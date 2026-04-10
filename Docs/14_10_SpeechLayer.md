@@ -89,7 +89,7 @@ public class SpeechLayer : BaseNpcLayer
 
 		// Resolve the next sound file from the event
 		var soundFile = Game.Random.FromList( sound.Sounds );
-;		if ( !soundFile.IsValid() ) return;
+		if ( !soundFile.IsValid() ) return;
 
 		// Play using the event's volume and pitch
 		_soundHandle = Sound.PlayFile( soundFile, sound.Volume.GetValue(), sound.Pitch.GetValue() );
