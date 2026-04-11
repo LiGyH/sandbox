@@ -1,0 +1,64 @@
+# 07.03 — Штурмовая винтовка M4A1 (M4a1Weapon) 🔫
+
+## Что мы делаем?
+
+Создаём конкретный класс оружия `M4a1Weapon` — автоматическую штурмовую винтовку M4A1, наследующую `IronSightsWeapon`.
+
+## Зачем это нужно?
+
+- **Автоматический огонь**: в отличие от пистолетов, стреляет при удержании ЛКМ (используется стандартный `WantsPrimaryAttack` из базового класса).
+- **Динамический прицел**: крестообразный прицел с четырьмя линиями, расстояние между которыми зависит от текущего разброса (`GetAimConeAmount`).
+- **Настраиваемый темп**: свойство `TimeBetweenShots` (по умолчанию 0.1 сек = 600 выстрелов/мин).
+
+## Как это работает внутри движка?
+
+| Элемент | Описание |
+|---|---|
+| `IronSightsWeapon` | Базовый класс. `WantsPrimaryAttack` по умолчанию возвращает `Input.Down("attack1")` — автоматический огонь. |
+| `TimeBetweenShots` | `[Property]` — интервал 0.1 сек между выстрелами. |
+| `GetPrimaryFireRate()` | Возвращает `TimeBetweenShots`. |
+| `PrimaryAttack()` | Стреляет пулей через `ShootBullet()`. |
+| `DrawCrosshair()` | Рисует 4 линии (крест) с режимом `Lighten`. Зазор `gap` = 16 + разброс × 32, длина линии = 12, толщина = 2. |
+| `GetAimConeAmount()` | Унаследованный метод — возвращает текущий множитель разброса для динамического раздвижения прицела. |
+
+## Создай файл
+
+**Путь:** `Code/Weapons/M4a1/M4a1Weapon.cs`
+
+```csharp
+using Sandbox.Rendering;
+
+public class M4a1Weapon : IronSightsWeapon
+{
+	[Property] public float TimeBetweenShots { get; set; } = 0.1f;
+
+	protected override float GetPrimaryFireRate() => TimeBetweenShots;
+
+	public override void PrimaryAttack()
+	{
+		ShootBullet( TimeBetweenShots, GetBullet() );
+	}
+
+	public override void DrawCrosshair( HudPainter hud, Vector2 center )
+	{
+		var gap = 16 + GetAimConeAmount() * 32;
+		var len = 12;
+		var w = 2f;
+
+		var color = !HasAmmo() || IsReloading() || TimeUntilNextShotAllowed > 0 ? CrosshairNoShoot : CrosshairCanShoot;
+
+		hud.SetBlendMode( BlendMode.Lighten );
+		hud.DrawLine( center + Vector2.Left * (len + gap), center + Vector2.Left * gap, w, color );
+		hud.DrawLine( center - Vector2.Left * (len + gap), center - Vector2.Left * gap, w, color );
+		hud.DrawLine( center + Vector2.Up * (len + gap), center + Vector2.Up * gap, w, color );
+		hud.DrawLine( center - Vector2.Up * (len + gap), center - Vector2.Up * gap, w, color );
+	}
+}
+```
+
+## Проверка
+
+1. Возьмите M4A1 и проверьте, что удержание ЛКМ вызывает непрерывную стрельбу.
+2. Убедитесь, что прицел (крест из 4 линий) раздвигается при стрельбе и сужается в покое.
+3. Проверьте темп стрельбы — должен соответствовать 0.1 сек (~600 выстрелов/мин).
+4. Убедитесь, что цвет прицела меняется при пустом магазине или перезарядке.

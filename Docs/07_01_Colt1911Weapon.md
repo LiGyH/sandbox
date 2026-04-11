@@ -1,0 +1,63 @@
+# 07.01 — Пистолет Colt 1911 (Colt1911Weapon) 🔫
+
+## Что мы делаем?
+
+Создаём конкретный класс оружия `Colt1911Weapon` — полуавтоматический пистолет Colt 1911, наследующий `IronSightsWeapon`.
+
+## Зачем это нужно?
+
+- **Полуавтоматический огонь**: стреляет одиночными выстрелами при нажатии (не при удержании).
+- **Настраиваемый темп стрельбы**: свойство `PrimaryFireRate` задаётся в инспекторе (по умолчанию 0.2 сек).
+- **Прицел-точка**: рисует минималистичный круговой прицел — чёрный контур с цветной серединой (зелёный / красный в зависимости от возможности выстрела).
+
+## Как это работает внутри движка?
+
+| Элемент | Описание |
+|---|---|
+| `IronSightsWeapon` | Базовый класс с поддержкой прицеливания через мушку. |
+| `PrimaryFireRate` | `[Property]` — интервал между выстрелами (0.2 сек). |
+| `GetPrimaryFireRate()` | Возвращает `PrimaryFireRate` для базового класса. |
+| `WantsPrimaryAttack()` | Возвращает `true` при **нажатии** (не удержании) кнопки `attack1` — полуавтоматический режим. |
+| `PrimaryAttack()` | Вызывает `ShootBullet()` с темпом стрельбы и текущим описанием пули. |
+| `DrawCrosshair()` | Рисует круг-точку: чёрный (r=5) + цветной (r=3). Цвет зависит от наличия патронов, перезарядки и задержки. |
+
+## Создай файл
+
+**Путь:** `Code/Weapons/Colt1911/Colt1911Weapon.cs`
+
+```csharp
+using Sandbox.Rendering;
+
+public class Colt1911Weapon : IronSightsWeapon
+{
+	[Property] public float PrimaryFireRate { get; set; } = 0.2f;
+
+	protected override float GetPrimaryFireRate() => PrimaryFireRate;
+
+	protected override bool WantsPrimaryAttack()
+	{
+		return Input.Pressed( "attack1" );
+	}
+
+	public override void PrimaryAttack()
+	{
+		ShootBullet( PrimaryFireRate, GetBullet() );
+	}
+
+	public override void DrawCrosshair( HudPainter hud, Vector2 center )
+	{
+		var color = !HasAmmo() || IsReloading() || TimeUntilNextShotAllowed > 0 ? CrosshairNoShoot : CrosshairCanShoot;
+
+		hud.SetBlendMode( BlendMode.Normal );
+		hud.DrawCircle( center, 5, Color.Black );
+		hud.DrawCircle( center, 3, color );
+	}
+}
+```
+
+## Проверка
+
+1. Возьмите Colt 1911 в инвентарь и убедитесь, что оружие стреляет одиночными при каждом нажатии ЛКМ.
+2. Убедитесь, что удержание ЛКМ **не** вызывает автоматическую стрельбу.
+3. Проверьте, что темп стрельбы соответствует `PrimaryFireRate` (0.2 сек между выстрелами).
+4. Убедитесь, что прицел отображает зелёную точку при наличии патронов и красную — при пустом магазине или перезарядке.
