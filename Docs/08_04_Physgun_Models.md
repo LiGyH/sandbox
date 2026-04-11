@@ -1,0 +1,210 @@
+# 🖐️ PhygunViewmodel — Визуальные эффекты viewmodel физической пушки
+
+## Что мы делаем?
+
+Создаём файл `PhygunViewmodel.cs` — компонент, управляющий визуальными эффектами модели от первого лица (viewmodel) физической пушки: свечение, искры, спрайты на кончике, анимация трубки и бутылки.
+
+## Зачем это нужно?
+
+Viewmodel-эффекты делают оружие «живым» для игрока:
+- Свечение на кончике пушки меняет цвет в зависимости от режима (физика / гравитация)
+- Искры вылетают при включении/выключении луча
+- Спрайты на кончике мерцают и масштабируются
+- Трубка с самоподсветкой (self-illum) прокручивается быстрее при активном луче
+- Бутылка пульсирует яркостью
+
+## Как это работает внутри движка?
+
+- `OnUpdate` получает ссылку на `Physgun` из родительского объекта и определяет режим (Pull/Beam)
+- `_tintFrac` плавно интерполируется между `PhysTint` (синий) и `GravTint` (оранжевый) через промежуточный белый
+- `UpdateTubeFx` — управляет скоростью прокрутки self-illum текстуры через `SmoothDamp`, обновляя offset и brightness материала
+- `UpdateBottleGlow` — пульсация яркости через `MathF.Sin` с разной частотой
+- `UpdateTipSprites` — случайная альфа и размер для каждого спрайта
+- `UpdateGlowEffect` — тинт и альфа для ParticleEffect
+- `UpdateSparks` — эмиссия частиц при изменении состояния `BeamActive`
+
+## Создай файл
+
+📄 `Code/Weapons/PhysGun/PhygunViewmodel.cs`
+
+```csharp
+public sealed class PhygunViewmodel : Component, Component.ExecuteInEditor
+{
+	[Property] public List<SpriteRenderer> TipSprites { get; set; }
+	[Property] public ParticleEffect GlowEffect { get; set; }
+	[Property] public ParticleEffect SparksEffect { get; set; }
+	[Property] public Material TubeFxMaterial { get; set; }
+	[Property] public Material BottleMaterial { get; set; }
+
+	[Property] public bool BeamActive { get; set; }
+	[Property] public Color GravTint { get; set; }
+	[Property] public Color PhysTint { get; set; }
+
+	float _tintFrac;
+	Color _effectsTint;
+
+	protected override void OnUpdate()
+	{
+		if ( GetComponentInParent<Physgun>() is Physgun physgun )
+		{
+			BeamActive = physgun.BeamActive;
+
+			_tintFrac = MathX.Approach( _tintFrac, physgun.PullActive ? 1 : 0, Time.Delta * 5 );
+			_effectsTint = _tintFrac <= 0.5f ? Color.Lerp( PhysTint, Color.White, _tintFrac * 2 ) : Color.Lerp( Color.White, GravTint, (_tintFrac - 0.5f) * 2 );
+		}
+		else
+		{
+			_tintFrac = 0.0f;
+			_effectsTint = PhysTint;
+		}
+
+		UpdateGlowEffect();
+		UpdateTipSprites();
+		UpdateTubeFx();
+		UpdateSparks();
+		UpdateBottleGlow();
+	}
+
+	float _scroll;
+	float _scrollSpeed;
+	float _scrollSpeedVel;
+
+	void UpdateTubeFx()
+	{
+		if ( TubeFxMaterial is null ) return;
+
+		// ideally we'd scroll the self illum on its own - but that's not an option.
+		// we have g_vSelfIllumScrollSpeed but we can't scale that speed up and down, because it's multiplied by time internally.
+
+		_scrollSpeed = MathX.SmoothDamp( _scrollSpeed, BeamActive ? 2.0f : 0.2f, ref _scrollSpeedVel, BeamActive ? 0.5f : 2.5f, Time.Delta );
+		_scroll += _scrollSpeed * Time.Delta;
+
+		TubeFxMaterial.Set( "g_vSelfIllumOffset", new Vector2( _scroll % 1, 0 ) );
+		TubeFxMaterial.Set( "g_flSelfIllumBrightness", 3 * (_scrollSpeed + 1.5) );
+		TubeFxMaterial.Set( "g_vSelfIllumTint", _effectsTint );
+	}
+
+	void UpdateBottleGlow()
+	{
+		if ( BottleMaterial is null ) return;
+
+		float bounce = MathF.Sin( Time.Now * (BeamActive ? 45.0f : 3.0f) ) * 0.5f;
+
+		BottleMaterial.Set( "g_vSelfIllumTint", _effectsTint );
+		BottleMaterial.Set( "g_flSelfIllumBrightness", (BeamActive ? 6.0f : 1.5f) + bounce );
+	}
+
+	void UpdateTipSprites()
+	{
+		var mul = BeamActive ? 1.0f : 0.6f;
+
+		foreach ( var sprite in TipSprites )
+		{
+			sprite.Enabled = true;
+			sprite.Color = _effectsTint.WithAlpha( mul * Random.Shared.Float( 0.4f, 0.9f ) );
+			sprite.Size = Random.Shared.Float( 6, 7 ) * mul;
+		}
+	}
+
+	void UpdateGlowEffect()
+	{
+		if ( GlowEffect is null ) return;
+
+		GlowEffect.Tint = _effectsTint;
+		GlowEffect.Alpha = BeamActive ? 1.0f : 0.2f;
+	}
+
+
+	bool _wasActive;
+
+	void UpdateSparks()
+	{
+		if ( SparksEffect is null ) return;
+
+		if ( BeamActive == _wasActive ) return;
+
+		_wasActive = BeamActive;
+
+		int count = BeamActive ? 20 : 3;
+
+		for ( int i = 0; i < count; i++ )
+		{
+			var p = SparksEffect.Emit( SparksEffect.WorldPosition, i / (float)count );
+			p.Velocity = Vector3.Random * 100.0f + SparksEffect.WorldTransform.Forward * 30.0f;
+		}
+	}
+}
+```
+
+## Проверка
+
+- Файл `Code/Weapons/PhysGun/PhygunViewmodel.cs` создан с классом `PhygunViewmodel`
+- Реализована плавная интерполяция цвета между режимами Phys/Grav через `_tintFrac`
+- `UpdateTubeFx` использует `SmoothDamp` для плавной прокрутки self-illum
+- `UpdateSparks` эмитирует частицы только при изменении состояния
+
+
+---
+
+# 🌍 PhygunWorldmodel — Визуальные эффекты worldmodel физической пушки
+
+## Что мы делаем?
+
+Создаём файл `PhygunWorldmodel.cs` — компонент, управляющий визуальными эффектами модели от третьего лица (worldmodel) физической пушки: свечение частиц и точечный свет.
+
+## Зачем это нужно?
+
+Другие игроки видят worldmodel оружия. Эффекты на worldmodel обеспечивают визуальную обратную связь:
+- Свечение частиц на кончике пушки меняет цвет при переключении режима (притягивание / физика)
+- Точечный свет подсвечивает окружение в соответствующем цвете
+- Плавная интерполяция цвета между режимами создаёт красивый переход
+
+## Как это работает внутри движка?
+
+- `OnUpdate` находит компонент `Physgun` в корневом объекте через `Components.Get<Physgun>(FindMode.EverythingInDescendants)`
+- Проверяет `PullActive` для определения текущего режима
+- `_tintFrac` плавно интерполируется от 0 (Phys) до 1 (Grav) через `MathX.Approach`
+- Цвет вычисляется с двухэтапной интерполяцией: PhysTint → White → GravTint
+- Применяется к `GlowEffect.Tint` и `GlowLight.LightColor`
+
+## Создай файл
+
+📄 `Code/Weapons/PhysGun/PhygunWorldmodel.cs`
+
+```csharp
+public sealed class PhygunWorldmodel : Component
+{
+	[Property] public ParticleEffect GlowEffect { get; set; }
+	[Property] public PointLight GlowLight { get; set; }
+
+	[Property] public Color GravTint { get; set; } = new Color( 1f, 0.8f, 0f );
+	[Property] public Color PhysTint { get; set; } = new Color( 0f, 0.68333f, 1f );
+
+	float _tintFrac;
+
+	protected override void OnUpdate()
+	{
+		var physgun = GameObject.Root.Components.Get<Physgun>( FindMode.EverythingInDescendants );
+		var pullActive = physgun?.PullActive ?? false;
+
+		_tintFrac = MathX.Approach( _tintFrac, pullActive ? 1 : 0, Time.Delta * 5 );
+
+		var tint = _tintFrac <= 0.5f
+			? Color.Lerp( PhysTint, Color.White, _tintFrac * 2 )
+			: Color.Lerp( Color.White, GravTint, (_tintFrac - 0.5f) * 2 );
+
+		if ( GlowEffect is not null )
+			GlowEffect.Tint = tint;
+
+		if ( GlowLight is not null )
+			GlowLight.LightColor = tint;
+	}
+}
+```
+
+## Проверка
+
+- Файл `Code/Weapons/PhysGun/PhygunWorldmodel.cs` создан с классом `PhygunWorldmodel`
+- Цвета по умолчанию: оранжевый для гравитации, синий для физики
+- Плавная двухэтапная интерполяция цвета через белый
+- Обновляются `GlowEffect` и `GlowLight`
