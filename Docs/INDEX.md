@@ -21,6 +21,35 @@
 | [00_07](00_07_Настройки_звука.md) | Настройки звука |
 | [00_08](00_08_Настройки_сети.md) | Настройки сети |
 
+## Фаза 0.5: Основы движка s&box 🧠
+
+> Теоретический блок на основе [Facepunch/sbox-docs](https://github.com/Facepunch/sbox-docs/). Читай до Фазы 1 — дальше ВСЁ опирается на это.
+
+| Файл | Тема |
+|------|------|
+| [00_09](00_09_GameObject.md) | GameObject и Transform |
+| [00_10](00_10_GameObject_Hierarchy.md) | Иерархия (родитель/дети) |
+| [00_11](00_11_Tags.md) | Теги |
+| [00_12](00_12_Component.md) | Component и жизненный цикл |
+| [00_13](00_13_Component_Attributes.md) | Атрибуты (`[Property]`, `[Sync]` ...) |
+| [00_14](00_14_Execution_Order.md) | Порядок выполнения |
+| [00_15](00_15_Scene_GameObjectSystem.md) | Scene и GameObjectSystem |
+| [00_16](00_16_Prefabs.md) | Prefabs |
+| [00_17](00_17_Hotloading.md) | Hotloading |
+| [00_18](00_18_ConVar_ConCmd.md) | ConVar и ConCmd |
+| [00_19](00_19_Input_Basics.md) | Input — основы |
+| [00_20](00_20_Networking_Basics.md) | Сеть: хост/клиент |
+| [00_21](00_21_Networked_Objects.md) | Сетевые объекты |
+| [00_22](00_22_Ownership.md) | Ownership |
+| [00_23](00_23_Rpc_Messages.md) | RPC сообщения |
+| [00_24](00_24_Sync_Properties.md) | Sync Properties |
+| [00_25](00_25_Network_Events.md) | События сети |
+| [00_26](00_26_Razor_Basics.md) | Razor UI — основы |
+| [00_27](00_27_Razor_Styling.md) | Razor стилизация |
+| [00_28](00_28_HudPainter.md) | HudPainter |
+| [00_29](00_29_GameResource.md) | GameResource |
+| [00_30](00_30_Log_Assert.md) | Log, Assert, диагностика |
+
 ## Фаза 1: Фундамент 🧱
 
 | Файл | Тема |

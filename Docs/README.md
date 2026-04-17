@@ -24,6 +24,33 @@
 - [00_07 — Настройки звука](00_07_Настройки_звука.md)
 - [00_08 — Настройки сети](00_08_Настройки_сети.md)
 
+### Фаза 0.5: Основы движка s&box 🧠
+
+> Теоретический блок по мотивам [официальной документации Facepunch](https://github.com/Facepunch/sbox-docs/). На этот фундамент опирается весь последующий код Sandbox. Если ты никогда не работал с s&box — **не пропускай**.
+
+- [00_09 — GameObject и Transform](00_09_GameObject.md)
+- [00_10 — Иерархия GameObject (родитель/дети)](00_10_GameObject_Hierarchy.md)
+- [00_11 — Теги (Tags)](00_11_Tags.md)
+- [00_12 — Component (компонент) и его жизненный цикл](00_12_Component.md)
+- [00_13 — Атрибуты компонентов (`[Property]`, `[Sync]`, `[Button]`...)](00_13_Component_Attributes.md)
+- [00_14 — Порядок выполнения (Execution Order)](00_14_Execution_Order.md)
+- [00_15 — Scene и GameObjectSystem](00_15_Scene_GameObjectSystem.md)
+- [00_16 — Prefabs (префабы)](00_16_Prefabs.md)
+- [00_17 — Hotloading (живая перезагрузка кода)](00_17_Hotloading.md)
+- [00_18 — ConVar и ConCmd (консоль)](00_18_ConVar_ConCmd.md)
+- [00_19 — Input (ввод): основы](00_19_Input_Basics.md)
+- [00_20 — Сеть: хост, клиент, соединение](00_20_Networking_Basics.md)
+- [00_21 — Сетевые объекты и NetworkHelper](00_21_Networked_Objects.md)
+- [00_22 — Ownership (владение сетевым объектом)](00_22_Ownership.md)
+- [00_23 — RPC сообщения](00_23_Rpc_Messages.md)
+- [00_24 — Sync Properties (синхронизация свойств)](00_24_Sync_Properties.md)
+- [00_25 — События сети (INetworkListener и др.)](00_25_Network_Events.md)
+- [00_26 — Razor Panels: основы UI](00_26_Razor_Basics.md)
+- [00_27 — Стилизация Razor Panels (SCSS)](00_27_Razor_Styling.md)
+- [00_28 — HudPainter (немедленный рендер HUD)](00_28_HudPainter.md)
+- [00_29 — GameResource (кастомные ресурсы)](00_29_GameResource.md)
+- [00_30 — Log, Assert и диагностика](00_30_Log_Assert.md)
+
 ### Фаза 1: Фундамент
 - [01_01 — Assembly.cs (глобальные using)](01_01_Assembly.md)
 - [01_02 — EngineAdditions.cs](01_02_EngineAdditions.md)
