@@ -132,6 +132,8 @@
 | [06.07](06_07_IronSightsWeapon.md) | Оружие с механическим прицелом (IronSightsWeapon) 🎯 |
 | [06.08](06_08_MeleeWeapon.md) | Ближнее оружие (MeleeWeapon) 🗡️ |
 | [06.09](06_09_Inventory_UI.md) | Этап 06_09 — Inventory UI (Панель инвентаря / хотбар) |
+| [06.10](06_10_AmmoResource_Inventory.md) | Общий пул патронов (AmmoResource + AmmoInventory) 🎯 |
+| [06.11](06_11_Projectile.md) | Базовый снаряд (Projectile) 🚀 |
 
 ## Фаза 7: Конкретные виды оружия 🎯
 
@@ -146,6 +148,7 @@
 | [07.07](07_07_Crowbar.md) | Монтировка (CrowbarWeapon) 🔧 |
 | [07.08](07_08_HandGrenade.md) | Ручная граната (HandGrenadeWeapon) 💣 |
 | [07.09](07_09_CameraScreen.md) | Фотокамера (CameraWeapon) 📷 |
+| [07.10](07_10_Rpg.md) | РПГ — ракетомёт (RpgWeapon + RpgProjectile) 🚀 |
 
 ## Фаза 8: Physgun 🔷
 
@@ -188,6 +191,7 @@
 | [10.11](10_11_Unbreakable.md) | 🛡️ Unbreakable — Инструмент «Неразрушимость» |
 | [10.12](10_12_Trail.md) | ✨ Trail — Инструмент «След» + LineDefinition |
 | [10.13](10_13_Decal.md) | 🖌️ Decal — Инструмент «Декали» |
+| [10.14](10_14_KeepUpright.md) | 👆🏻 KeepUpright — Инструмент «Upright» (стабилизатор поворота) |
 
 ## Фаза 11: Физические объекты и сборка 🧱
 
@@ -245,6 +249,7 @@
 | [14.14](14_14_Mounts.md) | Этап 14_14 — Mounts (Подключённые игры) |
 | [14.15](14_15_ToolsTab.md) | Этап 14_15 — ToolsTab и SpawnMenuModeBar |
 | [14.16](14_16_SaveMenu.md) | Этап 14_16 — SaveMenu, CleanupPage, UsersPage, UtilitiesPage |
+| [14.17](14_17_LocalProps.md) | Этап 14_17 — LocalProps и SpawnPageLocal (раздел «Local» в меню спавна) 📦 |
 
 ## Фаза 15: Выброшенное и подборы 📦
 

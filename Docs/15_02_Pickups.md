@@ -206,7 +206,7 @@ public sealed class HealthPickup : BasePickup
 
 ## Что мы делаем?
 
-Создаём **AmmoPickup** — подбираемый предмет, дающий запасные патроны для конкретного типа оружия.
+Создаём **AmmoPickup** — подбираемый предмет, дающий запасные патроны в общий пул патронов игрока по заданному [`AmmoResource`](06_10_AmmoResource_Inventory.md). Теперь пикап привязан не к конкретному оружию, а к **типу патронов**: одна коробка 9мм подходит всем 9мм-пушкам, которые ссылаются на тот же `AmmoResource`.
 
 ## Создай файл
 
@@ -214,14 +214,15 @@ public sealed class HealthPickup : BasePickup
 
 ```csharp
 /// <summary>
-/// A pickup that gives the player reserve ammo for a matching weapon.
+/// A pickup that adds ammo to the player's shared pool for a given AmmoResource.
 /// </summary>
 public sealed class AmmoPickup : BasePickup
 {
 	/// <summary>
-	/// The weapon prefab this ammo is for.
+	/// The ammo resource this pickup gives ammo for.
+	/// When set, ammo is added directly to the player's shared pool for that resource.
 	/// </summary>
-	[Property, Group( "Ammo" )] public GameObject WeaponPrefab { get; set; }
+	[Property, Group( "Ammo" )] public AmmoResource AmmoType { get; set; }
 
 	/// <summary>
 	/// The quantity of ammo to give.
@@ -230,28 +231,25 @@ public sealed class AmmoPickup : BasePickup
 
 	public override bool CanPickup( Player player, PlayerInventory inventory )
 	{
-		if ( !WeaponPrefab.IsValid() ) return false;
+		if ( AmmoType is not null )
+		{
+			var ammoInv = player.GetComponent<AmmoInventory>();
+			if ( ammoInv is null ) return false;
+			return ammoInv.GetAmmo( AmmoType ) < AmmoType.MaxReserve;
+		}
 
-		var weaponType = WeaponPrefab.GetComponent<BaseWeapon>( true )?.GetType();
-		if ( weaponType is null ) return false;
-
-		var existing = inventory.Weapons.OfType<BaseWeapon>().FirstOrDefault( x => x.GetType() == weaponType );
-		if ( !existing.IsValid() ) return false;
-
-		return existing.ReserveAmmo < existing.MaxReserveAmmo;
+		return false;
 	}
 
 	protected override bool OnPickup( Player player, PlayerInventory inventory )
 	{
-		if ( !WeaponPrefab.IsValid() ) return false;
+		if ( AmmoType is not null )
+		{
+			var ammoInv = player.GetComponent<AmmoInventory>();
+			if ( ammoInv is null ) return false;
+			return ammoInv.AddAmmo( AmmoType, AmmoAmount ) > 0;
+		}
 
-		var weaponType = WeaponPrefab.GetComponent<BaseWeapon>( true )?.GetType();
-		if ( weaponType is null ) return false;
-
-		var existing = inventory.Weapons.OfType<BaseWeapon>().FirstOrDefault( x => x.GetType() == weaponType );
-		if ( !existing.IsValid() ) return false;
-
-		existing.AddReserveAmmo( AmmoAmount );
 		return true;
 	}
 }
@@ -261,10 +259,12 @@ public sealed class AmmoPickup : BasePickup
 
 | Элемент | Что делает |
 |---------|-----------|
-| `WeaponPrefab` | Привязка к конкретному типу оружия (через префаб) |
-| `GetComponent<BaseWeapon>(true)` | `true` = включая неактивные компоненты (в префабе) |
-| `GetType() == weaponType` | Сравниваем типы — патроны для Shotgun подходят только к Shotgun |
-| `ReserveAmmo < MaxReserveAmmo` | Нельзя подобрать если запас патронов полный |
+| `AmmoType` | `AmmoResource` — ссылка на общий тип патронов (см. [06.10](06_10_AmmoResource_Inventory.md)). Без него подбор невозможен. |
+| `player.GetComponent<AmmoInventory>()` | Получаем общий пул патронов игрока. |
+| `ammoInv.GetAmmo(AmmoType) < AmmoType.MaxReserve` | Запрещаем подбор, когда пул уже полон. |
+| `ammoInv.AddAmmo(AmmoType, AmmoAmount)` | Кладём патроны в общий пул. Возвращает фактически добавленное количество; если 0 — пикап не считается успешным. |
+
+> ⚠️ **Миграция**: старое поле `WeaponPrefab` (ссылка на префаб оружия) удалено. Теперь пикап описывается только типом патронов. Обнови префабы пикапов `ammo_pistol`, `ammo_rifle`, `ammo_shotgun`, `ammo_rocket` — присвой им соответствующий `.ammo`-ресурс (`Assets/ammotype/9mm.ammo`, `rifle.ammo`, `shotgun.ammo`, `rocket.ammo`).
 
 ---
 
