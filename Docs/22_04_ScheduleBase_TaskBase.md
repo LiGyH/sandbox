@@ -1,4 +1,4 @@
-# 14.07 — NPC: Базовое расписание (ScheduleBase) 📅
+# 22.04 — NPC: Базовое расписание (ScheduleBase) 📅
 
 ## Что мы делаем?
 
@@ -182,7 +182,7 @@ public abstract class ScheduleBase
 
 ---
 
-Следующий шаг: [14.08 — NPC: Базовый слой (BaseNpcLayer)](14_08_BaseNpcLayer.md)
+Следующий шаг: [14.08 — NPC: Базовый слой (BaseNpcLayer)](22_05_Layers.md)
 
 
 ---
@@ -274,4 +274,4 @@ public abstract class TaskBase
 
 ---
 
-Следующий шаг: [14.07 — NPC: Базовое расписание (ScheduleBase)](14_07_ScheduleBase.md)
+Следующий шаг: [14.07 — NPC: Базовое расписание (ScheduleBase)](22_04_ScheduleBase_TaskBase.md)

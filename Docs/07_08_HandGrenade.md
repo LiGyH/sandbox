@@ -1,4 +1,12 @@
-# 07.11 — Ручная граната (HandGrenadeWeapon) 💣
+# 07.08 — Ручная граната (HandGrenadeWeapon) 💣
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.28 — HudPainter](00_28_HudPainter.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
 
 ## Что мы делаем?
 
@@ -447,3 +455,19 @@ public sealed class TimedExplosive : Component
 3. Проверьте, что физические объекты рядом отлетают от взрыва.
 4. Убедитесь, что объект гранаты уничтожается после взрыва.
 5. В мультиплеере проверьте, что взрыв авторитетен — происходит только на хосте.
+
+
+---
+
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+
+## ➡️ Следующий шаг
+
+Переходи к **[07.09 — Фотокамера (CameraWeapon) 📷](07_09_CameraScreen.md)**.

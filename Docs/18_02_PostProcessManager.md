@@ -409,3 +409,10 @@ public void Remove( string resourcePath )
 4. **Привязка к камере** — после `Toggle` проверьте, что новый `GameObject` является дочерним объектом камеры сцены (`Scene.Camera.GameObject`).
 5. **Флаг NotNetworked** — убедитесь, что созданные объекты эффектов имеют флаг `GameObjectFlags.NotNetworked` (не реплицируются по сети).
 6. **Remove** — вызовите `Remove("path/to/effect.spp")`. Объект должен быть уничтожен, а `SelectedPath` сброшен, если был равен удалённому пути.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[18.03 — Effects UI: интерфейс управления эффектами пост-обработки](18_03_Effects_UI.md)**.

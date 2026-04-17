@@ -1,4 +1,4 @@
-# 16.01 — Свободная камера (FreeCam) 🎥
+# 24.02 — Свободная камера (FreeCam) 🎥
 
 ## Что мы делаем?
 
@@ -182,3 +182,10 @@ public sealed class FreeCamGameObjectSystem : GameObjectSystem<FreeCamGameObject
 ---
 
 Это последняя фаза кодовых систем! Далее — обновлённый INDEX.md.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[24.03 — Базовый класс страницы утилит (UtilityPage) 🧰](24_03_UtilityPage.md)**.

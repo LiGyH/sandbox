@@ -1,5 +1,13 @@
 # 06.01 — Базовый переносимый предмет (BaseCarryable) 🎒
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.28 — HudPainter](00_28_HudPainter.md)
+
 ## Что мы делаем?
 
 Создаём базовый класс `BaseCarryable` — фундамент для любого предмета, который игрок может держать в руках: оружие, инструменты, камеры и т.д. Также определяем запись `TraceAttackInfo`, описывающую результат трассировочной атаки.
@@ -333,3 +341,10 @@ public partial class BaseCarryable : Component, IKillIcon
 - [ ] `WeaponModel` выбирает между ViewModel и WorldModel в зависимости от камеры
 - [ ] `TraceAttack` (RPC на хосте) наносит урон и прикладывает силу
 - [ ] При включении/выключении компонента создаются/уничтожаются модели
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[06.02 — ViewModel переносимого предмета (BaseCarryable.ViewModel) 👁️](06_02_BaseCarryable_Models.md)**.

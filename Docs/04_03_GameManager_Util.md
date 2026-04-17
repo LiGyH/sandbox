@@ -1,4 +1,4 @@
-# 04.02 — Утилиты GameManager: кик игроков (GameManager.Util) 🥾
+# 04.03 — Утилиты GameManager: кик игроков (GameManager.Util) 🥾
 
 ## Что мы делаем?
 

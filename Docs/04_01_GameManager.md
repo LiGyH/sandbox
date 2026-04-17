@@ -1,5 +1,11 @@
 # 04.01 — Игровой менеджер (GameManager) 🎮
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.25 — События сети](00_25_Network_Events.md)
+
 ## Что мы делаем?
 
 Создаём **GameManager** — центральную систему управления игрой. Это `GameObjectSystem` (синглтон), который:
@@ -174,3 +180,13 @@ var (type, path, source) = SpawnlistItem.ParseIdent( ident );
 ## Следующий файл
 
 Переходи к **04.02 — Утилиты GameManager (GameManager.Util)**.
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [23.01 — ISaveEvents](23_01_ISaveEvents.md)
+- [02.01 — IKillSource](02_01_IKillSource.md)
+- [14.01 — ISpawner](14_01_ISpawner.md)
+

@@ -1,4 +1,9 @@
-# 15.02 — Система очистки (CleanupSystem) 🧹
+# 23.03 — Система очистки (CleanupSystem) 🧹
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 
@@ -295,4 +300,4 @@ public sealed class CleanupSystem : GameObjectSystem<CleanupSystem>, ISceneLoadi
 
 ---
 
-Следующий шаг: [16.01 — Свободная камера (FreeCam)](16_01_FreeCam.md)
+Следующий шаг: [16.01 — Свободная камера (FreeCam)](24_02_FreeCam.md)

@@ -1,5 +1,10 @@
 # 🔗 BaseConstraintToolMode.cs — Базовый класс инструментов-соединений
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+
 ## Что мы делаем?
 
 Создаём файл `BaseConstraintToolMode.cs` — абстрактный класс для всех инструментов, которые **соединяют два объекта** (Rope, Weld, Elastic, BallSocket, Slider, NoCollide).

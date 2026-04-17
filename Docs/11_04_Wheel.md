@@ -1,5 +1,12 @@
 # 🛞 Инструмент Wheel (WheelTool)
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.29 — GameResource](00_29_GameResource.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
+
 ## Что мы делаем?
 Создаём режим тулгана для размещения колёс на объектах.
 
@@ -303,3 +310,10 @@ public class WheelDefinition : GameResource, IDefinitionResource
 - Файл `.wdef` открывается в редакторе ассетов.
 - Миниатюра генерируется из указанного префаба.
 - Ресурс доступен в списке выбора инструмента Wheel.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[11.05 — ⚙️ Инструмент Hydraulic (HydraulicTool)](11_05_Hydraulic.md)**.

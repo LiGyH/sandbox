@@ -1,5 +1,11 @@
 # 🔫 Toolgun.cs — Основной класс оружия-тулгана
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.28 — HudPainter](00_28_HudPainter.md)
+
 ## Что мы делаем?
 
 Создаём файл `Toolgun.cs` — основной класс оружия Toolgun, которое является **контейнером** для всех инструментов (`ToolMode`). Это `partial class`, основная часть логики.
@@ -207,3 +213,12 @@ Toolgun наследуется от `ScreenWeapon`, который создан 
 ---
 
 ➡️ Следующий шаг: [09_07 — Toolgun.Screen.cs и Toolgun.Effects.cs](09_07_Toolgun_Screen_Effects.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+

@@ -1,5 +1,10 @@
 # 🎯 Physgun.Hud — HUD-прицел физической пушки
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.28 — HudPainter](00_28_HudPainter.md)
+
 ## Что мы делаем?
 
 Создаём файл `Physgun.Hud.cs` — partial-часть класса `Physgun`, отвечающая за отрисовку HUD-элементов прицела на экране игрока.
@@ -52,3 +57,10 @@ public partial class Physgun : ScreenWeapon
 - Файл `Code/Weapons/PhysGun/Physgun.Hud.cs` создан как partial-класс `Physgun : ScreenWeapon`
 - Метод `DrawHud` корректно обрабатывает три состояния: захвачен, наведён, пусто
 - Используется `HudPainter.DrawCircle` для отрисовки прицела
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[08.04 — 🖐️ PhygunViewmodel — Визуальные эффекты viewmodel физической пушки](08_04_Physgun_Models.md)**.

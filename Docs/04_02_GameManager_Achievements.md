@@ -1,4 +1,9 @@
-# 04.03 — Ачивки (GameManager.Achievements) 🏆
+# 04.02 — Ачивки (GameManager.Achievements) 🏆
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 

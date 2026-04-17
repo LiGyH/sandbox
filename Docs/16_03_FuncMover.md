@@ -1,4 +1,10 @@
-# 12.05 — Движущийся объект (FuncMover) 🚚
+# 16.03 — Движущийся объект (FuncMover) 🚚
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 
@@ -179,4 +185,4 @@ public sealed class FuncMover : Component
 
 ---
 
-Следующий шаг: [12.06 — Триггер толчка (TriggerPush)](12_06_TriggerPush.md)
+Следующий шаг: [12.06 — Триггер толчка (TriggerPush)](16_04_Triggers.md)

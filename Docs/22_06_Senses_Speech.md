@@ -1,4 +1,10 @@
-# 14.09 — NPC: Слой сенсоров (SensesLayer) 👁️
+# 22.06 — NPC: Слой сенсоров (SensesLayer) 👁️
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
 
 ## Что мы делаем?
 
@@ -164,7 +170,7 @@ public class SensesLayer : BaseNpcLayer
 
 ---
 
-Следующий шаг: [14.10 — NPC: Слой речи (SpeechLayer)](14_10_SpeechLayer.md)
+Следующий шаг: [14.10 — NPC: Слой речи (SpeechLayer)](22_06_Senses_Speech.md)
 
 
 ---
@@ -386,4 +392,4 @@ public class SpeechLayer : BaseNpcLayer
 
 ---
 
-Следующий шаг: [14.11 — NPC: Задачи (Tasks)](14_11_Tasks.md)
+Следующий шаг: [14.11 — NPC: Задачи (Tasks)](22_07_Tasks_Basic.md)

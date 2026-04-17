@@ -1,4 +1,12 @@
-# 08.23 — Воздушный шар (Balloon) 🎈
+# 11.01 — Воздушный шар (Balloon) 🎈
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.29 — GameResource](00_29_GameResource.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
 
 ## Что мы делаем?
 
@@ -344,3 +352,10 @@ public class BalloonEntity : Component, Component.IDamageable
 - Эффект лопания окрашивается в цвет шара через `ITintable` интерфейс.
 - Фолбэк звука: если `PopSound` не задан, загружается стандартный звук из ресурсов.
 - `[RequireComponent]` гарантирует наличие `Prop` компонента на объекте.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[11.02 — 🎱 Инструмент Hoverball (HoverballTool)](11_02_Hoverball.md)**.

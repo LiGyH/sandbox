@@ -1,4 +1,10 @@
-# 11.03 — Пост-обработка (PostProcessing) 🎨
+# 18.01 — Пост-обработка (PostProcessing) 🎨
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.29 — GameResource](00_29_GameResource.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
 
 ## Что мы делаем?
 
@@ -251,4 +257,4 @@ public sealed class PostProcessManager : GameObjectSystem<PostProcessManager>
 
 ---
 
-Следующий шаг: [11.04 — Вспомогательные страницы (UtilityPage)](11_04_UtilityPage.md)
+Следующий шаг: [11.04 — Вспомогательные страницы (UtilityPage)](24_03_UtilityPage.md)

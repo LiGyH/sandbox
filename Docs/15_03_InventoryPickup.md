@@ -1,4 +1,9 @@
-# 13.05 — Подбор инвентарных предметов (InventoryPickup) 🎒
+# 15.03 — Подбор инвентарных предметов (InventoryPickup) 🎒
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 
@@ -87,4 +92,4 @@ public sealed class InventoryPickup : BasePickup, Component.IPressable
 
 ---
 
-Следующий шаг: [14.01 — NPC: Основной класс (Npc)](14_01_Npc.md)
+Следующий шаг: [14.01 — NPC: Основной класс (Npc)](22_01_Npc.md)

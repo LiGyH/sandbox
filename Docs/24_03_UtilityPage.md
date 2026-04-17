@@ -1,4 +1,9 @@
-# 11.04 — Базовый класс страницы утилит (UtilityPage) 🧰
+# 24.03 — Базовый класс страницы утилит (UtilityPage) 🧰
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.26 — Razor UI](00_26_Razor_Basics.md)
 
 ## Что мы делаем?
 
@@ -42,4 +47,4 @@ UI-компонент `UtilitiesPage.razor` собирает все наслед
 
 ---
 
-Следующий шаг: [12.01 — Спавнер игроков на карте (MapPlayerSpawner)](12_01_MapPlayerSpawner.md)
+Следующий шаг: [12.01 — Спавнер игроков на карте (MapPlayerSpawner)](16_05_MapPlayerSpawner.md)

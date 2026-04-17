@@ -1,4 +1,9 @@
-# 11.01 — Система банов (BanSystem) 🔨
+# 24.01 — Система банов (BanSystem) 🔨
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.25 — События сети](00_25_Network_Events.md)
 
 ## Что мы делаем?
 
@@ -163,4 +168,4 @@ public sealed class BanSystem : GameObjectSystem<BanSystem>, Component.INetworkL
 
 ---
 
-Следующий шаг: [11.02 — Система управления (ControlSystem)](11_02_ControlSystem.md)
+Следующий шаг: [11.02 — Система управления (ControlSystem)](17_01_ControlSystem.md)

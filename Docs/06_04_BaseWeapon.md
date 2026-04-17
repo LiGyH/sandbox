@@ -1,5 +1,10 @@
 # 06.04 — Базовое оружие (BaseWeapon) ⚔️
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.28 — HudPainter](00_28_HudPainter.md)
+
 ## Что мы делаем?
 
 Создаём класс `BaseWeapon` — основу для любого оружия в игре. Он наследует `BaseCarryable` и добавляет логику стрельбы, перезарядки, прицел и поддержку управления через сиденья (`IPlayerControllable`).
@@ -273,3 +278,10 @@ public partial class BaseWeapon : BaseCarryable, IPlayerControllable
 - [ ] `TryAutoReload()` начинает перезарядку после сухого щелчка
 - [ ] `DrawCrosshair()` рисует 4 линии перекрестья
 - [ ] `IPlayerControllable` позволяет управлять через сиденья
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[06.05 — Система боеприпасов (BaseWeapon.Ammo) 🔫](06_05_BaseWeapon_Ammo.md)**.

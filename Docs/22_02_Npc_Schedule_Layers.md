@@ -1,4 +1,4 @@
-# 14.04 — NPC: Планировщик расписаний (Npc.Schedule) 📋
+# 22.02 — NPC: Планировщик расписаний (Npc.Schedule) 📋
 
 ## Что мы делаем?
 
@@ -120,7 +120,7 @@ public partial class Npc : Component
 
 ---
 
-Следующий шаг: [14.05 — NPC: Статус задачи (TaskStatus)](14_05_TaskStatus.md)
+Следующий шаг: [14.05 — NPC: Статус задачи (TaskStatus)](22_04_ScheduleBase_TaskBase.md)
 
 
 ---
@@ -181,4 +181,4 @@ public partial class Npc : Component
 
 ---
 
-Следующий шаг: [14.04 — NPC: Планировщик расписаний (Npc.Schedule)](14_04_NpcSchedule.md)
+Следующий шаг: [14.04 — NPC: Планировщик расписаний (Npc.Schedule)](22_02_Npc_Schedule_Layers.md)

@@ -1,5 +1,14 @@
 # Этап 11_07 — Emitter (Эмиттер — источник частиц)
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.29 — GameResource](00_29_GameResource.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
+
 ## Что мы делаем?
 
 Создаём систему эмиттеров: инструмент `EmitterTool` для размещения источников частиц, ресурс `ScriptedEmitter` для описания эффектов и компонент `EmitterEntity` для управления частицами в мире. Игрок размещает эмиттер на поверхность, и тот начинает испускать выбранный эффект (искры, дым, огонь и т.д.).
@@ -400,3 +409,19 @@ public class EmitterEntity : Component, IPlayerControllable
 - **`SpawnParticle()`** — клонирует префаб частиц как дочерний объект эмиттера, со смещением `Vector3.Forward * 4f` (4 единицы вперёд).
 
 - **`DestroyParticle()`** — уничтожает экземпляр частиц.
+
+
+---
+
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [09.06 — Toolgun](09_06_Toolgun.md)
+
+## ➡️ Следующий шаг
+
+Переходи к **[11.08 — Этап 11_08 — Duplicator (Дупликатор — копирование конструкций)](11_08_Duplicator.md)**.

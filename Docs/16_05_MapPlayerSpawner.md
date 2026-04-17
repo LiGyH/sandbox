@@ -1,4 +1,9 @@
-# 12.01 — Спавнер игроков на карте (MapPlayerSpawner) 🗺️
+# 16.05 — Спавнер игроков на карте (MapPlayerSpawner) 🗺️
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
 
 ## Что мы делаем?
 
@@ -77,4 +82,4 @@ public sealed class MapPlayerSpawner : Component
 
 ---
 
-Следующий шаг: [12.02 — Базовый переключатель (BaseToggle)](12_02_BaseToggle.md)
+Следующий шаг: [12.02 — Базовый переключатель (BaseToggle)](16_01_BaseToggle.md)

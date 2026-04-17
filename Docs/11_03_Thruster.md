@@ -1,5 +1,12 @@
 # 🚀 Инструмент Thruster (ThrusterTool)
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+> - [00.29 — GameResource](00_29_GameResource.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
+
 ## Что мы делаем?
 Создаём режим тулгана для размещения двигателей (Thruster) на объектах в мире.
 
@@ -346,3 +353,10 @@ public class ThrusterDefinition : GameResource, IDefinitionResource
 - Файл `.tdef` открывается в редакторе ассетов.
 - Миниатюра генерируется из указанного префаба.
 - Ресурс отображается в списке выбора инструмента Thruster.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[11.04 — 🛞 Инструмент Wheel (WheelTool)](11_04_Wheel.md)**.

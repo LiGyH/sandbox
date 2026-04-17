@@ -1,4 +1,10 @@
-# 12.06 — Триггер толчка (TriggerPush) 🌠
+# 16.04 — Триггер толчка (TriggerPush) 🌠
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 
@@ -91,7 +97,7 @@ public sealed class TriggerPush : Component, Component.ITriggerListener
 
 ---
 
-Следующий шаг: [12.07 — Триггер телепортации (TriggerTeleport)](12_07_TriggerTeleport.md)
+Следующий шаг: [12.07 — Триггер телепортации (TriggerTeleport)](16_04_Triggers.md)
 
 
 ---
@@ -191,4 +197,4 @@ public sealed class TriggerTeleport : Component, Component.ITriggerListener
 
 ---
 
-Следующий шаг: [13.01 — Выброшенное оружие (DroppedWeapon)](13_01_DroppedWeapon.md)
+Следующий шаг: [13.01 — Выброшенное оружие (DroppedWeapon)](15_01_DroppedWeapon.md)

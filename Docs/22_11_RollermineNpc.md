@@ -1,4 +1,10 @@
-# 14.14 — NPC: Роллермайн (RollermineNpc) 🔵
+# 22.11 — NPC: Роллермайн (RollermineNpc) 🔵
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 
@@ -388,4 +394,14 @@ public class RollermineLeapTask : TaskBase
 
 ---
 
-Следующий шаг: [15.01 — Система сохранения (SaveSystem)](15_01_SaveSystem.md)
+Следующий шаг: [15.01 — Система сохранения (SaveSystem)](23_02_SaveSystem.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [04.01 — GameManager](04_01_GameManager.md)
+- [23.02 — SaveSystem](23_02_SaveSystem.md)
+- [02.04 — Damage Tags](02_04_DamageTags.md)
+

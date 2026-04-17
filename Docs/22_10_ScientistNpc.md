@@ -1,4 +1,9 @@
-# 14.13 — NPC: Учёный (ScientistNpc) 🔬
+# 22.10 — NPC: Учёный (ScientistNpc) 🔬
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
 
 ## Что мы делаем?
 
@@ -402,4 +407,4 @@ public class ScientistInspectPropSchedule : ScheduleBase
 
 ---
 
-Следующий шаг: [14.14 — NPC: Роллермайн (RollermineNpc)](14_14_RollermineNpc.md)
+Следующий шаг: [14.14 — NPC: Роллермайн (RollermineNpc)](22_11_RollermineNpc.md)

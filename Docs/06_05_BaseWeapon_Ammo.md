@@ -1,5 +1,11 @@
 # 06.05 — Система боеприпасов (BaseWeapon.Ammo) 🔫
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+
 ## Что мы делаем?
 
 Создаём partial-часть `BaseWeapon`, управляющую системой боеприпасов: магазин (clip), резерв (reserve), расход и пополнение патронов.
@@ -304,3 +310,10 @@ public partial class BaseWeapon
 - [ ] `CancelReload()` отменяет текущую перезарядку
 - [ ] Анимация перезарядки транслируется через `BroadcastReload()`
 - [ ] `finally`-блоки корректно очищают состояние
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[06.06 — Стрелковое оружие (BaseBulletWeapon) 🔫](06_06_BaseBulletWeapon.md)**.

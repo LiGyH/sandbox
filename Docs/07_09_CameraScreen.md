@@ -1,4 +1,10 @@
-# 07.10 — Фотокамера (CameraWeapon) 📷
+# 07.09 — Фотокамера (CameraWeapon) 📷
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.28 — HudPainter](00_28_HudPainter.md)
 
 ## Что мы делаем?
 
@@ -351,3 +357,20 @@ public partial class ScreenWeapon : BaseCarryable
 3. Двигайте мышь — джойстик на модели должен отклоняться в соответствии с движением.
 4. Проверьте, что экран обновляется каждый кадр при `ScreenRefreshInterval = 0`.
 5. Установите `ScreenRefreshInterval > 0` и убедитесь, что экран обновляется не чаще заданного интервала.
+
+
+---
+
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [09.06 — Toolgun](09_06_Toolgun.md)
+
+## ➡️ Следующий шаг
+
+Фаза завершена. Переходи к **[08.01 — 🔫 Physgun — Основная логика физической пушки](08_01_Physgun.md)** — начало следующей фазы.

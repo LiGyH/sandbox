@@ -1,5 +1,10 @@
 # 🖥️ Toolgun.Screen.cs и Toolgun.Effects.cs — Экран и эффекты тулгана
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.28 — HudPainter](00_28_HudPainter.md)
+
 ## Что мы делаем?
 
 Создаём **два файла** — расширения `partial class Toolgun`:

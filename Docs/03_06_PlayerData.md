@@ -1,4 +1,10 @@
-# 03.08 — Данные игрока (PlayerData) 📊
+# 03.06 — Данные игрока (PlayerData) 📊
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 
@@ -247,3 +253,12 @@ public sealed partial class PlayerData : Component, ISaveEvents
 ## Следующий файл
 
 Переходи к **03.09 — Урон от падения (PlayerFallDamage)**.
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [04.01 — GameManager](04_01_GameManager.md)
+- [23.01 — ISaveEvents](23_01_ISaveEvents.md)
+

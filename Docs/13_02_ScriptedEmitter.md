@@ -1,5 +1,11 @@
 # Этап 13_02 — ScriptedEmitter (Ресурс эмиттера частиц)
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.29 — GameResource](00_29_GameResource.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
+
 ## Смотрите этап 11_07
 
 Класс `ScriptedEmitter` подробно разобран в документации **[11_07_Emitter.md](11_07_Emitter.md)**, где он рассматривается вместе с инструментом размещения `EmitterTool` и компонентом `EmitterEntity` как единая система эмиттеров.
@@ -69,3 +75,10 @@ public class ScriptedEmitter : GameResource, IDefinitionResource
 ```
 
 Подробный разбор каждого метода — в [11_07_Emitter.md](11_07_Emitter.md).
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[13.03 — Этап 13_03 — DynamiteEntity (Динамит — взрывная сущность)](13_03_DynamiteEntity.md)**.

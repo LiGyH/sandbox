@@ -200,3 +200,10 @@ public partial class BaseCarryable : Component
 - [ ] `SetDropped(true)` включает их при выбросе
 - [ ] При создании/уничтожении рассылаются события `IEvent`
 - [ ] Мировая модель помечена `NotSaved | NotNetworked`
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[06.03 — Модель оружия (WeaponModel) 🔧](06_03_WeaponModel.md)**.

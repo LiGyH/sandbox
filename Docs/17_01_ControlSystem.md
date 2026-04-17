@@ -1,4 +1,4 @@
-# 11.02 — Система управления транспортом (ControlSystem) 🚗
+# 17.01 — Система управления транспортом (ControlSystem) 🚗
 
 ## Что мы делаем?
 
@@ -180,4 +180,4 @@ public class ControlSystem : GameObjectSystem<ControlSystem>
 
 ---
 
-Следующий шаг: [11.03 — Пост-обработка (PostProcessing)](11_03_PostProcessing.md)
+Следующий шаг: [11.03 — Пост-обработка (PostProcessing)](18_01_PostProcessResource.md)
