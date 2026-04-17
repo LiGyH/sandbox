@@ -1,4 +1,10 @@
-# 14.14 — NPC: Роллермайн (RollermineNpc) 🔵
+# 22.11 — NPC: Роллермайн (RollermineNpc) 🔵
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
 
 ## Что мы делаем?
 

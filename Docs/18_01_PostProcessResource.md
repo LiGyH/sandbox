@@ -1,4 +1,10 @@
-# 11.03 — Пост-обработка (PostProcessing) 🎨
+# 18.01 — Пост-обработка (PostProcessing) 🎨
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.29 — GameResource](00_29_GameResource.md)
+> - [00.16 — Prefabs](00_16_Prefabs.md)
 
 ## Что мы делаем?
 

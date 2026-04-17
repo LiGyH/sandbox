@@ -307,3 +307,10 @@ return bounds.ClosestPoint( Npc.WorldPosition );
 5. Добавьте `MoveTo(movingObject)` — NPC должен следовать за движущимся объектом.
 6. Уничтожьте целевой объект во время `MoveTo` — задача должна вернуть `Failed`.
 7. Проверьте, что NPC не ходит боком при резких поворотах маршрута.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[22.08 — Продвинутые задачи NPC (Say, FireWeapon, PickUpProp, DropProp)](22_08_Tasks_Advanced.md)**.

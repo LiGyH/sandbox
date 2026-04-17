@@ -1,4 +1,10 @@
-# 14.09 — NPC: Слой сенсоров (SensesLayer) 👁️
+# 22.06 — NPC: Слой сенсоров (SensesLayer) 👁️
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
 
 ## Что мы делаем?
 

@@ -1,4 +1,9 @@
-# 14.12 — NPC: Боевой NPC (CombatNpc) ⚔️
+# 22.09 — NPC: Боевой NPC (CombatNpc) ⚔️
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
 
 ## Что мы делаем?
 

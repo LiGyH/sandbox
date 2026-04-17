@@ -1,4 +1,9 @@
-# 03.07 — Режим Noclip (NoclipMoveMode) 👻
+# 03.15 — Режим Noclip (NoclipMoveMode) 👻
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
 
 ## Что мы делаем?
 

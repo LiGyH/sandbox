@@ -1,5 +1,12 @@
 # Этап 13_05 — EmitterEntity (Компонент управления эмиттером)
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.22 — Ownership](00_22_Ownership.md)
+> - [00.24 — Sync Properties](00_24_Sync_Properties.md)
+> - [00.23 — RPC сообщения](00_23_Rpc_Messages.md)
+
 ## Смотрите этап 11_07
 
 Класс `EmitterEntity` (и связанный с ним `EmitMode`) подробно разобран в документации **[11_07_Emitter.md](11_07_Emitter.md)**, где он рассматривается вместе с инструментом `EmitterTool` и ресурсом `ScriptedEmitter` как единая система эмиттеров.
@@ -158,3 +165,10 @@ public class EmitterEntity : Component, IPlayerControllable
 ```
 
 Подробный разбор каждого метода и свойства — в [11_07_Emitter.md](11_07_Emitter.md).
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[13.06 — Этап 13_06 — EntitySpawnerEntity (Спаунер сущностей)](13_06_EntitySpawnerEntity.md)**.

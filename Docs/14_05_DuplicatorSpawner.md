@@ -188,3 +188,10 @@ public class DuplicatorSpawner : ISpawner
 ### Вспомогательная запись `DupeInfo`
 
 - `private record DupeInfo( string Icon, string Json )` — простая структура для сериализации/десериализации пары «иконка + JSON» при передаче по сети.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[14.06 — Этап 14_06 — SpawnerWeapon](14_06_SpawnerWeapon.md)**.

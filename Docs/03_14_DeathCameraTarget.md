@@ -1,4 +1,4 @@
-# 03.06 — Камера смерти (DeathCameraTarget) 💀
+# 03.14 — Камера смерти (DeathCameraTarget) 💀
 
 ## Что мы делаем?
 

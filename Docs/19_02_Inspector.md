@@ -1,5 +1,10 @@
 # 19_02 — Inspector и GameObjectInspector
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.26 — Razor UI](00_26_Razor_Basics.md)
+
 ## Что мы делаем?
 
 Создаём два компонента:
@@ -1011,3 +1016,10 @@ public string Title => Target?.Count switch
 5. Выберите несколько объектов (Shift+клик) — заголовок вкладки должен показать «📦 Object (+N)».
 6. Правый клик по пропсу — должно появиться контекстное меню с «Delete» и «Break».
 7. Правый клик по игроку — кнопка «Delete» не должна отображаться.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[19.03 — InspectorEditor и InspectorEditorAttribute](19_03_InspectorEditor.md)**.

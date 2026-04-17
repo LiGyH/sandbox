@@ -1,5 +1,10 @@
 # 19_03 — InspectorEditor и InspectorEditorAttribute
 
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.26 — Razor UI](00_26_Razor_Basics.md)
+
 ## Что мы делаем?
 
 Создаём интерфейс **`IInspectorEditor`** и атрибут **`InspectorEditorAttribute`** — систему плагинов для инспектора. Любой разработчик может создать свою вкладку инспектора, просто написав класс-панель, реализующий `IInspectorEditor` и пометив его атрибутом `[InspectorEditor]`. Движок автоматически найдёт все такие классы и покажет их как вкладки.
@@ -167,3 +172,10 @@ var types = TypeLibrary.GetTypesWithAttribute<InspectorEditorAttribute>()
 3. Проверьте, что `GameObjectInspector` корректно помечен `[InspectorEditor(null)]` и `@implements IInspectorEditor`.
 4. В игре: при выделении объекта вкладки инспектора должны автоматически показывать только те редакторы, которые вернули `true` из `TrySetTarget`.
 5. Если вы создадите новый класс с `[InspectorEditor]` — он должен автоматически появиться как вкладка без изменений в `Inspector`.
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[19.04 — ComponentHandle (ручка компонента)](19_04_ComponentHandle.md)**.

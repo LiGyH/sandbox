@@ -1,4 +1,9 @@
-# 06.08 — Оружие с механическим прицелом (IronSightsWeapon) 🎯
+# 06.07 — Оружие с механическим прицелом (IronSightsWeapon) 🎯
+
+<!-- phase05-links -->
+> **📚 Основы движка (см. Фаза 0.5):**
+>
+> - [00.28 — HudPainter](00_28_HudPainter.md)
 
 ## Что мы делаем?
 
@@ -99,3 +104,10 @@ public abstract class IronSightsWeapon : BaseBulletWeapon
 - [ ] `GetBullet()` уменьшает разброс на `IronSightsFireScale`
 - [ ] `CanSecondaryAttack()` всегда `false`
 - [ ] При деактивации `_isAiming` сбрасывается
+
+
+---
+
+## ➡️ Следующий шаг
+
+Переходи к **[06.08 — Ближнее оружие (MeleeWeapon) 🗡️](06_08_MeleeWeapon.md)**.
