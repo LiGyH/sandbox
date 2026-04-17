@@ -82,4 +82,4 @@ public sealed class MapPlayerSpawner : Component
 
 ---
 
-Следующий шаг: [12.02 — Базовый переключатель (BaseToggle)](12_02_BaseToggle.md)
+Следующий шаг: [12.02 — Базовый переключатель (BaseToggle)](16_01_BaseToggle.md)

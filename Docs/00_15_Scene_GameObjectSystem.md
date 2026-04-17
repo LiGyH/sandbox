@@ -177,3 +177,12 @@ Listen( Stage.UpdateBones,      order, fn );   // перед рендером
 - [scene/gameobjectsystem.md](https://github.com/Facepunch/sbox-docs/blob/master/docs/scene/gameobjectsystem.md)
 
 **Следующий шаг:** [00.16 — Prefabs (префабы)](00_16_Prefabs.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [04.01 — GameManager](04_01_GameManager.md)
+- [23.02 — SaveSystem](23_02_SaveSystem.md)
+

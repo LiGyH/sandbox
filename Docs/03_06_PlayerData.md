@@ -253,3 +253,12 @@ public sealed partial class PlayerData : Component, ISaveEvents
 ## Следующий файл
 
 Переходи к **03.09 — Урон от падения (PlayerFallDamage)**.
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [04.01 — GameManager](04_01_GameManager.md)
+- [23.01 — ISaveEvents](23_01_ISaveEvents.md)
+

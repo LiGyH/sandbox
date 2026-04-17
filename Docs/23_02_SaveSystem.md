@@ -206,4 +206,4 @@ public sealed class SaveSystem : GameObjectSystem<SaveSystem>, ISceneLoadingEven
 
 ---
 
-Следующий шаг: [15.02 — Система очистки (CleanupSystem)](15_02_CleanupSystem.md)
+Следующий шаг: [15.02 — Система очистки (CleanupSystem)](23_03_CleanupSystem.md)

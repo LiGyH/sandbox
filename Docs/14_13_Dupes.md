@@ -904,6 +904,15 @@ protected override async void OnDragStart( DragEvent e )
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [11.08 — Duplicator](11_08_Duplicator.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+
 ## ➡️ Следующий шаг
 
 Переходи к **[14.14 — Этап 14_14 — Mounts (Подключённые игры)](14_14_Mounts.md)**.

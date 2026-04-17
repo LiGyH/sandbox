@@ -253,6 +253,15 @@ EffectsProperties
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [04.01 — GameManager](04_01_GameManager.md)
+- [19.02 — Inspector (ControlSheet)](19_02_Inspector.md)
+
 ## ➡️ Следующий шаг
 
 Фаза завершена. Переходи к **[19.01 — Context Menu Host (хост контекстного меню)](19_01_ContextMenuHost.md)** — начало следующей фазы.

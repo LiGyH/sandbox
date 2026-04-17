@@ -54,4 +54,4 @@ public partial class Npc : Component
 
 ---
 
-Следующий шаг: [14.03 — NPC: Ссылки на слои (Npc.Layers)](14_03_NpcLayers.md)
+Следующий шаг: [14.03 — NPC: Ссылки на слои (Npc.Layers)](22_02_Npc_Schedule_Layers.md)

@@ -185,4 +185,4 @@ public sealed class FuncMover : Component
 
 ---
 
-Следующий шаг: [12.06 — Триггер толчка (TriggerPush)](12_06_TriggerPush.md)
+Следующий шаг: [12.06 — Триггер толчка (TriggerPush)](16_04_Triggers.md)

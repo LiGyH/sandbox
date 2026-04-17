@@ -610,3 +610,16 @@ _timeSinceJumpPressed = 0;
 ## Следующий файл
 
 Переходи к **03.02 — Камера игрока (Player.Camera)**.
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [14.08 — SpawnMenu](14_08_SpawnMenu.md)
+- [04.01 — GameManager](04_01_GameManager.md)
+- [23.01 — ISaveEvents](23_01_ISaveEvents.md)
+- [02.04 — Damage Tags](02_04_DamageTags.md)
+- [02.01 — IKillSource](02_01_IKillSource.md)
+

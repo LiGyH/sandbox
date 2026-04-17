@@ -414,6 +414,15 @@ public partial class SpawnerWeapon : ScreenWeapon, IToolInfo
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [11.08 — Duplicator](11_08_Duplicator.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+
 ## ➡️ Следующий шаг
 
 Переходи к **[14.07 — Этап 14_07 — UI-компоненты меню спавна](14_07_UI_Components.md)**.

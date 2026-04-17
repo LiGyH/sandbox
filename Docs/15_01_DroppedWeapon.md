@@ -105,4 +105,15 @@ public sealed class DroppedWeapon : Component, Component.IPressable, PlayerContr
 
 ---
 
-Следующий шаг: [13.02 — Базовый подбираемый предмет (BasePickup)](13_02_BasePickup.md)
+Следующий шаг: [13.02 — Базовый подбираемый предмет (BasePickup)](15_02_Pickups.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+- [05.09 — PressableHud (IPressable)](05_09_PressableHud.md)
+

@@ -413,6 +413,15 @@ public class EmitterEntity : Component, IPlayerControllable
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [09.06 — Toolgun](09_06_Toolgun.md)
+
 ## ➡️ Следующий шаг
 
 Переходи к **[11.08 — Этап 11_08 — Duplicator (Дупликатор — копирование конструкций)](11_08_Duplicator.md)**.

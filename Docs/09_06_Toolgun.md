@@ -213,3 +213,12 @@ Toolgun наследуется от `ScreenWeapon`, который создан 
 ---
 
 ➡️ Следующий шаг: [09_07 — Toolgun.Screen.cs и Toolgun.Effects.cs](09_07_Toolgun_Screen_Effects.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+

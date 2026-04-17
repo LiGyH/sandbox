@@ -459,6 +459,15 @@ public sealed class TimedExplosive : Component
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+
 ## ➡️ Следующий шаг
 
 Переходи к **[07.09 — Фотокамера (CameraWeapon) 📷](07_09_CameraScreen.md)**.

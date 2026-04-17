@@ -97,7 +97,7 @@ public sealed class TriggerPush : Component, Component.ITriggerListener
 
 ---
 
-Следующий шаг: [12.07 — Триггер телепортации (TriggerTeleport)](12_07_TriggerTeleport.md)
+Следующий шаг: [12.07 — Триггер телепортации (TriggerTeleport)](16_04_Triggers.md)
 
 
 ---
@@ -197,4 +197,4 @@ public sealed class TriggerTeleport : Component, Component.ITriggerListener
 
 ---
 
-Следующий шаг: [13.01 — Выброшенное оружие (DroppedWeapon)](13_01_DroppedWeapon.md)
+Следующий шаг: [13.01 — Выброшенное оружие (DroppedWeapon)](15_01_DroppedWeapon.md)

@@ -361,6 +361,16 @@ public partial class ScreenWeapon : BaseCarryable
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [09.06 — Toolgun](09_06_Toolgun.md)
+
 ## ➡️ Следующий шаг
 
 Фаза завершена. Переходи к **[08.01 — 🔫 Physgun — Основная логика физической пушки](08_01_Physgun.md)** — начало следующей фазы.

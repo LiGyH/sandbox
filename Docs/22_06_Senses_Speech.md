@@ -170,7 +170,7 @@ public class SensesLayer : BaseNpcLayer
 
 ---
 
-Следующий шаг: [14.10 — NPC: Слой речи (SpeechLayer)](14_10_SpeechLayer.md)
+Следующий шаг: [14.10 — NPC: Слой речи (SpeechLayer)](22_06_Senses_Speech.md)
 
 
 ---
@@ -392,4 +392,4 @@ public class SpeechLayer : BaseNpcLayer
 
 ---
 
-Следующий шаг: [14.11 — NPC: Задачи (Tasks)](14_11_Tasks.md)
+Следующий шаг: [14.11 — NPC: Задачи (Tasks)](22_07_Tasks_Basic.md)

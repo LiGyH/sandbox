@@ -394,4 +394,14 @@ public class RollermineLeapTask : TaskBase
 
 ---
 
-Следующий шаг: [15.01 — Система сохранения (SaveSystem)](15_01_SaveSystem.md)
+Следующий шаг: [15.01 — Система сохранения (SaveSystem)](23_02_SaveSystem.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [04.01 — GameManager](04_01_GameManager.md)
+- [23.02 — SaveSystem](23_02_SaveSystem.md)
+- [02.04 — Damage Tags](02_04_DamageTags.md)
+

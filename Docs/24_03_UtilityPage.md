@@ -47,4 +47,4 @@ UI-компонент `UtilitiesPage.razor` собирает все наслед
 
 ---
 
-Следующий шаг: [12.01 — Спавнер игроков на карте (MapPlayerSpawner)](12_01_MapPlayerSpawner.md)
+Следующий шаг: [12.01 — Спавнер игроков на карте (MapPlayerSpawner)](16_05_MapPlayerSpawner.md)

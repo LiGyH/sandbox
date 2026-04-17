@@ -388,7 +388,7 @@ public sealed class Button : Component, Component.IPressable
 
 ---
 
-Следующий шаг: [12.05 — Движущийся объект (FuncMover)](12_05_FuncMover.md)
+Следующий шаг: [12.05 — Движущийся объект (FuncMover)](16_03_FuncMover.md)
 
 ---
 

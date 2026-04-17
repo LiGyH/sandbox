@@ -174,3 +174,13 @@ DestroyGameObject();    // то же самое, короче
 - [scene/components/component-methods.md](https://github.com/Facepunch/sbox-docs/blob/master/docs/scene/components/component-methods.md)
 
 **Следующий шаг:** [00.13 — Атрибуты компонентов (`[Property]`, `[Sync]`, `[RequireComponent]`)](00_13_Component_Attributes.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [03.01 — Player](03_01_Player.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+

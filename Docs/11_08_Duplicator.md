@@ -662,6 +662,15 @@ public class LinkedGameObjectBuilder
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [09.06 — Toolgun](09_06_Toolgun.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+
 ## ➡️ Следующий шаг
 
 Фаза завершена. Переходи к **[12.01 — Компонент: Владение объектом (Ownable) 🛡️](12_01_Ownable.md)** — начало следующей фазы.

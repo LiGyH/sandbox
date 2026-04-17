@@ -1068,3 +1068,16 @@ await Sandbox.Mounting.Directory.Mount( entry.Ident );
 ## Следующий файл
 
 Переходи к **03.14 — Наблюдатель (PlayerObserver)**.
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [08.01 — Physgun](08_01_Physgun.md)
+- [09.06 — Toolgun](09_06_Toolgun.md)
+- [23.01 — ISaveEvents](23_01_ISaveEvents.md)
+- [23.02 — SaveSystem](23_02_SaveSystem.md)
+

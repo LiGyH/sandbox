@@ -143,7 +143,7 @@ public abstract class BasePickup : Component, Component.ITriggerListener, Compon
 
 ---
 
-Следующий шаг: [13.03 — Аптечка (HealthPickup)](13_03_HealthPickup.md)
+Следующий шаг: [13.03 — Аптечка (HealthPickup)](15_02_Pickups.md)
 
 
 ---
@@ -197,7 +197,7 @@ public sealed class HealthPickup : BasePickup
 
 ---
 
-Следующий шаг: [13.04 — Патроны (AmmoPickup)](13_04_AmmoPickup.md)
+Следующий шаг: [13.04 — Патроны (AmmoPickup)](15_02_Pickups.md)
 
 
 ---
@@ -268,4 +268,13 @@ public sealed class AmmoPickup : BasePickup
 
 ---
 
-Следующий шаг: [13.05 — Подбор инвентарных предметов (InventoryPickup)](13_05_InventoryPickup.md)
+Следующий шаг: [13.05 — Подбор инвентарных предметов (InventoryPickup)](15_03_InventoryPickup.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+

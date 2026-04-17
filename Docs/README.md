@@ -122,6 +122,7 @@
 - [06_09 — UI: Inventory (инвентарь)](06_09_Inventory_UI.md)
 
 ### Фаза 7: Конкретное оружие
+- [07_00 — Обзор всех видов оружия (сравнительная таблица)](07_00_Weapons_Overview.md) ⭐
 - [07_01 — Colt1911](07_01_Colt1911.md)
 - [07_02 — Glock](07_02_Glock.md)
 - [07_03 — M4A1](07_03_M4A1.md)
@@ -217,7 +218,8 @@
 
 ### Фаза 16: Объекты карты
 - [16_01 — BaseToggle.cs](16_01_BaseToggle.md)
-- [16_02 — Button.cs и Door.cs](16_02_Button_Door.md)
+- [16_02 — Button.cs](16_02_Button_Door.md)
+- [16_02b — Door.cs](16_02b_Door.md)
 - [16_03 — FuncMover.cs](16_03_FuncMover.md)
 - [16_04 — TriggerPush и TriggerTeleport](16_04_Triggers.md)
 - [16_05 — MapPlayerSpawner.cs](16_05_MapPlayerSpawner.md)
@@ -229,7 +231,10 @@
 ### Фаза 18: Пост-обработка
 - [18_01 — PostProcessResource.cs](18_01_PostProcessResource.md)
 - [18_02 — PostProcessManager.cs](18_02_PostProcessManager.md)
-- [18_03 — UI: EffectsHost/List/Properties](18_03_Effects_UI.md)
+- [18_03 — Effects UI: обзор (landing)](18_03_Effects_UI.md)
+  - [18_03a — EffectsHost (корневой контейнер)](18_03a_EffectsHost.md)
+  - [18_03b — EffectsList (список эффектов)](18_03b_EffectsList.md)
+  - [18_03c — EffectsProperties (панель свойств)](18_03c_EffectsProperties.md)
 
 ### Фаза 19: Контекстное меню и инспектор
 - [19_01 — ContextMenuHost.razor](19_01_ContextMenuHost.md)

@@ -310,6 +310,15 @@ public sealed class SniperViewModel : Component, ICameraSetup
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.06 — BaseBulletWeapon](06_06_BaseBulletWeapon.md)
+- [06.07 — IronSightsWeapon](06_07_IronSightsWeapon.md)
+
 ## ➡️ Следующий шаг
 
 Переходи к **[07.07 — Монтировка (CrowbarWeapon) 🔧](07_07_Crowbar.md)**.

@@ -300,4 +300,4 @@ public sealed class CleanupSystem : GameObjectSystem<CleanupSystem>, ISceneLoadi
 
 ---
 
-Следующий шаг: [16.01 — Свободная камера (FreeCam)](16_01_FreeCam.md)
+Следующий шаг: [16.01 — Свободная камера (FreeCam)](24_02_FreeCam.md)

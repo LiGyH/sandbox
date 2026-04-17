@@ -92,4 +92,4 @@ public sealed class InventoryPickup : BasePickup, Component.IPressable
 
 ---
 
-Следующий шаг: [14.01 — NPC: Основной класс (Npc)](14_01_Npc.md)
+Следующий шаг: [14.01 — NPC: Основной класс (Npc)](22_01_Npc.md)

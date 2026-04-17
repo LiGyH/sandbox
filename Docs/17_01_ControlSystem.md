@@ -180,4 +180,4 @@ public class ControlSystem : GameObjectSystem<ControlSystem>
 
 ---
 
-Следующий шаг: [11.03 — Пост-обработка (PostProcessing)](11_03_PostProcessing.md)
+Следующий шаг: [11.03 — Пост-обработка (PostProcessing)](18_01_PostProcessResource.md)

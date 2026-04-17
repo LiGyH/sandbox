@@ -311,4 +311,13 @@ public class CombatPatrolSchedule : ScheduleBase
 
 ---
 
-Следующий шаг: [14.13 — NPC: Учёный (ScientistNpc)](14_13_ScientistNpc.md)
+Следующий шаг: [14.13 — NPC: Учёный (ScientistNpc)](22_10_ScientistNpc.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [02.04 — Damage Tags](02_04_DamageTags.md)
+

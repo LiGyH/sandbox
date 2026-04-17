@@ -337,3 +337,16 @@
 ## ✅ Конец документации
 
 Это последний файл. Вернись к [INDEX](INDEX.md), чтобы перечитать или повторить любой этап.
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.01 — BaseCarryable](06_01_BaseCarryable.md)
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [06.06 — BaseBulletWeapon](06_06_BaseBulletWeapon.md)
+- [06.07 — IronSightsWeapon](06_07_IronSightsWeapon.md)
+- [06.08 — MeleeWeapon](06_08_MeleeWeapon.md)
+- [08.01 — Physgun](08_01_Physgun.md)
+

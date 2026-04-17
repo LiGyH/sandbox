@@ -198,3 +198,12 @@ public class WeaponStats : GameResource
 📚 **Facepunch docs:** [assets/resources/index.md](https://github.com/Facepunch/sbox-docs/blob/master/docs/assets/resources/index.md)
 
 **Следующий шаг:** [00.30 — Логирование и диагностика (Log, Assert)](00_30_Log_Assert.md)
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [18.01 — PostProcessResource](18_01_PostProcessResource.md)
+

@@ -180,3 +180,13 @@ var (type, path, source) = SpawnlistItem.ParseIdent( ident );
 ## Следующий файл
 
 Переходи к **04.02 — Утилиты GameManager (GameManager.Util)**.
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [23.01 — ISaveEvents](23_01_ISaveEvents.md)
+- [02.01 — IKillSource](02_01_IKillSource.md)
+- [14.01 — ISpawner](14_01_ISpawner.md)
+

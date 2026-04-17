@@ -226,6 +226,15 @@ Vitals
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [06.04 — BaseWeapon](06_04_BaseWeapon.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+
 ## ➡️ Следующий шаг
 
 Переходи к **[05.03 — Этап 05_03 — Chat (Чат)](05_03_Chat.md)**.

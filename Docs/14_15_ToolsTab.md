@@ -403,6 +403,17 @@ SpawnMenuModeBar
 
 ---
 
+
+---
+
+<!-- seealso -->
+## 🔗 См. также
+
+- [09.06 — Toolgun](09_06_Toolgun.md)
+- [18.02 — PostProcessManager](18_02_PostProcessManager.md)
+- [03.08 — PlayerInventory](03_08_PlayerInventory.md)
+- [19.02 — Inspector (ControlSheet)](19_02_Inspector.md)
+
 ## ➡️ Следующий шаг
 
 Переходи к **[14.16 — Этап 14_16 — SaveMenu, CleanupPage, UsersPage, UtilitiesPage](14_16_SaveMenu.md)**.

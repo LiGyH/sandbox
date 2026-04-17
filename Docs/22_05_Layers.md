@@ -52,4 +52,4 @@ public abstract class BaseNpcLayer : Component
 
 ---
 
-Следующий шаг: [14.09 — NPC: Слой сенсоров (SensesLayer)](14_09_SensesLayer.md)
+Следующий шаг: [14.09 — NPC: Слой сенсоров (SensesLayer)](22_06_Senses_Speech.md)
