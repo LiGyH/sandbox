@@ -120,6 +120,8 @@
 - [06_07 — IronSightsWeapon.cs](06_07_IronSightsWeapon.md)
 - [06_08 — MeleeWeapon.cs](06_08_MeleeWeapon.md)
 - [06_09 — UI: Inventory (инвентарь)](06_09_Inventory_UI.md)
+- [06_10 — Общий пул патронов (AmmoResource + AmmoInventory)](06_10_AmmoResource_Inventory.md)
+- [06_11 — Базовый снаряд (Projectile)](06_11_Projectile.md)
 
 ### Фаза 7: Конкретное оружие
 - [07_00 — Обзор всех видов оружия (сравнительная таблица)](07_00_Weapons_Overview.md) ⭐
@@ -132,6 +134,7 @@
 - [07_07 — Crowbar](07_07_Crowbar.md)
 - [07_08 — HandGrenade](07_08_HandGrenade.md)
 - [07_09 — CameraWeapon и ScreenWeapon](07_09_CameraScreen.md)
+- [07_10 — РПГ (RpgWeapon + RpgProjectile)](07_10_Rpg.md)
 
 ### Фаза 8: PhysGun
 - [08_01 — Physgun.cs (основа)](08_01_Physgun.md)
@@ -165,6 +168,7 @@
 - [10_11 — Unbreakable (неразрушимое)](10_11_Unbreakable.md)
 - [10_12 — Trail (след)](10_12_Trail.md)
 - [10_13 — Decal (декали)](10_13_Decal.md)
+- [10_14 — KeepUpright (стабилизатор поворота)](10_14_KeepUpright.md)
 
 ### Фаза 11: Инструменты — сущности
 - [11_01 — Balloon (шарик)](11_01_Balloon.md)
@@ -210,6 +214,7 @@
 - [14_14 — Mounts (маунты)](14_14_Mounts.md)
 - [14_15 — ToolsTab и SpawnMenuModeBar](14_15_ToolsTab.md)
 - [14_16 — SaveMenu, CleanupPage, Users, Utilities](14_16_SaveMenu.md)
+- [14_17 — LocalProps и раздел «Local» в меню спавна](14_17_LocalProps.md)
 
 ### Фаза 15: Предметы и подбор
 - [15_01 — DroppedWeapon.cs](15_01_DroppedWeapon.md)

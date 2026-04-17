@@ -28,7 +28,8 @@
 | `IKillIcon` | Интерфейс для отображения иконки убийства в килфиде. |
 | `WeaponModel` (свойство) | Возвращает компонент `WeaponModel` из `ViewModel` или `WorldModel`, учитывая текущий вид камеры (firstperson / thirdperson). |
 | `Owner` | Ищет компонент `Player` в родительской иерархии через `GetComponentInParent`. |
-| `MuzzleTransform` | Точка откуда вылетают эффекты выстрела. |
+| `MuzzleGameObject` | `[Property]` — опциональная явная точка вылета. Используется, когда нет `WeaponModel` (например, в режиме сиденья/standalone). Если не задан — берётся muzzle из `WeaponModel`, иначе сам `GameObject`. |
+| `MuzzleTransform` | Точка откуда вылетают эффекты выстрела. Новый порядок разрешения: 1) muzzle из `WeaponModel` (если валиден), 2) явный `MuzzleGameObject`, 3) сам `GameObject`. |
 | `OnEnabled / OnDisabled` | Создание/уничтожение мировой и вью-моделей при активации. |
 | `OnFrameUpdate` | Каждый кадр определяет, нужна ли вью-модель (первое лицо) или нет (третье лицо). |
 | `OnPlayerUpdate → OnControl` | Цепочка вызовов для обработки ввода владельца. |
@@ -80,6 +81,12 @@ public partial class BaseCarryable : Component, IKillIcon
 
 	public GameObject ViewModel { get; protected set; }
 	public GameObject WorldModel { get; protected set; }
+
+	/// <summary>
+	/// Optional explicit muzzle point. Used when no WeaponModel is present (e.g. standalone/seat mode).
+	/// If unset, falls back to the WeaponModel muzzle or the weapon's own GameObject.
+	/// </summary>
+	[Property] public GameObject MuzzleGameObject { get; set; }
 
 	/// <summary>
 	/// Used for overriding the display icon
@@ -134,12 +141,15 @@ public partial class BaseCarryable : Component, IKillIcon
 
 	/// <summary>
 	/// Where shoot effects come from. Either the point on the world model or the viewmodel, whichever is currently being used.
+	/// Falls back to <see cref="MuzzleGameObject"/> (if set) and finally to this component's own GameObject.
 	/// </summary>
 	public GameObject MuzzleTransform
 	{
 		get
 		{
-			return WeaponModel?.MuzzleTransform ?? GameObject;
+			if ( WeaponModel?.MuzzleTransform.IsValid() ?? false ) return WeaponModel.MuzzleTransform;
+			if ( MuzzleGameObject.IsValid() ) return MuzzleGameObject;
+			return GameObject;
 		}
 	}
 
