@@ -123,10 +123,12 @@ public class HoverballTool : ToolMode
 ## Как это работает внутри движка?
 - Реализует `IPlayerControllable` для управления игроком.
 - `TargetZ` — целевая высота, которая изменяется входами `Up`/`Down`.
-- `Toggle` включает/выключает левитацию (при выключении возвращается гравитация).
+- `Toggle` включает/выключает левитацию (при выключении возвращается гравитация). При переключении проигрывается `EnableSound` или `DisableSound`.
 - В `OnFixedUpdate()` вычисляет разницу между текущей и целевой высотой, корректирует `Velocity.z`.
 - `AirResistance` добавляет горизонтальное торможение.
 - `Speed` регулирует скорость изменения высоты.
+- `IsEnabled` помечен `[Property, Sync, ClientEditable]` — клиент-владелец может менять состояние локально (с последующей синхронизацией хостом).
+- `OnEffect` (визуальные частицы / свет «включен») синхронизируется с `IsEnabled` каждый кадр в `OnUpdate()`, поэтому состояние эффекта корректно и на прокси.
 
 ## Создай файл
 `Code/Weapons/ToolGun/Modes/Hoverball/HoverballEntity.cs`
@@ -138,7 +140,7 @@ public class HoverballEntity : Component, IPlayerControllable
 	/// <summary>
 	/// Is the hoverball on?
 	/// </summary>
-	[Property, Sync]
+	[Property, Sync, ClientEditable]
 	public bool IsEnabled { get; private set; } = true;
 
 	/// <summary>
@@ -180,6 +182,9 @@ public class HoverballEntity : Component, IPlayerControllable
 	[Property]
 	public GameObject OnEffect { get; set; }
 
+	[Property] public SoundEvent EnableSound { get; set; }
+	[Property] public SoundEvent DisableSound { get; set; }
+
 	private float _zVelocity;
 	private bool _toggleWasHeld;
 
@@ -192,8 +197,12 @@ public class HoverballEntity : Component, IPlayerControllable
 		var rb = GetComponent<Rigidbody>();
 		if ( rb.IsValid() )
 			rb.Gravity = !IsEnabled;
+	}
 
-		OnEffect?.Enabled = IsEnabled;
+	protected override void OnUpdate()
+	{
+		if ( OnEffect.IsValid() )
+			OnEffect.Enabled = IsEnabled;
 	}
 
 	public void OnStartControl() { }
@@ -259,6 +268,11 @@ public class HoverballEntity : Component, IPlayerControllable
 	{
 		IsEnabled = !IsEnabled;
 
+		if ( IsEnabled )
+			Sound.Play( EnableSound, WorldPosition );
+		else
+			Sound.Play( DisableSound, WorldPosition );
+
 		var rb = GetComponent<Rigidbody>();
 		if ( !rb.IsValid() ) return;
 
@@ -271,8 +285,6 @@ public class HoverballEntity : Component, IPlayerControllable
 		{
 			rb.Gravity = true;
 		}
-
-		OnEffect?.Enabled = IsEnabled;
 	}
 }
 ```
@@ -281,7 +293,135 @@ public class HoverballEntity : Component, IPlayerControllable
 - Ховербол удерживает объект на начальной высоте.
 - Клавиши вверх/вниз изменяют целевую высоту.
 - Переключатель включает/выключает левитацию.
+- При переключении проигрываются `EnableSound` / `DisableSound`.
 - Сопротивление воздуха замедляет горизонтальное движение.
+
+
+---
+
+# 🎱 Морфы и свечение ховербола (HoverballMorphs)
+
+## Что мы делаем?
+Создаём дополнительный компонент `HoverballMorphs`, который управляет морф-таргетами скелетной модели ховербола (`Coils_Deployed`, `Pins_Deployed`) и пульсацией свечения материала при включении.
+
+## Зачем это нужно?
+Морф-вариант префаба (`hoverball_morph.fbx`) — более производительная альтернатива ригу: вместо костей используется пара морфов, отвечающих за «раскрытые» катушки и шипы. `HoverballMorphs` плавно гонит эти морфы между 0 и 1 и подсвечивает материал, когда ховербол активен.
+
+## Как это работает внутри движка?
+- Берёт ссылку на `HoverballEntity` и `SkinnedModelRenderer` в дочернем объекте.
+- Если задан `GlowMaterial`, создаёт его копию (`CreateCopy()`) и навешивает как `MaterialOverride`, отключая батчинг (`Batchable = false`), чтобы менять параметры материала индивидуально.
+- В `OnUpdate()` вычисляет целевые значения морфов:
+  - `Coils_Deployed` → 1, если `IsEnabled`, иначе 0.
+  - `Pins_Deployed` → нормированное `AirResistance / 5f` (clamp 0..1).
+- Анимация переходов идёт через `Easing.BounceOut`, длительность `TransitionDuration`.
+- Свечение: `g_vSelfIllumTint` = `IllumTint` (бирюзовый) при включении, `Color.Black` иначе. Яркость `g_flSelfIllumBrightness` шумно мерцает между 6 и 8 (через `MathX.Approach`), масштабируется на текущее значение `_coils`, чтобы плавно гасло вместе с морфом.
+
+## Создай файл
+`Code/Weapons/ToolGun/Modes/Hoverball/HoverballMorphs.cs`
+
+```csharp
+using Sandbox.Utility;
+
+public sealed class HoverballMorphs : Component
+{
+	private HoverballEntity _hoverball;
+	private SkinnedModelRenderer _renderer;
+	private Material _glowMaterialCopy;
+
+	private float _coils;
+	private float _pins;
+	private float _brightnessTarget;
+	private float _brightnessCurrent;
+	private float _brightnessTimer;
+
+	private float _coilsFrom;
+	private float _coilsTo;
+	private float _coilsTime;
+	private float _pinsFrom;
+	private float _pinsTo;
+	private float _pinsTime;
+
+	[Property] public float Speed { get; set; } = 15f;
+	[Property] public float TransitionDuration { get; set; } = 0.5f;
+	[Property] public Material GlowMaterial { get; set; }
+
+	public Color IllumTint => Color.FromBytes( 20, 165, 200 );
+	public float IllumBrightness => 8f;
+
+	protected override void OnStart()
+	{
+		_hoverball = GetComponent<HoverballEntity>();
+		_renderer = GetComponentInChildren<SkinnedModelRenderer>();
+
+		if ( GlowMaterial is not null && _renderer.IsValid() )
+		{
+			_glowMaterialCopy = GlowMaterial.CreateCopy();
+			_renderer.MaterialOverride = _glowMaterialCopy;
+			_renderer.SceneModel.Batchable = false;
+		}
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( !_hoverball.IsValid() || !_renderer.IsValid() ) return;
+
+		var targetCoils = _hoverball.IsEnabled ? 1f : 0f;
+		var targetPins = Math.Clamp( _hoverball.AirResistance / 5f, 0f, 1f );
+
+		if ( targetCoils != _coilsTo )
+		{
+			_coilsFrom = _coils;
+			_coilsTo = targetCoils;
+			_coilsTime = 0f;
+		}
+
+		if ( targetPins != _pinsTo )
+		{
+			_pinsFrom = _pins;
+			_pinsTo = targetPins;
+			_pinsTime = 0f;
+		}
+
+		_coilsTime = Math.Min( _coilsTime + Time.Delta / TransitionDuration, 1f );
+		_pinsTime = Math.Min( _pinsTime + Time.Delta / TransitionDuration, 1f );
+
+		_coils = MathX.Lerp( _coilsFrom, _coilsTo, Easing.BounceOut( _coilsTime ) );
+		_pins = MathX.Lerp( _pinsFrom, _pinsTo, Easing.BounceOut( _pinsTime ) );
+
+		_renderer.SceneModel?.Morphs.Set( "Coils_Deployed", _coils );
+		_renderer.SceneModel?.Morphs.Set( "Pins_Deployed", _pins );
+
+		UpdateGlowMaterial();
+	}
+
+	void UpdateGlowMaterial()
+	{
+		if ( _glowMaterialCopy is null ) return;
+
+		var brightness = _hoverball.IsEnabled ? IllumBrightness : 0f;
+
+		if ( _hoverball.IsEnabled )
+		{
+			_brightnessTimer -= Time.Delta;
+			if ( _brightnessTimer <= 0f )
+			{
+				_brightnessTarget = Random.Shared.Float( 6f, 8f );
+				_brightnessTimer = Random.Shared.Float( 0.1f, 0.4f );
+			}
+			_brightnessCurrent = MathX.Approach( _brightnessCurrent, _brightnessTarget, Time.Delta * 7f );
+			brightness = _brightnessCurrent;
+		}
+
+		_glowMaterialCopy.Set( "g_vSelfIllumTint", _hoverball.IsEnabled ? IllumTint : Color.Black );
+		_glowMaterialCopy.Set( "g_flSelfIllumBrightness", brightness * _coils );
+	}
+}
+```
+
+## Проверка
+- В морф-варианте префаба ховербола (`hoverball_morph.prefab`) при включении плавно «раскрываются» катушки и шипы.
+- Материал начинает мерцать бирюзовым self-illum, гаснет при выключении.
+- Уровень `AirResistance` тула виден на модели — чем выше, тем больше выдвигаются «шипы».
 
 
 ---
