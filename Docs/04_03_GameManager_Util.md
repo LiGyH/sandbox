@@ -84,6 +84,17 @@ public sealed partial class GameManager
 	}
 
 	/// <summary>
+	/// RPC to kick a player. Caller must be host or have admin permission.
+	/// </summary>
+	[Rpc.Host]
+	public static void RpcKickPlayer( Connection target, string reason = "Kicked" )
+	{
+		if ( !Rpc.Caller.HasPermission( "admin" ) ) return;
+
+		Current.Kick( target, reason );
+	}
+
+	/// <summary>
 	/// Kicks a player by name or Steam ID. Optionally provide a reason.
 	/// Usage: kick [name|steamid] [reason]
 	/// </summary>
@@ -126,6 +137,7 @@ public sealed partial class GameManager
 1. Консоль: `kick "PlayerName"` → игрок выгнан, в чате «PlayerName was kicked: Kicked»
 2. Консоль: `kick 76561198012345678 "Cheating"` → кик по SteamID
 3. Кикнутый игрок видит причину при отключении
+4. Любой клиент с правом `admin` может вызвать `GameManager.RpcKickPlayer( target, reason )` (например, из таблицы счёта). RPC отвергнет вызов без прав.
 
 ## Следующий файл
 
