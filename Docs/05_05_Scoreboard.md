@@ -193,7 +193,7 @@
 			bool isMuted = SandboxVoice.IsMuted( steamId );
 			menu.AddOption( isMuted ? "volume_up" : "volume_off", isMuted ? "Unmute" : "Mute", () => SandboxVoice.Mute( steamId ) );
 
-			if ( Networking.IsHost )
+			if ( Connection.Local?.HasPermission( "admin" ) == true )
 			{
 				menu.AddSpacer();
 				menu.AddOption( "person_remove", "Kick", () => OpenKickConfirm( Entry ) );
@@ -213,10 +213,7 @@
 			ConfirmLabel = "Kick",
 			OnConfirm = x =>
 			{
-				entry.Connection?.Kick( x );
-
-                // only the host can run this so it's fine
-				Game.ActiveScene.Get<Chat>()?.AddSystemText( $"{entry.DisplayName} was kicked: {x}", "🚪" );
+				GameManager.RpcKickPlayer( entry.Connection, x );
 			}
 		};
 		popup.Parent = FindPopupPanel();
@@ -229,7 +226,7 @@
 			Title = "Ban Player",
 			Prompt = $"Why do you want to ban {entry.DisplayName}?",
 			ConfirmLabel = "Ban",
-			OnConfirm = x => BanSystem.Current?.Ban( entry.Connection, x )
+			OnConfirm = x => BanSystem.RpcBanPlayer( entry.Connection, x )
 		};
 		popup.Parent = FindPopupPanel();
 	}
@@ -256,8 +253,8 @@
 |-------|-----------|
 | Copy Steam ID | Копирует Steam ID в буфер обмена |
 | Mute/Unmute | Заглушить/включить голос игрока |
-| Kick (только хост) | Кикнуть игрока с указанием причины |
-| Ban (только хост) | Забанить игрока с указанием причины |
+| Kick (только админ) | Кикнуть игрока с указанием причины. Вызывает `GameManager.RpcKickPlayer( conn, reason )` — host-RPC, проверяющий `HasPermission( "admin" )` |
+| Ban (только админ) | Забанить игрока с указанием причины. Вызывает `BanSystem.RpcBanPlayer( conn, reason )` — host-RPC, также с проверкой прав |
 
 ---
 

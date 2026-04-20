@@ -7,7 +7,7 @@
 
 ## Что мы делаем?
 
-Создаём **Ownable** — компонент, который отслеживает владельца объекта (кто его заспавнил) и реализует систему защиты пропов. При включённой защите только владелец и хост могут взаимодействовать с объектом через физ-пушку и тул-ган.
+Создаём **Ownable** — компонент, который отслеживает владельца объекта (кто его заспавнил) и реализует систему защиты пропов. При включённой защите только владелец и игроки с правами администратора (`HasPermission( "admin" )`) могут взаимодействовать с объектом через физ-пушку и тул-ган.
 
 ## Зачем это нужно?
 
@@ -22,7 +22,7 @@
 - `Owner` — свойство-обёртка, ищет `Connection` по `_ownerId` в списке всех подключений. `[JsonIgnore]` исключает из сериализации.
 - `Set()` — статический метод для удобного назначения владельца. Создаёт компонент если его нет (`GetOrAddComponent`).
 - `OwnershipChecks` — `ConVar` с флагами `Replicated | Server | GameSetting`. Реплицируется на клиенты, но изменяется только на сервере.
-- `HasAccess()` — статический метод проверки доступа. Хост имеет доступ всегда. Если владелец не задан — доступ открыт всем.
+- `HasAccess()` — статический метод проверки доступа. Игроки с правом `admin` имеют доступ всегда (`Connection.HasPermission( "admin" )`). Если владелец не задан — доступ открыт всем.
 - `IPhysgunEvent.OnPhysgunGrab()` / `IToolgunEvent.OnToolgunSelect()` — явные реализации интерфейсов, отменяющие событие если нет доступа.
 
 ## Создай файл
@@ -61,7 +61,7 @@ public sealed class Ownable : Component, IPhysgunEvent, IToolgunEvent
 
 	/// <summary>
 	/// When enabled, players can only physgun/toolgun objects they own.
-	/// Host is always exempt. Off by default.
+	/// Players with the "admin" permission are always exempt. Off by default.
 	/// </summary>
 	[Title( "Prop Protection" )]
 	[ConVar( "sb.ownership_checks", ConVarFlags.Replicated | ConVarFlags.Server | ConVarFlags.GameSetting, Help = "Enforce ownership, players can only interact with their own props." )]
@@ -73,7 +73,7 @@ public sealed class Ownable : Component, IPhysgunEvent, IToolgunEvent
 	{
 		if ( !OwnershipChecks ) return true;
 		if ( caller is null ) return false;
-		if ( caller.IsHost ) return true;
+		if ( caller.HasPermission( "admin" ) ) return true;
 		if ( owner is null ) return true;
 		return owner == caller;
 	}

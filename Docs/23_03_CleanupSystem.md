@@ -254,14 +254,14 @@ public sealed class CleanupSystem : GameObjectSystem<CleanupSystem>, ISceneLoadi
 	[Rpc.Host]
 	public static void RpcCleanUpAll()
 	{
-		if ( !Rpc.Caller.IsHost ) return;
+		if ( !Rpc.Caller.HasPermission( "admin" ) ) return;
 		Current?.Cleanup();
 	}
 
 	[Rpc.Host]
 	public static void RpcCleanUpTarget( Connection target )
 	{
-		if ( !Rpc.Caller.IsHost ) return;
+		if ( !Rpc.Caller.HasPermission( "admin" ) ) return;
 		CleanupPlayer( target );
 	}
 
@@ -291,7 +291,8 @@ public sealed class CleanupSystem : GameObjectSystem<CleanupSystem>, ISceneLoadi
 | `Cleanup()` | Полная очистка — удаляет все заспавненные, восстанавливает разрушенные |
 | `CleanupPlayer(conn)` | Только объекты конкретного игрока (по `Ownable.Owner`) |
 | `RpcCleanUpMine()` | Игрок очищает свои объекты |
-| `RpcCleanUpAll()` | Хост очищает всё |
+| `RpcCleanUpAll()` | Полная очистка — доступна только администраторам (`Rpc.Caller.HasPermission( "admin" )`) |
+| `RpcCleanUpTarget(target)` | Очистка объектов конкретного игрока — только администратор |
 | `cleanup` (консоль) | Команда хоста, опционально с именем игрока |
 
 ## Связь с SaveSystem

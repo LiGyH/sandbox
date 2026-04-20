@@ -39,7 +39,7 @@
 3. **SaveSystem.SaveVersion** — версия формата сохранений. При несовпадении сейв помечается как «Outdated».
 4. **MenuPanel** — всплывающее контекстное меню движка.
 5. **StringQueryPopup** — модальное окно с текстом и кнопками (подтверждение/отмена).
-6. **CleanupSystem** — система очистки мира. RPC-вызовы (`RpcCleanUpMine`, `RpcCleanUpAll`, `RpcCleanUpTarget`) отправляют команду серверу.
+6. **CleanupSystem** — система очистки мира. RPC-вызовы (`RpcCleanUpMine`, `RpcCleanUpAll`, `RpcCleanUpTarget`) отправляют команду серверу. `RpcCleanUpAll` и `RpcCleanUpTarget` доступны только администраторам (`Rpc.Caller.HasPermission( "admin" )`).
 7. **BanSystem** — система банов. Хранит список забаненных по SteamId.
 8. **UtilityPage** — базовый класс для страниц утилит. Метод `IsVisible()` контролирует видимость.
 9. Атрибут `[SpawnMenuHost.SpawnMenuMode<SpawnMenuHost.HostOnly>]` на `SaveMenu` означает, что этот режим доступен **только хосту**.
@@ -495,7 +495,7 @@ SaveMenu
         <label class="left">🧼 Clean Up Mine</label>
     </div>
 
-    @if ( Connection.Local.IsHost )
+    @if ( Connection.Local.HasPermission( "admin" ) )
     {
         <div class="control-row" @onclick=@(() =>CleanUpAll() )>
             <label class="left">🧹 Clean Up All</label>
@@ -574,7 +574,7 @@ SaveMenu
 
 @code
 {
-    public override bool IsVisible() => Networking.IsHost;
+    public override bool IsVisible() => Connection.Local?.HasPermission( "admin" ) == true;
 
     void OpenBanOptions( SteamId steamId, BanSystem.BanEntry entry )
     {
@@ -897,9 +897,9 @@ sound-in: ui.hover;
 Кнопка «Очистить мои объекты». Доступна **всем игрокам**.
 
 ```razor
-@if ( Connection.Local.IsHost )
+@if ( Connection.Local.HasPermission( "admin" ) )
 ```
-Блок **только для хоста**: кнопка «Clean Up All» и список игроков для точечной очистки.
+Блок **только для администраторов** (хост по умолчанию имеет это право): кнопка «Clean Up All» и список игроков для точечной очистки.
 
 ```csharp
 void CleanUpMine() => CleanupSystem.RpcCleanUpMine();
@@ -911,9 +911,9 @@ void CleanUpMine() => CleanupSystem.RpcCleanUpMine();
 ### UsersPage.razor — Управление банами
 
 ```csharp
-public override bool IsVisible() => Networking.IsHost;
+public override bool IsVisible() => Connection.Local?.HasPermission( "admin" ) == true;
 ```
-Страница **видна только хосту**. Метод `IsVisible()` переопределён из `UtilityPage`.
+Страница **видна только администраторам** (хост по умолчанию имеет право `admin`). Метод `IsVisible()` переопределён из `UtilityPage`.
 
 ```razor
 var bans = BanSystem.Current?.GetBannedList();
@@ -1006,10 +1006,10 @@ void OnSelect( TypeDescription type )
 5. Кликните на сейв — должно появиться **подтверждение загрузки**.
 6. Правый клик — **контекстное меню** с Load и Delete.
 7. Перейдите во вкладку **Utilities** (🌍) — слева группы World и Utilities.
-8. **Cleanup** — кнопки «Clean Up Mine», «Clean Up All» (только хост), список игроков.
-9. **Users** (только хост) — список забаненных с аватарами, разбан, копирование Steam ID.
+8. **Cleanup** — кнопки «Clean Up Mine», «Clean Up All» (только админ), список игроков.
+9. **Users** (только админ) — список забаненных с аватарами, разбан, копирование Steam ID.
 10. **Utilities** — кнопка «Kill Me» должна убить вашего персонажа.
-11. Как **обычный игрок** (не хост): кнопка Saves не видна, страница Users не видна, в Cleanup нет «Clean Up All».
+11. Как **обычный игрок** (без права `admin`): кнопка Saves не видна, страница Users не видна, в Cleanup нет «Clean Up All».
 
 
 ---

@@ -110,6 +110,17 @@ public sealed class BanSystem : GameObjectSystem<BanSystem>, Component.INetworkL
 	private void Save() => LocalData.Set( "bans", _bans );
 
 	/// <summary>
+	/// RPC to ban a connected player. Caller must be host or have admin permission.
+	/// </summary>
+	[Rpc.Host]
+	public static void RpcBanPlayer( Connection target, string reason = "Banned" )
+	{
+		if ( !Rpc.Caller.HasPermission( "admin" ) ) return;
+
+		Current.Ban( target, reason );
+	}
+
+	/// <summary>
 	/// Bans a player by name or Steam ID. Optionally provide a reason.
 	/// Usage: ban [name|steamid] [reason]
 	/// </summary>
@@ -157,12 +168,14 @@ public sealed class BanSystem : GameObjectSystem<BanSystem>, Component.INetworkL
 | `AcceptConnection` | Вызывается движком при подключении — возвращает `false` для бана |
 | `connection.Kick(reason)` | Немедленно отключает игрока с сообщением |
 | `[ConCmd("ban")]` | Регистрирует консольную команду `ban` |
+| `[Rpc.Host] RpcBanPlayer` | Host-RPC для бана из клиентского UI (например, из таблицы счёта). Игнорирует вызовы без права `admin` |
 | `GameManager.FindPlayerWithName` | Ищет подключение по частичному имени |
 
 ## Результат
 
 После создания этого файла:
 - Хост может банить игроков командой `ban имя причина`
+- Любой клиент с правом `admin` может вызвать `BanSystem.RpcBanPlayer( target, reason )` (например, из контекстного меню таблицы счёта) — RPC отвергнет вызов без прав
 - Забаненные не смогут подключиться к серверу
 - Баны сохраняются между перезапусками
 

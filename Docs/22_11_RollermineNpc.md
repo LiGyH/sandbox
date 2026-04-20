@@ -89,17 +89,33 @@ public class RollermineNpc : Npc, Component.IDamageable, Component.ICollisionLis
 
 	public Rigidbody Rigidbody { get; private set; }
 
-	private bool _hunting;
+	[Sync] public bool IsHunting { get; private set; }
 	private TimeSince _lastBounce;
 	private const float BounceCooldown = 0.25f;
 
+	private SphereCollider _collider;
+	private float _baseRadius;
+
+	/// <summary>
+	/// Called by chase/idle schedules to toggle the hunting particle children.
+	/// On entering hunt, the collider grows and an upward impulse is applied so the
+	/// roller "pops" into action.
+	/// </summary>
 	public void SetHunting( bool hunting )
 	{
-		if ( _hunting == hunting ) return;
-		_hunting = hunting;
+		if ( IsHunting == hunting ) return;
+		IsHunting = hunting;
 
 		if ( HuntingEffects.IsValid() )
 			HuntingEffects.Enabled = hunting;
+
+		if ( _collider.IsValid() )
+		{
+			_collider.Radius = hunting ? _baseRadius * 1.4f : _baseRadius;
+
+			if ( hunting && Rigidbody.IsValid() )
+				Rigidbody.ApplyImpulse( Vector3.Up * 50000f );
+		}
 	}
 
 	[Rpc.Broadcast]
@@ -120,6 +136,10 @@ public class RollermineNpc : Npc, Component.IDamageable, Component.ICollisionLis
 	{
 		base.OnStart();
 		Rigidbody = GetComponent<Rigidbody>();
+		_collider = GetComponent<SphereCollider>();
+
+		if ( _collider.IsValid() )
+			_baseRadius = _collider.Radius;
 
 		if ( Rigidbody.IsValid() )
 			Rigidbody.MotionEnabled = true;
@@ -391,6 +411,141 @@ public class RollermineLeapTask : TaskBase
 | Chase: Roll | RollermineRollTask | Катится к цели, применяя силу и вращение |
 | Chase: Leap | RollermineLeapTask | Прыгает на цель импульсом |
 | Contact | OnCollisionStart | Наносит урон и отскакивает |
+
+> **Примечание о сетевизации.** Поле `_hunting` заменено на публичное свойство `[Sync] IsHunting`, чтобы клиенты тоже могли реагировать на состояние охоты — это нужно для нового компонента `RollermineMorphs` (см. ниже). Кроме того, `SetHunting( true )` теперь временно увеличивает радиус `SphereCollider` в 1.4 раза и применяет короткий импульс вверх, благодаря чему ролик «вскакивает» при обнаружении цели.
+
+---
+
+# 🔵 Морфы и свечение Rollermine (RollermineMorphs)
+
+## Что мы делаем?
+Создаём `RollermineMorphs` — компонент, который управляет морф-таргетами и пульсацией свечения материала роллермайна. Использует **ту же** меш-модель, что и морф-вариант ховербола (`Coils_Deployed`, `Pins_Deployed`), но реагирует на `IsHunting`.
+
+## Зачем это нужно?
+Визуально показывает «боевой режим»: при включении охоты у роллермайна выдвигаются катушки и шипы, материал начинает мерцать характерным бирюзовым self-illum.
+
+## Как это работает внутри движка?
+- Берёт ссылку на `RollermineNpc` и `SkinnedModelRenderer` в дочернем объекте.
+- Если задан `GlowMaterial`, копирует его и подменяет `MaterialOverride`, отключив батчинг.
+- В `OnUpdate()` целевые значения морфов = 1, если `IsHunting`, иначе 0.
+- Переходы — через `Easing.BounceOut`, длительность `TransitionDuration = 0.3 сек`.
+- Свечение работает аналогично `HoverballMorphs`: бирюзовый `IllumTint`, шумно мерцающая яркость, гасится множителем `_coils`.
+
+## Создай файл
+`Code/Npcs/Rollermine/RollermineMorphs.cs`
+
+```csharp
+using Sandbox.Utility;
+
+namespace Sandbox.Npcs.Rollermine;
+
+/// <summary>
+/// Drives morph targets and material glow on the rollermine mesh based on hunting state.
+/// Same mesh as hoverball — uses Coils_Deployed and Pins_Deployed morphs.
+/// </summary>
+public sealed class RollermineMorphs : Component
+{
+	private RollermineNpc _rollermine;
+	private SkinnedModelRenderer _renderer;
+	private Material _glowMaterialCopy;
+
+	private float _coils;
+	private float _pins;
+	private float _brightnessTarget;
+	private float _brightnessCurrent;
+	private float _brightnessTimer;
+
+	private float _coilsFrom;
+	private float _coilsTo;
+	private float _coilsTime;
+	private float _pinsFrom;
+	private float _pinsTo;
+	private float _pinsTime;
+
+	[Property] public float Speed { get; set; } = 15f;
+	public float TransitionDuration => 0.3f;
+	[Property] public Material GlowMaterial { get; set; }
+
+	public Color IllumTint => Color.FromBytes( 20, 165, 200 );
+	public float IllumBrightness => 8f;
+
+	protected override void OnStart()
+	{
+		_rollermine = GetComponent<RollermineNpc>();
+		_renderer = GetComponentInChildren<SkinnedModelRenderer>();
+
+		if ( GlowMaterial is not null && _renderer.IsValid() )
+		{
+			_glowMaterialCopy = GlowMaterial.CreateCopy();
+			_renderer.MaterialOverride = _glowMaterialCopy;
+			_renderer.SceneModel.Batchable = false;
+		}
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( !_rollermine.IsValid() || !_renderer.IsValid() ) return;
+
+		var hunting = _rollermine.IsHunting;
+
+		var targetCoils = hunting ? 1f : 0f;
+		var targetPins = hunting ? 1f : 0f;
+
+		if ( targetCoils != _coilsTo )
+		{
+			_coilsFrom = _coils;
+			_coilsTo = targetCoils;
+			_coilsTime = 0f;
+		}
+
+		if ( targetPins != _pinsTo )
+		{
+			_pinsFrom = _pins;
+			_pinsTo = targetPins;
+			_pinsTime = 0f;
+		}
+
+		_coilsTime = Math.Min( _coilsTime + Time.Delta / TransitionDuration, 1f );
+		_pinsTime = Math.Min( _pinsTime + Time.Delta / TransitionDuration, 1f );
+
+		_coils = MathX.Lerp( _coilsFrom, _coilsTo, Easing.BounceOut( _coilsTime ) );
+		_pins = MathX.Lerp( _pinsFrom, _pinsTo, Easing.BounceOut( _pinsTime ) );
+
+		_renderer.SceneModel?.Morphs.Set( "Coils_Deployed", _coils );
+		_renderer.SceneModel?.Morphs.Set( "Pins_Deployed", _pins );
+
+		UpdateGlowMaterial();
+	}
+
+	void UpdateGlowMaterial()
+	{
+		if ( _glowMaterialCopy is null ) return;
+
+		var hunting = _rollermine.IsHunting;
+		var brightness = hunting ? IllumBrightness : 0f;
+
+		if ( hunting )
+		{
+			_brightnessTimer -= Time.Delta;
+			if ( _brightnessTimer <= 0f )
+			{
+				_brightnessTarget = Random.Shared.Float( 6f, 8f );
+				_brightnessTimer = Random.Shared.Float( 0.1f, 0.4f );
+			}
+			_brightnessCurrent = MathX.Approach( _brightnessCurrent, _brightnessTarget, Time.Delta * 7f );
+			brightness = _brightnessCurrent;
+		}
+
+		_glowMaterialCopy.Set( "g_vSelfIllumTint", hunting ? IllumTint : Color.Black );
+		_glowMaterialCopy.Set( "g_flSelfIllumBrightness", brightness * _coils );
+	}
+}
+```
+
+## Проверка
+- При обнаружении игрока ролик «раскрывается» — морфы плавно идут к 1, материал начинает мерцать бирюзовым.
+- При потере цели и возврате к Idle — морфы возвращаются к 0, свечение гаснет.
+- Переходы используют `Easing.BounceOut`, поэтому появление пинов выглядит как «щелчок».
 
 ---
 
