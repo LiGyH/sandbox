@@ -357,6 +357,38 @@
 | [25.02](25_02_Scenes_Prefabs.md) | Сцены и префабы |
 | [25.03](25_03_Final_Check.md) | Итоговая проверка |
 
+## Фаза 26: Углублённые основы движка s&box (продолжение Фазы 0.5) 📚
+
+> Дополнение к Фазе 0.5: темы из [официальной документации Facepunch](https://github.com/Facepunch/sbox-docs/), не раскрытые или раскрытые лишь поверхностно. Можно читать в любом порядке как справочник; каждый файл самодостаточен.
+
+| Файл | Тема |
+|------|------|
+| [26.01](26_01_Physics_Bodies.md) | Физика: PhysicsBody, тела и формы 🪨 |
+| [26.02](26_02_Tracing_Ray.md) | Трассировка: Scene.Trace и луч (Ray) 🎯 |
+| [26.03](26_03_Tracing_Shapes.md) | Трассировка: Sphere/Box/Sweep и фильтры |
+| [26.04](26_04_Physics_Events.md) | События физики: OnCollisionStart/Update/Stop 💥 |
+| [26.05](26_05_Triggers.md) | Триггеры: OnTriggerEnter/Exit 🚪 |
+| [26.06](26_06_Sound.md) | Звук: SoundEvent и Sound.Play 🔊 |
+| [26.07](26_07_Math_Types.md) | Математические типы: Vector3, Rotation, Angles ➕ |
+| [26.08](26_08_Curve_Easing.md) | Curve и интерполяция (Easing, Lerp) 📈 |
+| [26.09](26_09_Color.md) | Color и цветовые пространства 🎨 |
+| [26.10](26_10_Async_Components.md) | Async/Task в компонентах ⏱️ |
+| [26.11](26_11_Scene_Events.md) | Сценовые события: ISceneStartup, IGameObjectNetworkEvents 🚦 |
+| [26.12](26_12_Http_Requests.md) | HTTP-запросы (Http.RequestAsync) 🌐 |
+| [26.13](26_13_WebSockets.md) | WebSockets 🔌 |
+| [26.14](26_14_Network_Visibility.md) | Сетевая видимость (Network Visibility) 👁️ |
+| [26.15](26_15_Localization.md) | Локализация UI (`#token`, словари) 💬 |
+| [26.16](26_16_VirtualGrid.md) | VirtualGrid: большие списки в Razor 🧮 |
+| [26.17](26_17_NavMesh.md) | NavMesh: основы и генерация 🗺️ |
+| [26.18](26_18_NavMesh_Agent.md) | NavMeshAgent: движение по навмешу 🛞 |
+| [26.19](26_19_Terrain.md) | Terrain: рельеф 🌄 |
+| [26.20](26_20_ActionGraph.md) | ActionGraph: введение 🍝 |
+| [26.21](26_21_Custom_Assets.md) | Custom-ассеты и GameResource-расширения 📦 |
+| [26.22](26_22_Editor_Extensions.md) | Editor-расширения: основы 🛠️ |
+| [26.23](26_23_Property_Attributes.md) | Property Attributes: полный справочник 🏷️ |
+| [26.24](26_24_Services.md) | Сервисы: Achievements, Leaderboards, Stats 🏆 |
+| [26.25](26_25_Threading.md) | Настоящая многопоточность (Thread, Task.Run, потокобезопасность) 🧵 |
+
 ---
 
 ## Полезные ссылки
