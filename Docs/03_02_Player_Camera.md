@@ -138,8 +138,9 @@ public sealed partial class Player
 		var camRot = Rotation.FromYaw( _seatedAngles.yaw ) * Rotation.FromPitch( _seatedAngles.pitch );
 		var desiredPos = seatPos + camRot.Backward * _smoothedDistance;
 
-		// Trace from pivot to desired camera position; stop at walls so the camera doesn't clip through geometry
-		var tr = Scene.Trace.FromTo( seatPos, desiredPos ).Radius( 8f ).WithoutTags( "player", "ragdoll", "effect" ).IgnoreGameObjectHierarchy( GameObject.Root ).Run();
+		// Trace from pivot to desired camera position; only collide with world geometry
+		// so the camera can't be pushed by the player's own constructions, props or effects.
+		var tr = Scene.Trace.FromTo( seatPos, desiredPos ).Radius( 8f ).WithTag( "world" ).IgnoreGameObjectHierarchy( GameObject.Root ).Run();
 		var camPos = tr.Hit ? tr.HitPosition + (seatPos - desiredPos).Normal * 4f : desiredPos;
 
 		camera.WorldPosition = camPos;
@@ -179,6 +180,8 @@ public sealed partial class Player
 ### Трейс (Scene.Trace)
 
 Трейс — это луч из точки A в точку B. Если луч сталкивается с геометрией, мы получаем точку столкновения. Используется для предотвращения прохождения камеры сквозь стены.
+
+> **Только мир (`WithTag("world")`)**: для seat-камеры трейс намеренно сужен до геометрии мира. Раньше использовался `WithoutTags("player","ragdoll","effect")`, но он также упирался в любые пропы и физические объекты — из-за этого камера дёргалась о собственную конструкцию игрока (например, корпус машины, к которой приварено сиденье). Тег `world` есть только у статической геометрии карты, поэтому камера теперь подтягивается только при упоре в стены и пол. `IgnoreGameObjectHierarchy( GameObject.Root )` дополнительно исключает объекты самого игрока.
 
 ## Проверка
 

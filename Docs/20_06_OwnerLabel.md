@@ -7,17 +7,19 @@
 
 ## Что мы делаем?
 
-Создаём **OwnerLabel** — HUD-компонент, который показывает имя и аватар владельца объекта, когда игрок смотрит на него. Это небольшая плавающая метка в правой части экрана: аватар Steam + имя игрока. Появляется с анимацией при наведении взгляда и исчезает, когда игрок отводит взгляд.
+Создаём **OwnerLabel** — простой HUD-компонент, который показывает текстовую метку «Owned by <имя>», когда игрок смотрит на принадлежащий кому-то объект. Метка плавно появляется в правой части экрана при наведении взгляда и плавно исчезает, когда игрок отводит взгляд. Если игрок включил «скрыть HUD» (`WantsHideHud`), метка не отрисовывается вовсе.
 
 ## Как это работает внутри движка
 
 - `OwnerLabel` наследуется от `PanelComponent` — компонент сцены с UI-панелью. Добавляется на объект HUD.
 - В `OnUpdate()` (каждый кадр) выполняется рейкаст из камеры вперёд на 2048 юнитов (`Scene.Trace.Ray`), исключая объекты с тегами `"player"` и `"trigger"`.
 - Если луч попал в объект, ищется компонент `Ownable` через `GetComponentInParent<Ownable>(true)` (ищет вверх по иерархии, включая неактивные).
-- Если `Ownable` найден и у него есть `Owner` (объект `Connection`), берётся `DisplayName` и `SteamId` владельца.
-- CSS-класс `"visible"` управляет видимостью: без него — `opacity: 0` и сдвиг вправо, с ним — `opacity: 1` и нормальная позиция. Переход анимируется через `transition: all 0.15s ease`.
-- Аватар загружается через протокол `avatar:steamid` — движок автоматически загружает аватар Steam по ID.
-- `BuildHash()` возвращает хеш от `_ownerName` и `_ownerId` — перерисовка UI происходит только при смене целевого объекта.
+- Если `Ownable` найден и у него есть `Owner` (объект `Connection`), берётся `DisplayName` владельца и показывается метка вида «Owned by <имя>».
+- CSS-класс `"visible"` управляет видимостью: без него — `opacity: 0`, с ним — `opacity: 1`. Переход анимируется через `transition: all 0.15s ease`.
+- В самом верху Razor-шаблона стоит ранний выход: если у локального игрока установлен флаг `WantsHideHud`, шаблон возвращается до отрисовки `<root>` — и панель полностью скрывается, как и весь остальной HUD.
+- `BuildHash()` зависит только от `_ownerName` — UI перерисовывается лишь при смене целевого объекта.
+
+> **Изменено в апстриме:** в актуальной версии метка стала проще — без аватара Steam и без ID. Теперь это именно текстовая подпись «Owned by <имя>», плюс реакция на скрытие HUD. Раньше отрисовывался ещё и круглый аватар по `avatar:steamid`, и `_ownerId` участвовал в хеше — этого больше нет.
 
 ## Путь к файлам
 
@@ -36,17 +38,20 @@ Code/UI/OwnerLabel/OwnerLabel.razor.scss
 @inherits PanelComponent
 @namespace Sandbox
 
+@if ( Player.IsValid() && Player.WantsHideHud )
+    return;
+
 <root>
 	<div class="owner-label hud-panel">
-		<div class="avatar" style="background-image: url( avatar:@_ownerId )"></div>
-		<label class="name">@_ownerName</label>
+		<label class="name">Owned by @_ownerName</label>
 	</div>
 </root>
 
 @code
 {
-	string _ownerName;
-	ulong _ownerId;
+    string _ownerName;
+
+    Player Player => Player.FindLocalPlayer();
 
 	protected override void OnUpdate()
 	{
@@ -68,7 +73,6 @@ Code/UI/OwnerLabel/OwnerLabel.razor.scss
 			if ( ownable.IsValid() && ownable.Owner is not null )
 			{
 				_ownerName = ownable.Owner.DisplayName;
-				_ownerId = ownable.Owner.SteamId;
 				Panel.SetClass( "visible", true );
 				return;
 			}
@@ -77,7 +81,7 @@ Code/UI/OwnerLabel/OwnerLabel.razor.scss
 		Panel.SetClass( "visible", false );
 	}
 
-	protected override int BuildHash() => System.HashCode.Combine( _ownerName, _ownerId );
+	protected override int BuildHash() => System.HashCode.Combine( _ownerName );
 }
 ```
 
@@ -93,36 +97,22 @@ OwnerLabel
 	top: 50%;
 	pointer-events: none;
 	opacity: 0;
-	transform: translate(32px) scale(0.9);
 	transition: all 0.15s ease;
 
 	&.visible
 	{
 		opacity: 1;
-		transform: translate(0) scale(1);
 	}
 
 	.owner-label
 	{
 		flex-direction: row;
 		align-items: center;
-		gap: 10px;
 		padding: 10px 14px;
-
-		.avatar
-		{
-			width: 20px;
-			height: 20px;
-			border-radius: 50%;
-			background-size: cover;
-			background-repeat: no-repeat;
-			background-position: center;
-			flex-shrink: 0;
-		}
 
 		.name
 		{
-			font-size: 14px;
+			font-size: 11px;
 			font-weight: 600;
 			font-family: $title-font;
 			color: $hud-text;
@@ -138,7 +128,9 @@ OwnerLabel
 | Элемент | Описание |
 |---------|----------|
 | `@inherits PanelComponent` | Компонент сцены с привязанной UI-панелью. Размещается на HUD-объекте. |
-| `_ownerName` / `_ownerId` | Приватные поля: имя владельца и его Steam ID. Обновляются каждый кадр. |
+| `@if ( Player.IsValid() && Player.WantsHideHud ) return;` | Ранний выход на уровне рендера: пока локальный игрок просит скрыть HUD, метка вообще не строится. То же самое делают другие HUD-панели Sandbox. |
+| `Player Player => Player.FindLocalPlayer();` | Свойство-обёртка: берёт ссылку на локального игрока. Используется только чтобы прочитать `WantsHideHud`. |
+| `_ownerName` | Приватное поле: имя владельца. Обновляется каждый кадр. |
 | `OnUpdate()` | Вызывается каждый кадр. Основная логика — рейкаст и проверка владельца. |
 | `Scene.Camera` | Ссылка на активную камеру сцены. Если камеры нет — скрываем метку. |
 | `Scene.Trace.Ray(...)` | Рейкаст — лучевая трассировка. `camera.Transform.World.ForwardRay` — луч из позиции камеры в направлении взгляда. `2048` — максимальная дистанция в юнитах (примерно 50 метров). |
@@ -150,11 +142,9 @@ OwnerLabel
 | `ownable.IsValid()` | Дополнительная проверка валидности компонента. |
 | `ownable.Owner` | Свойство типа `Connection` — ссылка на подключение игрока-владельца. |
 | `DisplayName` | Отображаемое имя игрока (Steam-никнейм). |
-| `SteamId` | 64-битный идентификатор Steam. Используется для загрузки аватара. |
 | `Panel.SetClass("visible", true/false)` | Добавляет/убирает CSS-класс на корневой панели. Управляет видимостью через CSS-анимацию. |
-| `avatar:@_ownerId` | Протокол движка для загрузки аватара Steam. Движок кеширует аватары. |
 | `class="hud-panel"` | Общий CSS-класс HUD-панелей из темы — даёт полупрозрачный фон, скруглённые углы. |
-| `BuildHash()` | `HashCode.Combine(_ownerName, _ownerId)` — UI перерисовывается только при смене владельца (имя или ID). Если игрок смотрит на тот же объект — перерисовки нет. |
+| `BuildHash()` | `HashCode.Combine(_ownerName)` — UI перерисовывается только при смене имени владельца. Если игрок смотрит на тот же объект — перерисовки нет. |
 
 ### OwnerLabel.razor.scss
 
@@ -162,22 +152,22 @@ OwnerLabel
 |----------|----------|
 | `OwnerLabel` | Абсолютное позиционирование: правый край (`right: $deadzone-x`), вертикальный центр (`top: 50%`). `pointer-events: none` — не перехватывает клики. |
 | `$deadzone-x` | Переменная из Theme.scss — отступ от края экрана (безопасная зона). |
-| `opacity: 0` + `transform: translate(32px) scale(0.9)` | Начальное скрытое состояние: невидимо и сдвинуто вправо на 32px с небольшим уменьшением. |
-| `transition: all 0.15s ease` | Плавный переход 150мс — создаёт эффект «выезжания» метки при появлении. |
-| `&.visible` | Видимое состояние: полная непрозрачность, нормальная позиция и размер. |
-| `.owner-label` | Горизонтальная раскладка: аватар + имя, с отступами. |
-| `.avatar` | Круглый аватар 20×20px. `border-radius: 50%` делает его круглым. `background-size: cover` заполняет всю площадь. |
-| `.name` | Имя игрока: 14px, жирный, шрифт заголовков из темы (`$title-font`), цвет HUD-текста (`$hud-text`). |
+| `opacity: 0` | Начальное скрытое состояние: невидимо. |
+| `transition: all 0.15s ease` | Плавный переход 150мс — создаёт мягкое появление/исчезновение метки. |
+| `&.visible` | Видимое состояние: полная непрозрачность. |
+| `.owner-label` | Горизонтальная раскладка с отступами вокруг текста. |
+| `.name` | Имя владельца: 11px, жирный, шрифт заголовков из темы (`$title-font`), цвет HUD-текста (`$hud-text`). |
 
 ## Что проверить
 
 1. Убедитесь, что `OwnerLabel` добавлен на HUD-объект сцены.
 2. Заспавните объект (проп) — он должен получить `Ownable`-компонент с вашим ID.
-3. Посмотрите на объект — в правой части экрана должна плавно появиться метка с вашим аватаром и именем.
+3. Посмотрите на объект — в правой части экрана должна плавно появиться метка «Owned by <ваше имя>».
 4. Отведите взгляд — метка должна плавно исчезнуть.
-5. Посмотрите на объект другого игрока — должно показаться его имя и аватар.
+5. Посмотрите на объект другого игрока — должно показаться его имя.
 6. Посмотрите на объект без владельца — метка не должна появляться.
 7. Посмотрите на игрока — метка не должна появляться (тег `"player"` исключён).
+8. Включите «скрыть HUD» (`WantsHideHud`) — метка должна полностью пропасть, даже если вы смотрите на свой проп.
 
 
 ---

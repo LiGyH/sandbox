@@ -613,6 +613,12 @@ public class LinkedGameObjectBuilder
 			if ( link.Body.IsValid() )
 				AddConnected( link.Body );
 		}
+
+		// If any children have a physics filter, also connect them.
+		foreach ( var filter in source.GetComponentsInChildren<PhysicsFilter>( includeSelf: false ) )
+		{
+			AddConnected( filter.GameObject );
+		}
 	}
 
 	public void RemoveDeletedObjects()
@@ -654,6 +660,7 @@ public class LinkedGameObjectBuilder
   3. Перебирает все `Rigidbody` и их `Joints` — добавляет объекты с обеих сторон соединения
   4. Перебирает все `Collider` и их `Joints` — аналогично
   5. Перебирает все `ManualLink` — добавляет связанные объекты (те самые связи от LinkerTool)
+  6. Перебирает все дочерние `PhysicsFilter` (без самого `source`) — добавляет их `GameObject`. Это нужно, чтобы дупликатор «подхватывал» под-объекты, у которых явно настроен физический фильтр (например, особые столкновения у части конструкции), даже если они не связаны через джоинты.
 
 - **Рекурсия с защитой от циклов** — метод `Add()` возвращает `false` если объект уже в списке, что прерывает рекурсию `AddConnected()`. Это обеспечивает корректный обход даже при циклических связях (A↔B↔C↔A).
 
