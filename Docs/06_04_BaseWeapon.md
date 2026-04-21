@@ -28,7 +28,7 @@
 | `DryFire()` | Воспроизводит звук сухого щелчка, если нет патронов и не идёт перезарядка. |
 | `TryAutoReload()` | Вызывает `DryFire()`, затем пытается начать перезарядку `OnReloadStart()`. |
 | `OnPlayerUpdate()` | Управляет вью-моделью + вызывает `OnControl()` только для локального игрока. |
-| `OnControl()` | Основной цикл ввода: отмена перезарядки → ручная перезарядка → атака1 → атака2. |
+| `OnControl()` | Основной цикл ввода: отмена перезарядки → ручная перезарядка → атака1 → атака2. **Сразу выходит, если у оружия есть владелец (`HasOwner`)** — иначе при стрельбе из рук ввод срабатывал бы дважды (через `OnPlayerUpdate` и через путь `IPlayerControllable`). Этот код-путь используется только в seat / standalone-режиме. |
 | `CanPrimaryAttack() / CanSecondaryAttack()` | Проверки: есть ли патроны, не идёт ли перезарядка, прошёл ли таймер. |
 | `IPlayerControllable` | Интерфейс для управления из транспортных сидений с `ClientInput`. |
 | `DrawCrosshair()` | Рисует 4 линии перекрестья через `HudPainter.DrawLine()`. |
@@ -248,6 +248,8 @@ public partial class BaseWeapon : BaseCarryable, IPlayerControllable
 
 	public virtual void OnControl()
 	{
+		if ( HasOwner ) return;
+
 		if ( ShootInput.Down() && CanPrimaryAttack() )
 			PrimaryAttack();
 
