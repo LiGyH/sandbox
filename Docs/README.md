@@ -289,6 +289,35 @@
 - [25_02 — Сцены и префабы](25_02_Scenes_Prefabs.md)
 - [25_03 — Итоговая проверка](25_03_Final_Check.md)
 
+### Фаза 26: Углублённые основы движка s&box (продолжение Фазы 0.5) 📚
+
+> Темы из [официальной документации Facepunch](https://github.com/Facepunch/sbox-docs/), которые в Фазе 0.5 были не раскрыты или упомянуты лишь вскользь. Можно читать в любом порядке — каждый подэтап самодостаточен и ссылается на материалы основного курса там, где это нужно.
+
+- [26_01 — Физика: PhysicsBody, тела и формы](26_01_Physics_Bodies.md)
+- [26_02 — Трассировка: Scene.Trace и луч (Ray)](26_02_Tracing_Ray.md)
+- [26_03 — Трассировка: Sphere/Box/Sweep и фильтры](26_03_Tracing_Shapes.md)
+- [26_04 — События физики: OnCollisionStart/Update/Stop](26_04_Physics_Events.md)
+- [26_05 — Триггеры: OnTriggerEnter/Exit](26_05_Triggers.md)
+- [26_06 — Звук: SoundEvent и Sound.Play](26_06_Sound.md)
+- [26_07 — Математические типы: Vector3, Rotation, Angles](26_07_Math_Types.md)
+- [26_08 — Curve и интерполяция (Easing, Lerp)](26_08_Curve_Easing.md)
+- [26_09 — Color и цветовые пространства](26_09_Color.md)
+- [26_10 — Async/Task в компонентах](26_10_Async_Components.md)
+- [26_11 — Сценовые события: ISceneStartup, IGameObjectNetworkEvents](26_11_Scene_Events.md)
+- [26_12 — HTTP-запросы (Http.RequestAsync)](26_12_Http_Requests.md)
+- [26_13 — WebSockets](26_13_WebSockets.md)
+- [26_14 — Сетевая видимость (Network Visibility)](26_14_Network_Visibility.md)
+- [26_15 — Локализация UI (`#token`, словари)](26_15_Localization.md)
+- [26_16 — VirtualGrid: большие списки в Razor](26_16_VirtualGrid.md)
+- [26_17 — NavMesh: основы и генерация](26_17_NavMesh.md)
+- [26_18 — NavMeshAgent: движение по навмешу](26_18_NavMesh_Agent.md)
+- [26_19 — Terrain: рельеф](26_19_Terrain.md)
+- [26_20 — ActionGraph: введение](26_20_ActionGraph.md)
+- [26_21 — Custom-ассеты и GameResource-расширения](26_21_Custom_Assets.md)
+- [26_22 — Editor-расширения: основы](26_22_Editor_Extensions.md)
+- [26_23 — Property Attributes: полный справочник](26_23_Property_Attributes.md)
+- [26_24 — Сервисы: Achievements, Leaderboards, Stats](26_24_Services.md)
+
 ---
 
 ## Ссылки
