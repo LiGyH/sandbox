@@ -387,6 +387,7 @@
 | [26.22](26_22_Editor_Extensions.md) | Editor-расширения: основы 🛠️ |
 | [26.23](26_23_Property_Attributes.md) | Property Attributes: полный справочник 🏷️ |
 | [26.24](26_24_Services.md) | Сервисы: Achievements, Leaderboards, Stats 🏆 |
+| [26.25](26_25_Threading.md) | Настоящая многопоточность (Thread, Task.Run, потокобезопасность) 🧵 |
 
 ---
 

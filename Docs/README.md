@@ -317,6 +317,7 @@
 - [26_22 — Editor-расширения: основы](26_22_Editor_Extensions.md)
 - [26_23 — Property Attributes: полный справочник](26_23_Property_Attributes.md)
 - [26_24 — Сервисы: Achievements, Leaderboards, Stats](26_24_Services.md)
+- [26_25 — Настоящая многопоточность (Thread, Task.Run, потокобезопасность)](26_25_Threading.md)
 
 ---
 
