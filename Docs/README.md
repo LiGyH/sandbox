@@ -319,6 +319,21 @@
 - [26_24 — Сервисы: Achievements, Leaderboards, Stats](26_24_Services.md)
 - [26_25 — Настоящая многопоточность (Thread, Task.Run, потокобезопасность)](26_25_Threading.md)
 
+### Фаза 27: Dedicated Server — выделенные серверы и сеть в глубину 🛰️
+
+> Глубокий разбор выделенных серверов по [официальной документации Facepunch → networking/dedicated-servers](https://github.com/Facepunch/sbox-docs/tree/master/docs/networking/dedicated-servers): установка, конфигурация, серверный код, паттерны (server-authoritative, prediction, lag-compensation, interest management), масштабирование под разные жанры (от 16 до 1000+ игроков) и эксплуатация в проде.
+
+- [27_01 — Dedicated Server: что это и зачем нужен](27_01_Dedicated_Server_Intro.md)
+- [27_02 — Установка через SteamCMD и первый запуск](27_02_SteamCMD_Install.md)
+- [27_03 — Конфигурация сервера: командная строка, ConVar, ConCmd](27_03_Server_Configuration.md)
+- [27_04 — Локальный проект на сервере и Serverside Code (`#if SERVER`)](27_04_Local_Project_Serverside_Code.md)
+- [27_05 — User Permissions: админы, claims, проверки](27_05_User_Permissions.md)
+- [27_06 — Устройство сетевого кода: tick, snapshot, RPC, [Sync]](27_06_Network_Internals.md)
+- [27_07 — Сетевые паттерны: prediction, lag-comp, interest management](27_07_Networking_Patterns.md)
+- [27_08 — Масштабирование: от 16 до 1000+ игроков](27_08_Scaling_Players.md)
+- [27_09 — Архитектуры под жанры (FPS, BR, MOBA, RP, MMO-light, симулятор)](27_09_Genre_Examples.md)
+- [27_10 — Эксплуатация: хостинг, мониторинг, обновление, защита](27_10_Hosting_Operations.md)
+
 ---
 
 ## Ссылки
