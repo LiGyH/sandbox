@@ -389,6 +389,23 @@
 | [26.24](26_24_Services.md) | Сервисы: Achievements, Leaderboards, Stats 🏆 |
 | [26.25](26_25_Threading.md) | Настоящая многопоточность (Thread, Task.Run, потокобезопасность) 🧵 |
 
+## Фаза 27: Dedicated Server — выделенные серверы и сеть в глубину 🛰️
+
+> Глубокий разбор по [официальной документации Facepunch → networking/dedicated-servers](https://github.com/Facepunch/sbox-docs/tree/master/docs/networking/dedicated-servers) плюс архитектурные паттерны и масштабирование под разные жанры. Подэтапы 27.01–27.05 — пошагово; 27.06–27.10 — справочник, в который возвращаешься под конкретный проект.
+
+| Файл | Тема |
+|------|------|
+| [27.01](27_01_Dedicated_Server_Intro.md) | Что такое Dedicated Server и зачем он нужен (Listen vs Dedicated) 🛰️ |
+| [27.02](27_02_SteamCMD_Install.md) | Установка через SteamCMD, первый запуск `sbox-server.exe` 📥 |
+| [27.03](27_03_Server_Configuration.md) | Конфигурация: командная строка, ConVar/ConCmd, порты ⚙️ |
+| [27.04](27_04_Local_Project_Serverside_Code.md) | Локальный проект и Serverside Code (`#if SERVER`, `*.Server.cs`) 👾 |
+| [27.05](27_05_User_Permissions.md) | User Permissions: admins, claims, `Connection.HasPermission` 🔐 |
+| [27.06](27_06_Network_Internals.md) | Устройство сетевого кода: tick, snapshot, RPC, [Sync] 🧬 |
+| [27.07](27_07_Networking_Patterns.md) | Сетевые паттерны: prediction, lag-comp, interest management 🧩 |
+| [27.08](27_08_Scaling_Players.md) | Масштабирование: 16 / 64 / 128 / 256 / 1000 / 1000+ игроков 📈 |
+| [27.09](27_09_Genre_Examples.md) | Архитектуры под жанры (FPS, BR, MOBA, RP, MMO-light, симулятор) 🎮 |
+| [27.10](27_10_Hosting_Operations.md) | Хостинг, мониторинг, обновление, бэкапы, защита 🛡️ |
+
 ---
 
 ## Полезные ссылки
