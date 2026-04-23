@@ -75,8 +75,8 @@ public class SpawnlistsPage : BaseSpawnMenu
 		}
 
 		AddHeader( "Workshop" );
-		AddOption( "🎖️", "Popular", () => new SpawnlistWorkshop { SortOrder = Storage.SortOrder.RankedByVote } );
-		AddOption( "🐣", "Newest", () => new SpawnlistWorkshop { SortOrder = Storage.SortOrder.RankedByPublicationDate } );
+		AddOption( "🎖️", "Popular", () => new SpawnlistWorkshop { SortOrder = WorkshopSortMode.Popular } );
+		AddOption( "🐣", "Newest", () => new SpawnlistWorkshop { SortOrder = WorkshopSortMode.Newest } );
 	}
 
 	protected override void OnMenuFooter( Panel footer )
@@ -685,10 +685,21 @@ SpawnlistView
 
 <SpawnMenuContent>
 
+    <Header>
+        <SpawnMenuToolbar>
+            <Left>
+                <TextEntry Placeholder="Search..." class="filter menu-input" Value:bind=@Filter />
+            </Left>
+            <Right>
+                <DropDown Value:bind=@SortOrder />
+            </Right>
+        </SpawnMenuToolbar>
+    </Header>
+
     <Body>
-        <VirtualList Items=@Items ItemHeight=@(48) OnLastCell="@(() => { _ = QueryNext(); })">
+        <VirtualList Items=@Items.Where( x => GetItemCount( x ) > 0 ) ItemHeight=@(48) OnLastCell="@(() => { _ = QueryNext(); })">
             <Item Context="context">
-                @if (context is Storage.QueryItem item && GetItemCount( item ) > 0)
+                @if (context is Storage.QueryItem item)
                 {
                     <div class="spawnlist-row" onclick=@( () => _ = OnInstall( item ) )>
                         <div class="avatar" style="background-image: url('@item.Owner.Avatar');"></div>
@@ -708,7 +719,29 @@ SpawnlistView
 
 @code
 {
-    public Storage.SortOrder SortOrder { get; set; } = Storage.SortOrder.RankedByVote;
+    string _filter;
+    public string Filter
+    {
+        get => _filter;
+        set
+        {
+            if ( _filter == value ) return;
+            _filter = value;
+            Rebuild();
+        }
+    }
+
+    WorkshopSortMode _sortOrder = WorkshopSortMode.Popular;
+    public WorkshopSortMode SortOrder
+    {
+        get => _sortOrder;
+        set
+        {
+            if ( _sortOrder == value ) return;
+            _sortOrder = value;
+            Rebuild();
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -738,13 +771,22 @@ SpawnlistView
         var query = new Storage.Query();
         query.KeyValues["package"] = "facepunch.sandbox";
         query.KeyValues["type"] = "spawnlist";
-        query.SortOrder = SortOrder;
+        query.SortOrder = SortOrder.ToSortOrder();
+
+        if ( !string.IsNullOrWhiteSpace( Filter ) ) query.SearchText = Filter;
 
         LastResult = await query.Run();
         if ( LastResult.Items == null ) return;
 
         Items.AddRange( LastResult.Items );
         StateHasChanged();
+    }
+
+    async void Rebuild()
+    {
+        Items.Clear();
+        LastResult = null;
+        await QueryNext();
     }
 
     async Task OnInstall( Storage.QueryItem item )
@@ -768,6 +810,12 @@ SpawnlistView
     }
 }
 ```
+
+> **Что нового:**
+> - В шапке появилась поисковая строка (`TextEntry`) и dropdown сортировки (`WorkshopSortMode`).
+> - Фильтр списка по `GetItemCount > 0` перенесён в LINQ-выражение `Items.Where(...)` внутри `VirtualList`, а не внутри `<Item>`-шаблона — иначе виртуализация показывала пустые строки.
+> - `SortOrder.ToSortOrder()` маппит дружественное `WorkshopSortMode` → нативное `Storage.SortOrder` (см. [14.13 — Dupes / WorkshopSortMode](14_13_Dupes.md#workshopsortmode)).
+> - `SearchText` пробрасывается в `Storage.Query`, когда фильтр непустой.
 
 ### SpawnlistWorkshop.razor.scss
 

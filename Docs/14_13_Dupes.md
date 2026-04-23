@@ -81,8 +81,8 @@ public class DupesPage : BaseSpawnMenu
 	protected override void Rebuild()
 	{
 		AddHeader( "Workshop" );
-		AddOption( "🎖️", "Popular Dupes", () => new DupesWorkshop() { SortOrder = Storage.SortOrder.RankedByVote } );
-		AddOption( "🐣", "Newest Dupes", () => new DupesWorkshop() { SortOrder = Storage.SortOrder.RankedByPublicationDate } );
+		AddOption( "🎖️", "Popular Dupes", () => new DupesWorkshop() { SortOrder = WorkshopSortMode.Popular } );
+		AddOption( "🐣", "Newest Dupes", () => new DupesWorkshop() { SortOrder = WorkshopSortMode.Newest } );
 
 		AddHeader( "Categories" );
 
@@ -90,7 +90,7 @@ public class DupesPage : BaseSpawnMenu
 		{
 			AddOption( entry.Icon, entry.Title, () => new DupesWorkshop()
 			{
-				SortOrder = Storage.SortOrder.RankedByVote,
+				SortOrder = WorkshopSortMode.Popular,
 				Category = entry.Name.ToString()
 			} );
 		}
@@ -248,6 +248,17 @@ public enum DupeMovement
 
 <SpawnMenuContent>
 
+    <Header>
+        <SpawnMenuToolbar>
+            <Left>
+                <TextEntry Placeholder="Search..." class="filter menu-input" Value:bind=@Filter />
+            </Left>
+            <Right>
+                <DropDown Value:bind=@SortOrder />
+            </Right>
+        </SpawnMenuToolbar>
+    </Header>
+
     <Body>
 		
         <VirtualGrid Items=@Items ItemSize=@(200) OnLastCell="@(() => { _ = QueryNext(); })">
@@ -266,7 +277,30 @@ public enum DupeMovement
 
 @code
 {
-    public Storage.SortOrder SortOrder { get; set; } = Storage.SortOrder.RankedByVote;
+    string _filter;
+    public string Filter
+    {
+        get => _filter;
+        set
+        {
+            if ( _filter == value ) return;
+            _filter = value;
+            Rebuild();
+        }
+    }
+
+    WorkshopSortMode _sortOrder = WorkshopSortMode.Popular;
+    public WorkshopSortMode SortOrder
+    {
+        get => _sortOrder;
+        set
+        {
+            if ( _sortOrder == value ) return;
+            _sortOrder = value;
+            Rebuild();
+        }
+    }
+
     public string Category { get; set; }
 
     protected override async Task OnParametersSetAsync()
@@ -297,9 +331,10 @@ public enum DupeMovement
 		var query = new Storage.Query();
 		query.KeyValues["package"] = "facepunch.sandbox";
 		query.KeyValues["type"] = "dupe";
-		query.SortOrder = SortOrder;
+		query.SortOrder = SortOrder.ToSortOrder();
 
-        if (Category != null) query.KeyValues["category"] = Category;
+        if ( !string.IsNullOrWhiteSpace( Filter ) ) query.SearchText = Filter;
+        if (Category != null) query.KeyValues["Category"] = Category;
 
 		LastResult = await query.Run();
 		if ( LastResult.Items == null ) return;
@@ -307,8 +342,22 @@ public enum DupeMovement
 		Items.AddRange( LastResult.Items );
 		StateHasChanged();
 	}
+
+    async void Rebuild()
+    {
+        Items.Clear();
+        LastResult = null;
+        await QueryNext();
+    }
 }
 ```
+
+> **Что нового:**
+> - В шапке появилась `SpawnMenuToolbar` с `TextEntry` (поиск по `Filter`) и `DropDown` (сортировка по `WorkshopSortMode`).
+> - `SortOrder` теперь — это **`WorkshopSortMode`** (`Popular / Newest / Trending`), а не сырой `Storage.SortOrder`. Маппинг делает [`WorkshopSortModeExtensions.ToSortOrder()`](#workshopsortmode) из `Code/Utility/WorkshopSortMode.cs`.
+> - Любое изменение `Filter` или `SortOrder` сбрасывает `Items`/`LastResult` и заново запускает запрос через `Rebuild()`.
+> - При непустом `Filter` в запрос пробрасывается `query.SearchText` — серверная мастерская сама делает full-text поиск.
+> - Ключ категории теперь `"Category"` с заглавной буквы (`KeyValues["Category"]`) — это требование текущего бэкенда мастерской.
 
 ---
 
@@ -758,10 +807,11 @@ IEnumerable<object> GetData()
 Принцип похож на `DupesLocal`, но данные загружаются **из облака**.
 
 ```csharp
-public Storage.SortOrder SortOrder { get; set; } = Storage.SortOrder.RankedByVote;
+public WorkshopSortMode SortOrder { get; set; } = WorkshopSortMode.Popular;
 public string Category { get; set; }
+public string Filter { get; set; }
 ```
-Свойства задаются при создании компонента из `DupesPage`.
+Все три параметра — bindable: меняешь в UI → срабатывает setter → `Rebuild()` чистит список и запускает первый `QueryNext()`.
 
 ```csharp
 protected override async Task OnParametersSetAsync()
@@ -777,12 +827,38 @@ async Task QueryNext()
 ```
 Метод **пагинации**:
 - Если `LastResult` уже есть — проверяем `HasMoreResults()` и загружаем следующую страницу.
-- Если нет — создаём `Storage.Query` с ключами `package`, `type`, порядком сортировки и (опционально) категорией, затем запускаем `query.Run()`.
+- Если нет — создаём `Storage.Query` с ключами `package`, `type`, переводом сортировки `WorkshopSortMode → Storage.SortOrder` через `ToSortOrder()`, опциональным `SearchText` (поиск) и опциональным `KeyValues["Category"]`, затем запускаем `query.Run()`.
 
 ```razor
 <VirtualGrid Items=@Items ItemSize=@(200) OnLastCell="@(() => { _ = QueryNext(); })">
 ```
 `OnLastCell` — **callback**, вызываемый когда пользователь доскроллил до конца. Это и есть **бесконечная прокрутка**.
+
+#### WorkshopSortMode
+
+Чтобы UI работал с дружественными значениями, а не сырыми `Storage.SortOrder.RankedByPublicationDate`, в `Code/Utility/WorkshopSortMode.cs` определено перечисление-обёртка:
+
+```csharp
+public enum WorkshopSortMode
+{
+    Popular,
+    Newest,
+    Trending
+}
+
+public static class WorkshopSortModeExtensions
+{
+    public static Storage.SortOrder ToSortOrder( this WorkshopSortMode mode ) => mode switch
+    {
+        WorkshopSortMode.Popular  => Storage.SortOrder.RankedByVote,
+        WorkshopSortMode.Newest   => Storage.SortOrder.RankedByPublicationDate,
+        WorkshopSortMode.Trending => Storage.SortOrder.RankedByTrend,
+        _                         => Storage.SortOrder.RankedByVote
+    };
+}
+```
+
+Этот же тип используется в `SpawnlistWorkshop.razor` — поэтому DropDown сортировки выглядит одинаково в обеих вкладках.
 
 ---
 

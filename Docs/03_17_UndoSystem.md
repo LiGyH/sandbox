@@ -55,37 +55,50 @@ public class Entry
 {
     public string Name { get; set; }  // "Spawn Prop", "Weld"
     public string Icon { get; set; }  // иконка для уведомления
-    
-    Action actions = null;            // цепочка действий
-    bool actioned;                    // было ли хоть одно действие выполнено
+
+    long SteamId;
+
+    List<GameObject> gameObjects = new();  // объекты, которые будут уничтожены при отмене
 }
 ```
+
+> **Изменение от старой версии:** раньше Entry хранил мультикаст-делегат `Action actions` и флаг `actioned` — каждый `Add` добавлял лямбду. В актуальном апстриме это упрощено до простого `List<GameObject>`. Это позволило корректно реализовать `Remove(GameObject)` (см. ниже) — из делегата отдельную лямбду удалить было нельзя.
 
 #### Добавление объектов
 
 ```csharp
 public void Add( GameObject go )
 {
-    actions += () =>
-    {
-        if ( go.IsValid() )
-        {
-            go.Destroy();
-            actioned = true;
-        }
-    };
+    gameObjects.Add( go );
 }
 ```
 
-`actions` — мультикаст-делегат. Каждый `Add` добавляет лямбду, которая уничтожит объект. При отмене все лямбды выполняются.
+#### Удаление объектов из записи
+
+```csharp
+public void Remove( GameObject go )
+{
+    gameObjects.Remove( go );
+}
+```
+
+Нужен, например, в `PlayerInventory`: когда игрок поднял лежащее на земле оружие, его GameObject уже мог быть в чьём-то undo-стеке (от спавнера). Если его не убрать, кто-то нажмёт Z — и оружие исчезнет прямо из инвентаря. Поэтому при подборе вызывается `UndoSystem.Current.Remove( item.GameObject )` (см. [03.08 — PlayerInventory](03_08_PlayerInventory.md)).
 
 #### Выполнение отмены
 
 ```csharp
 public bool Run( bool sendNotice = true )
 {
-    actioned = false;
-    actions?.InvokeWithWarning();  // вызываем все лямбды
+    var actioned = false;
+
+    foreach ( var go in gameObjects )
+    {
+        if ( go.IsValid() )
+        {
+            go.Destroy();
+            actioned = true;
+        }
+    }
 
     if ( !actioned ) return false; // ничего не удалилось → false
 
@@ -95,7 +108,7 @@ public bool Run( bool sendNotice = true )
 }
 ```
 
-`actioned = false` → после вызова всех лямбд проверяем, удалилось ли хоть что-то. Если объекты уже были удалены другим способом → `actioned` остаётся `false` → пропускаем эту запись.
+`actioned` теперь — локальная переменная, выставляется только если хотя бы один объект остался валиден и был уничтожен. Если все объекты уже были удалены другим способом → возвращаем `false` → `PlayerStack.Undo()` пробует следующую запись.
 
 ### Рекурсивный undo
 
@@ -157,6 +170,15 @@ public class UndoSystem : GameObjectSystem<UndoSystem>
 	}
 
 	/// <summary>
+	/// Remove a GameObject from all player undo stacks so it can no longer be undone.
+	/// </summary>
+	public void Remove( GameObject go )
+	{
+		foreach ( var stack in stacks.Values )
+			stack.Remove( go );
+	}
+
+	/// <summary>
 	/// Per-player undo stack
 	/// </summary>
 	public class PlayerStack
@@ -195,6 +217,15 @@ public class UndoSystem : GameObjectSystem<UndoSystem>
 				Undo();
 			}
 		}
+
+		/// <summary>
+		/// Remove a GameObject from all entries in this stack.
+		/// </summary>
+		public void Remove( GameObject go )
+		{
+			foreach ( var entry in entries )
+				entry.Remove( go );
+		}
 	}
 
 	/// <summary>
@@ -210,8 +241,7 @@ public class UndoSystem : GameObjectSystem<UndoSystem>
 
 		long SteamId;
 
-		Action actions = null;
-		bool actioned;
+		List<GameObject> gameObjects = new();
 
 		internal Entry( long steamId )
 		{
@@ -223,20 +253,12 @@ public class UndoSystem : GameObjectSystem<UndoSystem>
 		/// </summary>
 		public void Add( GameObject go )
 		{
-			actions += () =>
-			{
-				if ( go.IsValid() )
-				{
-					go.Destroy();
-					actioned = true;
-				}
-			};
+			gameObjects.Add( go );
 		}
 
 		/// <summary>
 		/// Add a collection of GameObjects that should be destroyed when the undo is undone
 		/// </summary>
-		/// <param name="gos"></param>
 		public void Add( params IEnumerable<GameObject> gos )
 		{
 			foreach ( var go in gos )
@@ -246,12 +268,28 @@ public class UndoSystem : GameObjectSystem<UndoSystem>
 		}
 
 		/// <summary>
+		/// Remove a GameObject from this entry so it will no longer be destroyed on undo.
+		/// </summary>
+		public void Remove( GameObject go )
+		{
+			gameObjects.Remove( go );
+		}
+
+		/// <summary>
 		/// Run this undo
 		/// </summary>
 		public bool Run( bool sendNotice = true )
 		{
-			actioned = false;
-			actions?.InvokeWithWarning();
+			var actioned = false;
+
+			foreach ( var go in gameObjects )
+			{
+				if ( go.IsValid() )
+				{
+					go.Destroy();
+					actioned = true;
+				}
+			}
 
 			if ( !actioned )
 				return false;

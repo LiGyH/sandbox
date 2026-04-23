@@ -235,8 +235,12 @@ public sealed partial class ViewModel : WeaponModel, ICameraSetup
 		if ( Renderer.TryGetBoneTransformLocal( "camera", out var bone ) )
 		{
 			var scale = 0.5f;
-			cc.LocalPosition += bone.Position * scale;
-			cc.LocalRotation *= bone.Rotation * scale;
+			// Применяем смещение/поворот «камера»-кости в мировом пространстве.
+			// До перехода на WorldPosition/WorldRotation использовались LocalPosition/LocalRotation,
+			// но это давало неправильное смещение, если у держателя viewmodel был ненулевой
+			// мировой поворот (например, при наклонной камере / dead-камере).
+			cc.WorldPosition += cc.WorldRotation * bone.Position * scale;
+			cc.WorldRotation *= bone.Rotation * scale;
 		}
 	}
 

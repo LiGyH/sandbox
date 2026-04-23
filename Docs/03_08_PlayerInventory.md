@@ -66,10 +66,11 @@ Slot 5: —            (MaxSlots = 6)
 Алгоритм:
 1. Проверяем: мы хост? Есть ли свободный слот?
 2. Если уже есть такое оружие → добавляем только патроны (`AddReserveAmmo`)
-3. Клонируем префаб → делаем дочерним объектом игрока
-4. `NetworkSpawn` — регистрируем в сети (владелец = владелец игрока)
-5. Вызываем `OnAdded` на оружии и `IPlayerEvent.OnPickup`
-6. Если нужно — автопереключение (`ShouldAutoswitchTo`)
+3. Клонируем префаб → делаем дочерним объектом игрока через `SetParent( GameObject, false )` и обнуляем `LocalTransform`, чтобы оружие было ровно на хозяине
+4. **Удаляем GameObject из всех undo-стеков** (`UndoSystem.Current.Remove`) — иначе кто-то может «отменить» спавн прямо у нас из рук
+5. `NetworkSpawn` — регистрируем в сети (владелец = владелец игрока)
+6. Вызываем `OnAdded` на оружии и `IPlayerEvent.OnPickup`
+7. Если нужно — автопереключение (`ShouldAutoswitchTo`)
 
 ### Выброс оружия (Drop)
 
@@ -81,8 +82,8 @@ public bool Drop( BaseCarryable weapon )
 2. Два варианта:
    - **DroppedWeapon** — создаём свежий клон из префаба (чистое состояние)
    - **Обычное** — создаём из `ItemPrefab`
-3. Запускаем физику: скорость игрока + бросок вперёд + случайное вращение
-4. Назначаем владельца (`Ownable.Set`)
+3. Назначаем владельца (`Ownable.Set`) и добавляем тег `"removable"` **до** `NetworkSpawn` — так клиенты сразу видят правильного владельца и набор тегов, а Cleanup System (`CleanupSystem`, тег `"removable"`) корректно подхватит дроп при общей очистке
+4. Запускаем `NetworkSpawn` и физику: скорость игрока + бросок вперёд + случайное вращение
 5. Переключаемся на лучшее оставшееся оружие
 
 ### Переключение оружия (SwitchWeapon)
@@ -411,9 +412,15 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		if ( slot < 0 )
 			return;
 
-		item.GameObject.Parent = GameObject;
+		item.GameObject.SetParent( GameObject, false );
+		item.LocalTransform = global::Transform.Zero;
 		item.InventorySlot = slot;
 		item.GameObject.Enabled = false;
+
+		// Удаляем оружие из всех undo-стеков, чтобы кто-нибудь не «отменил»
+		// его прямо у нас из рук — например, если оружие изначально было
+		// заспавнено через Spawnmenu и попало в чей-то undo-стек.
+		UndoSystem.Current.Remove( item.GameObject );
 
 		if ( Network.Owner is not null )
 			item.Network.AssignOwnership( Network.Owner );
@@ -466,8 +473,9 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 						StartEnabled = true
 					} );
 
-					pickup.NetworkSpawn();
 					Ownable.Set( pickup, Player.Network.Owner );
+					pickup.Tags.Add( "removable" );
+					pickup.NetworkSpawn();
 
 					if ( pickup.GetComponent<Rigidbody>() is { } rb )
 					{
@@ -489,8 +497,9 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 				StartEnabled = true
 			} );
 
-			pickup.NetworkSpawn();
 			Ownable.Set( pickup, Player.Network.Owner );
+			pickup.Tags.Add( "removable" );
+			pickup.NetworkSpawn();
 
 			if ( pickup.GetComponent<Rigidbody>() is { } rb )
 			{

@@ -8,7 +8,7 @@
 
 ## Что мы делаем?
 
-Создаём конкретный класс оружия `CameraWeapon` — фотокамеру, которая позволяет игроку делать снимки с настраиваемым FOV, креном и глубиной резкости.
+Создаём конкретный класс оружия `CameraWeapon` — фотокамеру, которая позволяет игроку делать снимки с настраиваемым FOV, креном и глубиной резкости. Дополнительно камера всегда рисует свой кадр в собственный **render target** — этот же кадр потом подхватывает [TVEntity](13_07_TVEntity.md), если игрок свяжет камеру с телевизором через [Linker](11_06_Linker.md) (или ManualLink).
 
 ## Зачем это нужно?
 
@@ -16,7 +16,7 @@
 - **Глубина резкости (DOF)**: автоматическая фокусировка на объекте в центре экрана с размытием фона.
 - **Статистика**: каждый снимок увеличивает счётчик `photos` через `Services.Stats`.
 - **Скрытие HUD**: при активной камере HUD полностью скрывается (`WantsHideHud`).
-- **Эффект дрожания**: лёгкий шум Перлина имитирует дрожание рук фотографа.
+- **RT-камера + RenderTexture**: фоновая `CameraComponent` всегда рендерит сцену в текстуру `RenderTexture`. Эта текстура отдаётся `TVEntity` через `ManualLink`, и игрок видит на ТВ то, что снимает камера.
 
 ## Как это работает внутри движка?
 
@@ -25,16 +25,22 @@
 | `BaseWeapon` | Базовый класс оружия (не IronSights, не Bullet). |
 | `fov` | Текущий FOV (по умолчанию 50°). Изменяется ПКМ + pitch мыши. Зажат в [1, 150]. |
 | `roll` | Текущий крен камеры. Изменяется ПКМ + yaw мыши. |
-| `dof` | Компонент `DepthOfField`, создаётся при включении, уничтожается при выключении. |
+| `dof` | Компонент `DepthOfField`, создаётся **лениво** через `EnsureDepthOfField()` при первом обновлении в `OnControl`, уничтожается при выключении/уничтожении. |
 | `focusing` | Флаг: ЛКМ зажата — камера фокусируется. |
-| `WantsHideHud` | `true` — скрывает весь HUD. |
-| `OnEnabled()` | Создаёт `DepthOfField` на камере сцены с флагом `NotNetworked`. |
-| `OnDisabled()` | Уничтожает DOF-компонент. |
-| `OnCameraSetup()` | Устанавливает FOV, крен и добавляет Perlin-шум для дрожания. |
+| `WantsHideHud` | `true` — скрывает весь HUD (см. [05.09 PressableHud](05_09_PressableHud.md), [20.06 OwnerLabel](20_06_OwnerLabel.md) — оба HUD теперь явно учитывают этот флаг). |
+| `_rtCamera` | Дочерняя `CameraComponent` (`IsMainCamera = false`). Создаётся в `EnsureRTCamera()`, исключает из рендера тег `"viewmodel"`. |
+| `_renderTexture` | Render target камеры. Размер `_cameraResolution × _cameraResolution` (по умолчанию 512). Создаётся через `Texture.CreateRenderTarget().WithSize(...)` и привязывается как `RenderTarget` для `_rtCamera`. |
+| `RenderTexture` (свойство) | Публичный getter — `TVEntity.FindLinkedTexture()` читает именно его. |
+| `OnEnabled()` | Вызывает `EnsureRTCamera()` и `EnsureRenderTexture()`. DOF не создаётся здесь — он лениво создаётся в `OnControl` (только когда у нас действительно есть `Scene.Camera` и игрок управляет оружием). |
+| `OnDisabled()` / `OnDestroy()` | Уничтожают DOF, render target и сбрасывают ссылку на RT-камеру. |
+| `OnPreRender()` | Каждый кадр перед рендером выставляет позу `_rtCamera`. **Если камеру кто-то держит** (`HasOwner`) — копирует `Scene.Camera.WorldPosition / Rotation / FieldOfView` и добавляет в `RenderExcludeTags` тег `"viewer"`, чтобы свой viewmodel/тело хозяина не попадали на ТВ. **Если оружие лежит** — убирает `"viewer"` и сбрасывает FOV в 40° (камера превращается в обычную «статичную» сцену). |
+| `OnCameraSetup()` | Устанавливает FOV и крен **на основной камере игрока**, когда тот держит фотоаппарат и является владельцем (`Network.IsOwner`). |
 | `OnCameraMove()` | При зажатом ПКМ обнуляет движение камеры (зум, а не поворот). Масштабирует чувствительность по FOV. |
-| `OnControl()` | `Reload` — сброс FOV/крена. ПКМ — зум/крен. ЛКМ отпущена — `TakeScreenshot()` + `Stats.Increment`. |
-| `UpdateDepthOfField()` | Если не фокусируемся — трассировка от камеры, поиск точки фокуса. `BlurSize` зависит от FOV, `FocalDistance` плавно интерполируется. |
+| `OnControl()` | `Reload` — сброс FOV/крена. ПКМ — зум/крен. ЛКМ отпущена — `TakeScreenshot()` + `Stats.Increment`. Здесь же вызывается `EnsureDepthOfField()` и `UpdateDepthOfField()`. |
+| `UpdateDepthOfField()` | Если не фокусируемся — трассировка от камеры, поиск точки фокуса. `BlurSize` рассчитывается по формуле `pow(remap(FOV, 1, 55, 1, 0), 4) * 16`, `FocusRange = 512`, `FocalDistance` плавно интерполируется. |
 | `DrawHud()` | Пустой — HUD не рисуется. |
+
+> **Важно про связку с TV:** RT-камера существует **всегда, пока активен `CameraWeapon`** — даже если её никто не держит. Это нужно, чтобы ТВ продолжал показывать картинку, когда фотоаппарат лежит на полке. `TVEntity` сам отключает камеру через `camera.Enabled = !tooFar` по дистанции, чтобы не тратить GPU на рендер невидимого ТВ.
 
 ## Создай файл
 
@@ -42,7 +48,6 @@
 
 ```csharp
 using Sandbox.Rendering;
-using Sandbox.Utility;
 
 public class CameraWeapon : BaseWeapon
 {
@@ -55,56 +60,83 @@ public class CameraWeapon : BaseWeapon
 
 	[Property] SoundEvent CameraShoot { get; set; }
 
+	/// <summary>
+	/// The RT camera's resolution 
+	/// </summary>
+	private static int _cameraResolution = 512;
+
+	/// <summary>
+	/// The render target texture produced by this camera. Read by <see cref="TVEntity"/>.
+	/// </summary>
+	public Texture RenderTexture => _renderTexture;
+
+	private Texture _renderTexture;
+	private CameraComponent _rtCamera;
+
 	public override bool WantsHideHud => true;
 
 	protected override void OnEnabled()
 	{
 		base.OnEnabled();
 
-		if ( IsProxy )
-			return;
-
-		dof = Scene.Camera.Components.GetOrCreate<DepthOfField>();
-		dof.Flags |= ComponentFlags.NotNetworked;
-
-		focusing = false;
+		EnsureRTCamera();
+		EnsureRenderTexture();
 	}
 
 	protected override void OnDisabled()
 	{
 		base.OnDisabled();
 
-		if ( IsProxy )
-			return;
+		DestroyDepthOfField();
+		CleanupRenderTexture();
+		CleanupRTCamera();
+	}
 
-		dof?.Destroy();
-		dof = default;
+	protected override void OnDestroy()
+	{
+		DestroyDepthOfField();
+		CleanupRenderTexture();
+		CleanupRTCamera();
+		base.OnDestroy();
+	}
+
+	protected override void OnPreRender()
+	{
+		if ( _rtCamera is null ) return;
+
+		EnsureRenderTexture();
+
+		if ( HasOwner && Scene.Camera is not null )
+		{
+			// Когда камеру держит игрок — зеркалим главную камеру,
+			// чтобы ТВ показывал ровно то, что видит фотограф.
+			_rtCamera.WorldPosition = Scene.Camera.WorldPosition;
+			_rtCamera.WorldRotation = Scene.Camera.WorldRotation;
+			_rtCamera.FieldOfView = Scene.Camera.FieldOfView;
+
+			if ( !_rtCamera.RenderExcludeTags.Has( "viewer" ) )
+				_rtCamera.RenderExcludeTags.Add( "viewer" );
+		}
+		else
+		{
+			_rtCamera.RenderExcludeTags.Remove( "viewer" );
+			_rtCamera.FieldOfView = 40f;
+		}
 	}
 
 	/// <summary>
-	/// We want to control the camera fov
+	/// We want to control the camera fov when held by a player.
 	/// </summary>
 	public override void OnCameraSetup( Player player, Sandbox.CameraComponent camera )
 	{
-		//Log.Info( $"{player.Network.IsOwner} {Network.IsOwner}" );
 		if ( !player.Network.IsOwner || !Network.IsOwner ) return;
 
 		camera.FieldOfView = fov;
 		camera.WorldRotation = camera.WorldRotation * new Angles( 0, 0, roll );
-
-		var t = 20.0f;
-		var s = 1.0f;
-
-		var x = Noise.Perlin( Time.Now * t, 3, 5 ).Remap( 0, 1, -1, 1 ) * s;
-		var y = Noise.Perlin( Time.Now * t * 0.8f, 3, 4 ).Remap( 0, 1, -1, 1 ) * s;
-
-		camera.WorldRotation *= new Angles( x, y, 0 );
-
 	}
 
 	public override void OnCameraMove( Player player, ref Angles angles )
 	{
-		// We're zooming
 		if ( Input.Down( "attack2" ) )
 		{
 			angles = default;
@@ -131,6 +163,8 @@ public class CameraWeapon : BaseWeapon
 			roll -= Input.AnalogLook.yaw;
 		}
 
+		EnsureDepthOfField();
+
 		if ( dof.IsValid() )
 		{
 			UpdateDepthOfField( dof );
@@ -147,25 +181,86 @@ public class CameraWeapon : BaseWeapon
 		focusing = Input.Down( "attack1" );
 	}
 
+	private void EnsureDepthOfField()
+	{
+		if ( dof.IsValid() ) return;
+
+		dof = Scene.Camera.GetOrAddComponent<DepthOfField>();
+		dof.Flags |= ComponentFlags.NotNetworked;
+		focusing = false;
+	}
+
+	private void DestroyDepthOfField()
+	{
+		dof?.Destroy();
+		dof = default;
+	}
+
 	private void UpdateDepthOfField( DepthOfField dof )
 	{
 		if ( !focusing )
 		{
-			dof.BlurSize = Scene.Camera.FieldOfView.Remap( 20, 80, 25, 5 );
-			dof.FocusRange = 1024;
+			dof.BlurSize = MathF.Pow( Scene.Camera.FieldOfView.Remap( 1, 55, 1, 0 ), 4 ) * 16;
+			dof.FocusRange = 512;
 			dof.FrontBlur = false;
 
 			var tr = Scene.Trace.Ray( Scene.Camera.Transform.World.ForwardRay, 5000 )
-								.Radius( 8 )
+								.Radius( 4 )
 								.IgnoreGameObjectHierarchy( GameObject.Root )
 								.Run();
 
 			focusPoint = tr.EndPosition;
 		}
 
-		var target = Scene.Camera.WorldPosition.Distance( focusPoint ) + 32;
+		var target = Scene.Camera.WorldPosition.Distance( focusPoint ) + 64;
 
-		dof.FocalDistance = dof.FocalDistance.LerpTo( target, Time.Delta * 10.0f );
+		dof.FocalDistance = dof.FocalDistance.LerpTo( target, Time.Delta * 2.0f );
+	}
+
+	private void EnsureRTCamera()
+	{
+		_rtCamera = GetComponentInChildren<CameraComponent>( true );
+
+		if ( _rtCamera is null )
+		{
+			var go = new GameObject( GameObject, true, "rt_camera" );
+			_rtCamera = go.AddComponent<CameraComponent>();
+		}
+
+		_rtCamera.IsMainCamera = false;
+		_rtCamera.BackgroundColor = Color.Black;
+		_rtCamera.ClearFlags = ClearFlags.Color | ClearFlags.Depth | ClearFlags.Stencil;
+		_rtCamera.FieldOfView = fov;
+		_rtCamera.RenderExcludeTags.Add( "viewmodel" );
+	}
+
+	private void EnsureRenderTexture()
+	{
+		if ( _renderTexture is not null && _renderTexture.Width == _cameraResolution && _renderTexture.Height == _cameraResolution )
+			return;
+
+		CleanupRenderTexture();
+
+		_renderTexture = Texture.CreateRenderTarget()
+			.WithSize( _cameraResolution, _cameraResolution )
+			.Create();
+
+		if ( _rtCamera is not null )
+			_rtCamera.RenderTarget = _renderTexture;
+	}
+
+	private void CleanupRenderTexture()
+	{
+		if ( _rtCamera is not null )
+			_rtCamera.RenderTarget = null;
+
+		_renderTexture?.Dispose();
+		_renderTexture = null;
+	}
+
+	private void CleanupRTCamera()
+	{
+		_rtCamera = null;
 	}
 
 	public override void DrawHud( HudPainter painter, Vector2 crosshair )
@@ -183,7 +278,7 @@ public class CameraWeapon : BaseWeapon
 4. Нажмите `R` (reload) — FOV и крен должны сброситься к значениям по умолчанию.
 5. Нажмите и отпустите ЛКМ — должен быть сделан скриншот со звуком затвора.
 6. Проверьте, что фон размыт (DOF), а объект в центре экрана — в фокусе.
-7. Проверьте лёгкое дрожание камеры (Perlin noise).
+7. **Свяжите камеру с TV через Linker** ([11.06](11_06_Linker.md)) — на экране телевизора должно появиться то, что видит камера. Бросьте камеру и отойдите — TV продолжает показывать картинку, но при удалении дальше `MaxRenderDistance` сам отключает RT-камеру.
 
 
 ---

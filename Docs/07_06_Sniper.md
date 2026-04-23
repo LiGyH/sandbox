@@ -113,7 +113,13 @@ public class SniperWeapon : BaseBulletWeapon
 		if ( _hasFired && Input.Released( "attack1" ) )
 		{
 			_hasFired = false;
-			ViewModel?.RunEvent<ViewModel>( x => x.Renderer?.Set( "b_reload_bolt", true ) );
+			ViewModel?.RunEvent<ViewModel>( x =>
+			{
+				// Сбрасываем speed_reload в 1 — глобально WeaponModel мог его снизить
+				// для частичной перезарядки, но болт снайпера должен работать на полной скорости.
+				x.Renderer?.Set( "speed_reload", 1 );
+				x.Renderer?.Set( "b_reload_bolt", true );
+			} );
 		}
 	}
 

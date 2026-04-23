@@ -25,9 +25,9 @@ joint.Body = point2.GameObject;
 
 ### Отличие от других инструментов
 
-- **Нет `ConstraintCleanup`** — NoCollide не является физическим соединением
-- **Нет `FindConstraints`** — стандартное удаление не используется (нет переопределения)
-- **Нет `ReloadAction`** — нет возможности удалить через R
+- **Нет `ConstraintCleanup`** — NoCollide не является физическим соединением (Joint), а лишь правилом фильтра.
+- **`FindConstraints` переопределён** — вместо стандартного поиска суставов мы ищем все компоненты `PhysicsFilter` на исходном объекте, чьё `Body.Root` равно цели (или сам объект — если он один).
+- **`ReloadAction` есть** — нажатие R в первой стадии удаляет существующий `PhysicsFilter` между объектом под прицелом и тем, на котором фильтр висит.
 - **Группа `"Tools"`** вместо `"Constraints"`
 
 ## Создай файл
@@ -44,6 +44,14 @@ public class NoCollide : BaseConstraintToolMode
 {
 	public override string Description => Stage == 1 ? "#tool.hint.nocollide.stage1" : "#tool.hint.nocollide.stage0";
 	public override string PrimaryAction => Stage == 1 ? "#tool.hint.nocollide.finish" : "#tool.hint.nocollide.source";
+	public override string ReloadAction => "#tool.hint.nocollide.remove";
+
+	protected override IEnumerable<GameObject> FindConstraints( GameObject linked, GameObject target )
+	{
+		foreach ( var filter in linked.GetComponentsInChildren<PhysicsFilter>( true ) )
+			if ( linked == target || filter.Body?.Root == target )
+				yield return filter.GameObject;
+	}
 
 	protected override void CreateConstraint( SelectionPoint point1, SelectionPoint point2 )
 	{
@@ -66,13 +74,15 @@ public class NoCollide : BaseConstraintToolMode
 |---------|----------|
 | `[Title( "No Collide" )]` | Отображаемое имя с пробелом |
 | `PhysicsFilter` | Исключает пару из проверки столкновений |
-| Нет `ReloadAction` | Нет возможности удалить |
+| `ReloadAction = "#tool.hint.nocollide.remove"` | На R можно удалить уже созданный фильтр без проп-полицейского |
+| `FindConstraints(linked, target)` | Базовый класс сам обходит результат и удаляет найденные `GameObject`. Для NoCollide мы возвращаем GameObject'ы с компонентом `PhysicsFilter`, у которых `Body.Root == target` — это и есть «фильтр между этими двумя объектами». |
 | Только `undo` с одним объектом | Проще, чем у других инструментов |
 
 ## Что проверить?
 
-1. Два объекта стоят рядом → NoCollide → они проходят друг сквозь друга
-2. Undo (Z) → столкновения восстанавливаются
+1. Два объекта стоят рядом → NoCollide → они проходят друг сквозь друга.
+2. Undo (Z) → столкновения восстанавливаются.
+3. Наведись на один из объектов и нажми **R** → `PhysicsFilter` удаляется, столкновения восстанавливаются без отмены всей цепочки undo.
 
 ---
 
