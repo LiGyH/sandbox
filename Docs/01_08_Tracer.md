@@ -61,10 +61,14 @@
 	[Property, Feature( "Light" ), Range( 0, 1 )]
 	public float LightPosition { get; set; } = 0;
 
+	[Property] public Material Material { get; set; }
+
 	bool ITemporaryEffect.IsActive => !_finished;
 
 	float _distance = 0.0f;
 	bool _finished = false;
+
+	private Material _defaultMaterial;
 
 	SceneLineObject _so;
 	SceneLight _light;
@@ -72,6 +76,9 @@
 	{
 		_so = new SceneLineObject( Scene.SceneWorld );
 		_so.Transform = Transform.World;
+
+		// Запасной материал для старого texture-based рендера трассеров
+		_defaultMaterial = Material.Load( "materials/default/default_line.vmat" ).CreateCopy();
 
 		_distance = StartDistance;
 	}
@@ -143,7 +150,18 @@
 		_so.RenderingEnabled = true;
 		_so.Transform = WorldTransform;
 		_so.Flags.CastShadows = CastShadows;
-		_so.Attributes.Set( "BaseTexture", Texture.White );
+
+		// Если задан кастомный материал — используем его, иначе fallback на дефолтный
+		if ( Material.IsValid() )
+		{
+			_so.Material = Material;
+		}
+		else
+		{
+			_defaultMaterial.Set( "Color", Texture.White );
+			_so.Material = _defaultMaterial;
+		}
+
 		_so.Attributes.SetCombo( "D_BLEND", Opaque ? 0 : 1 );
 
 		_so.StartLine();
@@ -209,6 +227,7 @@ public sealed class Tracer : Renderer, Component.ExecuteInEditor, Component.ITem
 - `DistancePerSecond` — скорость трассера.
 - `Length` — длина видимого «хвоста».
 - `StartDistance` — начальное смещение (чтобы трассер начинался не от дула, а чуть дальше).
+- `Material` — необязательный кастомный материал линии. Если не задан, используется копия `materials/default/default_line.vmat` (см. `_defaultMaterial`). Это позволяет каждому оружию использовать свой trail-материал — в патче, добавляющем трассеры всем стрелковым видам оружия (`tracer_9mm.prefab`, `tracer_rifle.prefab`), используются именно префабы со своими материалами.
 
 ### Жизненный цикл
 

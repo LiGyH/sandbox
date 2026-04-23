@@ -16,7 +16,7 @@
 - Если луч попал в объект, ищется компонент `Ownable` через `GetComponentInParent<Ownable>(true)` (ищет вверх по иерархии, включая неактивные).
 - Если `Ownable` найден и у него есть `Owner` (объект `Connection`), берётся `DisplayName` владельца и показывается метка вида «Owned by <имя>».
 - CSS-класс `"visible"` управляет видимостью: без него — `opacity: 0`, с ним — `opacity: 1`. Переход анимируется через `transition: all 0.15s ease`.
-- В самом верху Razor-шаблона стоит ранний выход: если у локального игрока установлен флаг `WantsHideHud`, шаблон возвращается до отрисовки `<root>` — и панель полностью скрывается, как и весь остальной HUD.
+- В самом начале `OnUpdate()` стоит ранний выход: если `Scene.Camera` отсутствует **или** у локального игрока установлен флаг `WantsHideHud`, метод снимает класс `visible` и не запускает трассу. Это позволяет плавно скрывать панель через CSS-анимацию класса `.visible`, не разрушая саму DOM-ноду.
 - `BuildHash()` зависит только от `_ownerName` — UI перерисовывается лишь при смене целевого объекта.
 
 > **Изменено в апстриме:** в актуальной версии метка стала проще — без аватара Steam и без ID. Теперь это именно текстовая подпись «Owned by <имя>», плюс реакция на скрытие HUD. Раньше отрисовывался ещё и круглый аватар по `avatar:steamid`, и `_ownerId` участвовал в хеше — этого больше нет.
@@ -38,9 +38,6 @@ Code/UI/OwnerLabel/OwnerLabel.razor.scss
 @inherits PanelComponent
 @namespace Sandbox
 
-@if ( Player.IsValid() && Player.WantsHideHud )
-    return;
-
 <root>
 	<div class="owner-label hud-panel">
 		<label class="name">Owned by @_ownerName</label>
@@ -56,7 +53,7 @@ Code/UI/OwnerLabel/OwnerLabel.razor.scss
 	protected override void OnUpdate()
 	{
 		var camera = Scene.Camera;
-		if ( camera is null )
+        if (camera is null || (Player.IsValid() && Player.WantsHideHud) )
 		{
 			Panel.SetClass( "visible", false );
 			return;
@@ -128,7 +125,7 @@ OwnerLabel
 | Элемент | Описание |
 |---------|----------|
 | `@inherits PanelComponent` | Компонент сцены с привязанной UI-панелью. Размещается на HUD-объекте. |
-| `@if ( Player.IsValid() && Player.WantsHideHud ) return;` | Ранний выход на уровне рендера: пока локальный игрок просит скрыть HUD, метка вообще не строится. То же самое делают другие HUD-панели Sandbox. |
+| `if ( camera is null \|\| (Player.IsValid() && Player.WantsHideHud) )` | Ранний выход в цикле обновления: если `Scene.Camera` ещё не существует, **или** локальный игрок попросил скрыть HUD (например, держит CameraWeapon с `WantsHideHud = true`) — снимаем класс `visible` и не делаем трассу. Раньше выход по `WantsHideHud` стоял прямо в шаблоне Razor, но это убирало возможность плавно скрывать панель через CSS-классы. |
 | `Player Player => Player.FindLocalPlayer();` | Свойство-обёртка: берёт ссылку на локального игрока. Используется только чтобы прочитать `WantsHideHud`. |
 | `_ownerName` | Приватное поле: имя владельца. Обновляется каждый кадр. |
 | `OnUpdate()` | Вызывается каждый кадр. Основная логика — рейкаст и проверка владельца. |

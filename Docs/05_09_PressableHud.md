@@ -72,6 +72,7 @@
     {
         var lp = Player.FindLocalPlayer();
         if (lp is null) return default;
+        if (lp.WantsHideHud) return default;
         if (lp.Controller.Tooltips.Count == 0) return default;
 
         return lp.Controller.Tooltips.FirstOrDefault();
@@ -96,7 +97,7 @@
 | `_hashCode` | Хэш-код текущей подсказки — используется для оптимизации (не пересоздавать, если ничего не изменилось) |
 | `_tooltip` | Текущая всплывающая подсказка (или `null`, если нет) |
 | `OnUpdate()` | Каждый кадр проверяет, на что смотрит игрок |
-| `GetHovered()` | Получает информацию об объекте, на который смотрит игрок |
+| `GetHovered()` | Получает информацию об объекте, на который смотрит игрок. Дополнительно возвращает `default`, если у локального игрока установлен `WantsHideHud` — например, когда он держит CameraWeapon с фотомодом. |
 
 **Логика OnUpdate():**
 

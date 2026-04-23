@@ -121,6 +121,10 @@ public partial class Toolgun : ScreenWeapon
 			Components.Create( mode, enabled );
 			enabled = false;
 		}
+
+		// Принудительно пересинхронизируем состояние GameObject — иначе клиенты,
+		// уже видящие тулган, не получат новые ToolMode-компоненты на старте.
+		Network.Refresh( GameObject );
 	}
 
 	public override void OnControl( Player player )

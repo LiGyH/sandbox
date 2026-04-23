@@ -617,7 +617,9 @@ public partial class Physgun
 | `AimTransform` (getter) | Приоритеты источника прицеливания: **1)** глаза владельца, если он есть; **2)** если `CanAim` и есть `ClientInput.Current` — позиция `MuzzleTransform` + поворот глаз сидящего; **3)** чистый `MuzzleTransform.WorldTransform`. |
 | `_lastAimTransform` | Кэш последнего прицела. Используется `CurrentAimTransform` и внутри `UpdateBeam/OnFixedUpdate`, чтобы не лагать на один кадр после потери владельца. |
 | `CurrentAimTransform` | `HasOwner ? AimTransform : _lastAimTransform`. |
-| `OnControl()` (без параметра) | Seat/standalone-версия управления: `ShootInput` захватывает/запускает объект, `SecondaryInput` притягивает/отменяет. Пересобирает те же стадии `GrabState`, но берёт `AimTransform` вместо `Owner.EyeTransform`. **Сразу выходит, если у физгана есть владелец (`HasOwner`)** — иначе seat-логика «крала» бы состояние захвата у обычного физгана в руках игрока. |
+| `OnControl()` (без параметра) | Seat/standalone-версия управления: `ShootInput` захватывает/запускает объект, `SecondaryInput` притягивает/отменяет, **`ExtendInput` / `RetractInput` подгоняют дистанцию захвата** (`GrabDistance ± 200 ⋅ Time.Delta`, не ниже нуля) — аналог колеса мыши в обычном режиме. Пересобирает те же стадии `GrabState`, но берёт `AimTransform` вместо `Owner.EyeTransform`. **Сразу выходит, если у физгана есть владелец (`HasOwner`)** — иначе seat-логика «крала» бы состояние захвата у обычного физгана в руках игрока. |
+
+> Все четыре входа (`ShootInput`, `SecondaryInput`, `ExtendInput`, `RetractInput`) объявлены в `Physgun.Effects.cs` как `[Property, Sync, ClientEditable, Group( "Inputs" )] ClientInput`, поэтому они конфигурируются через инспектор префаба сиденья / турели и индивидуально привязываются к клавишам каждого игрока через `ClientInput`-биндинги ([17.02 — ClientInput](17_02_ClientInput.md)).
 
 > В классическом `OnControl(Player)` теперь тоже пишется `_lastAimTransform = AimTransform`, а `OnFixedUpdate` использует `CurrentAimTransform.Rotation.Backward` и `.Yaw()` — это позволяет корректно рассчитывать силу притягивания и целевой поворот как для игрока, так и для сиденья.
 

@@ -173,6 +173,7 @@
 | [09.07](09_07_Toolgun_Screen_Effects.md) | 🖥️ Toolgun.Screen.cs и Toolgun.Effects.cs — Экран и эффекты тулгана |
 | [09.08](09_08_IToolgunEvent.md) | Компонент: Событие тул-гана (IToolgunEvent) 🔧 |
 | [09.09](09_09_ToolInfoPanel.md) | Этап 09_09 — ToolInfoPanel (Панель информации об инструменте) |
+| [09.10](09_10_Stacker.md) | 📚 Stacker — Инструмент «Стэкер» (массовое копирование объектов) |
 
 ## Фаза 10: Тулы и констрейнты 🔗
 
@@ -228,6 +229,7 @@
 | [13.04](13_04_Lights.md) | Этап 13_04 — Lights (Управляемые источники света) |
 | [13.05](13_05_EmitterEntity.md) | Этап 13_05 — EmitterEntity (Компонент управления эмиттером) |
 | [13.06](13_06_EntitySpawnerEntity.md) | Этап 13_06 — EntitySpawnerEntity (Спаунер сущностей) |
+| [13.07](13_07_TVEntity.md) | 📺 TVEntity (Телевизор, отображающий feed с CameraWeapon) |
 
 ## Фаза 14: Меню спавна и инвентарь 🗂️
 
