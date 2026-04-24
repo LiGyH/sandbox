@@ -6,12 +6,81 @@ public class RpgWeapon : BaseWeapon
 	[Property] public float TimeBetweenShots { get; set; } = 2f;
 	[Property] public GameObject ProjectilePrefab { get; set; }
 	[Property] public SoundEvent ShootSound { get; set; }
+	[Property] public float ProjectileSpeed { get; set; } = 1024f;
+
+	/// <summary>
+	/// When enabled, fired rockets will continuously track toward the player's crosshair.
+	/// Toggle with right-click (player) or SecondaryInput (standalone/seat).
+	/// </summary>
+	[Property, Sync, ClientEditable] public bool IsTrackedAim { get; set; } = false;
+
+	public override bool IsTargetedAim => IsTrackedAim;
 
 	[Sync( SyncFlags.FromHost )] RpgProjectile Projectile { get; set; }
 
 	TimeSince TimeSinceShoot;
 
+	/// <summary>
+	/// Whether a live rocket is currently being guided toward the crosshair.
+	/// </summary>
+	public bool IsGuiding => IsTrackedAim && Projectile.IsValid();
+
 	protected override float GetPrimaryFireRate() => TimeBetweenShots;
+
+	public override bool CanSecondaryAttack() => false;
+
+	public override void OnControl( Player player )
+	{
+		base.OnControl( player );
+
+		if ( Input.Pressed( "attack2" ) )
+			ToggleTrackedAim();
+
+		if ( IsGuiding )
+		{
+			var target = GetAimTarget();
+			Projectile.UpdateWithTarget( target, ProjectileSpeed );
+		}
+	}
+
+	/// <summary>
+	/// Standalone / seat control — uses SecondaryInput to toggle tracking.
+	/// </summary>
+	public override void OnControl()
+	{
+		base.OnControl();
+
+		if ( HasOwner || IsProxy ) return;
+
+		if ( SecondaryInput.Pressed() )
+			ToggleTrackedAim();
+
+		if ( IsGuiding )
+		{
+			var target = GetAimTarget();
+			Projectile.UpdateWithTarget( target, ProjectileSpeed );
+		}
+	}
+
+	[Rpc.Host]
+	private void ToggleTrackedAim()
+	{
+		IsTrackedAim = !IsTrackedAim;
+	}
+
+	/// <summary>
+	/// Traces from AimRay and returns the world-space point the player is looking at.
+	/// </summary>
+	private Vector3 GetAimTarget()
+	{
+		var ray = AimRay;
+		var tr = Scene.Trace.Ray( ray, 16384f )
+			.IgnoreGameObjectHierarchy( AimIgnoreRoot )
+			.WithoutTags( "trigger", "projectile" )
+			.Run();
+
+		return tr.Hit ? tr.HitPosition : ray.Position + ray.Forward * 16384f;
+	}
 
 	public override void PrimaryAttack()
 	{
@@ -32,16 +101,13 @@ public class RpgWeapon : BaseWeapon
 		if ( ShootSound.IsValid() )
 			GameObject.PlaySound( ShootSound );
 
+		var ray = AimRay;
+		var muzzlePos = MuzzleTransform.WorldTransform.Position;
+		var spawnPos = muzzlePos + ray.Forward * 64f;
+
 		if ( HasOwner )
 		{
-			var transform = Owner.EyeTransform;
-			transform.Position = transform.Position + Vector3.Down * 8f + transform.Right * 8f;
-			var forward = transform.Forward;
-			var initialPos = transform.ForwardRay.Position + (forward * 64.0f);
-
-			initialPos = CheckThrowPosition( Owner, transform.Position, initialPos );
-
-			CreateProjectile( initialPos, transform.Forward, 1024 );
+			spawnPos = CheckThrowPosition( Owner, muzzlePos, spawnPos );
 
 			Owner.Controller.EyeAngles += new Angles( Random.Shared.Float( -0.2f, -0.3f ), Random.Shared.Float( -0.1f, 0.1f ), 0 );
 
@@ -56,12 +122,8 @@ public class RpgWeapon : BaseWeapon
 				}
 			}
 		}
-		else
-		{
-			// Seat / standalone — fire straight from the muzzle
-			var muzzleTransform = MuzzleTransform.WorldTransform;
-			CreateProjectile( muzzleTransform.Position, muzzleTransform.Rotation.Forward, 1024 );
-		}
+
+		CreateProjectile( spawnPos, ray.Forward, ProjectileSpeed );
 	}
 
 	private Vector3 CheckThrowPosition( Player player, Vector3 eyePosition, Vector3 grenadePosition )
@@ -100,23 +162,31 @@ public class RpgWeapon : BaseWeapon
 	public override void DrawCrosshair( HudPainter hud, Vector2 center )
 	{
 		var tss = TimeSinceShoot.Relative.Remap( 0, 0.2f, 1, 0 );
-
-		var gap = 6 + Easing.EaseOut( tss ) * 32;
-		var len = 6;
 		var w = 2;
-
-		Color color = !CanPrimaryAttack() ? CrosshairNoShoot : CrosshairCanShoot;
 
 		hud.SetBlendMode( BlendMode.Lighten );
 
-		// Define the size of the square
+		if ( IsTrackedAim )
+		{
+			// Diamond crosshair when in tracked aim mode
+			Color guideColor = IsGuiding ? new Color( 1f, 0.5f, 0.1f ) : CrosshairCanShoot;
+			var size = 32f;
+
+			hud.DrawLine( center + new Vector2( 0, -size ), center + new Vector2( size, 0 ), w, guideColor );
+			hud.DrawLine( center + new Vector2( size, 0 ), center + new Vector2( 0, size ), w, guideColor );
+			hud.DrawLine( center + new Vector2( 0, size ), center + new Vector2( -size, 0 ), w, guideColor );
+			hud.DrawLine( center + new Vector2( -size, 0 ), center + new Vector2( 0, -size ), w, guideColor );
+
+			return;
+		}
+
+		Color color = !CanPrimaryAttack() ? CrosshairNoShoot : CrosshairCanShoot;
+
 		var squareSize = 64f;
 
-		// Draw the four edges of the square
-		hud.DrawLine( center + new Vector2( -squareSize / 2, -squareSize / 2 ), center + new Vector2( squareSize / 2, -squareSize / 2 ), w, color ); // Top edge
-		hud.DrawLine( center + new Vector2( squareSize / 2, -squareSize / 2 ), center + new Vector2( squareSize / 2, squareSize / 2 ), w, color );   // Right edge
-		hud.DrawLine( center + new Vector2( squareSize / 2, squareSize / 2 ), center + new Vector2( -squareSize / 2, squareSize / 2 ), w, color );  // Bottom edge
-		hud.DrawLine( center + new Vector2( -squareSize / 2, squareSize / 2 ), center + new Vector2( -squareSize / 2, -squareSize / 2 ), w, color ); // Left edge
-
+		hud.DrawLine( center + new Vector2( -squareSize / 2, -squareSize / 2 ), center + new Vector2( squareSize / 2, -squareSize / 2 ), w, color );
+		hud.DrawLine( center + new Vector2( squareSize / 2, -squareSize / 2 ), center + new Vector2( squareSize / 2, squareSize / 2 ), w, color );
+		hud.DrawLine( center + new Vector2( squareSize / 2, squareSize / 2 ), center + new Vector2( -squareSize / 2, squareSize / 2 ), w, color );
+		hud.DrawLine( center + new Vector2( -squareSize / 2, squareSize / 2 ), center + new Vector2( -squareSize / 2, -squareSize / 2 ), w, color );
 	}
 }

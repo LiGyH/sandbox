@@ -9,9 +9,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 	/// <summary>
 	/// All weapons currently in the inventory, ordered by slot.
 	/// </summary>
-	public List<BaseCarryable> Weapons => GetComponentsInChildren<BaseCarryable>( true )
-		.OrderBy( x => x.InventorySlot )
-		.ToList();
+	public IEnumerable<BaseCarryable> Weapons => GetComponentsInChildren<BaseCarryable>( true );
 
 	[Sync( SyncFlags.FromHost ), Change] public BaseCarryable ActiveWeapon { get; private set; }
 
@@ -33,8 +31,11 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 	public BaseCarryable GetSlot( int slot )
 	{
 		if ( slot < 0 || slot >= MaxSlots ) return null;
-		return GetComponentsInChildren<BaseCarryable>( true )
-			.FirstOrDefault( x => x.InventorySlot == slot );
+		foreach ( var w in Weapons )
+		{
+			if ( w.InventorySlot == slot ) return w;
+		}
+		return null;
 	}
 
 	/// <summary>
@@ -42,15 +43,15 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 	/// </summary>
 	public int FindEmptySlot()
 	{
-		var occupied = GetComponentsInChildren<BaseCarryable>( true )
-			.Where( x => x.InventorySlot >= 0 )
-			.Select( x => x.InventorySlot )
-			.ToHashSet();
-
+		var weapons = Weapons;
 		for ( int i = 0; i < MaxSlots; i++ )
 		{
-			if ( !occupied.Contains( i ) )
-				return i;
+			bool occupied = false;
+			foreach ( var w in weapons )
+			{
+				if ( w.InventorySlot == i ) { occupied = true; break; }
+			}
+			if ( !occupied ) return i;
 		}
 
 		return -1;
@@ -355,6 +356,9 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		SaveLoadout();
 	}
 
+	private static SoundEvent AmmoPickupSound = ResourceLibrary.Get<SoundEvent>( "sounds/weapons/ammo_pickup.sound" );
+	private static SoundEvent GunPickupSound = ResourceLibrary.Get<SoundEvent>( "sounds/weapons/ammo_pickup.sound" );
+
 	[Rpc.Owner]
 	private void OnClientPickup( BaseCarryable weapon, bool justAmmo = false )
 	{
@@ -366,7 +370,10 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		}
 
 		if ( Player.IsLocalPlayer )
+		{
+			GameObject.PlaySound( justAmmo ? AmmoPickupSound : GunPickupSound );
 			ILocalPlayerEvent.Post( e => e.OnPickup( weapon ) );
+		}
 	}
 
 	private bool ShouldAutoswitchTo( BaseCarryable item )
@@ -657,7 +664,6 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		SaveLoadout();
 	}
 
-
 	/// <summary>
 	/// One entry in a serialized loadout: the prefab resource path and the slot it occupies.
 	/// </summary>
@@ -859,6 +865,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 	{
 		foreach ( var weapon in Weapons.ToList() )
 			weapon.DestroyGameObject();
+
 
 		// Let queued destructions finish before adding new weapons.
 		await Task.Yield();
