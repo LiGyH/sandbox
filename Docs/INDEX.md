@@ -214,7 +214,7 @@
 | [12.01](12_01_Ownable.md) | Компонент: Владение объектом (Ownable) 🛡️ |
 | [12.02](12_02_ConstraintCleanup.md) | Компонент: Очистка констрейнтов (ConstraintCleanup) 🔗 |
 | [12.03](12_03_ManualLink.md) | Компонент: Ручная связь (ManualLink) 🔗 |
-| [12.04](12_04_MassOverride.md) | Компонент: Переопределение массы (MassOverride) ⚖️ |
+| [12.04](12_04_MassOverride.md) | Компонент: Физические свойства (PhysicalProperties) ⚖️ |
 | [12.05](12_05_MorphState.md) | Компонент: Состояние морфов (MorphState) 🎭 |
 | [12.06](12_06_MountMetadata.md) | Компонент: Метаданные монтирования (MountMetadata) 🧩 |
 | [12.07](12_07_SpawningProgress.md) | Компонент: Прогресс спавна (SpawningProgress) ✨ |

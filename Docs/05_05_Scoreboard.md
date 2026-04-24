@@ -167,6 +167,11 @@
 {
     public PlayerData Entry { get; set; }
 
+    /// <summary>
+    /// Rebuild whenever ping or kill/death counters change (every second is enough).
+    /// </summary>
+    protected override int BuildHash() => System.HashCode.Combine( Entry?.Kills, Entry?.Deaths, Entry?.Ping.CeilToInt() );
+
     public override void Tick()
     {
         if ( Entry is null ) return;

@@ -65,6 +65,7 @@ public sealed class PlayerObserver : Component
 {
 	Angles EyeAngles;
 	TimeSince timeSinceStarted;
+	DeathCameraTarget _cachedCorpse;
 
 	protected override void OnEnabled()
 	{
@@ -78,14 +79,19 @@ public sealed class PlayerObserver : Component
 	{
 		if ( IsProxy ) return;
 
-		var corpse = Scene.GetAllComponents<DeathCameraTarget>()
-					.Where( x => x.Connection == Network.Owner )
-					.OrderByDescending( x => x.Created )
-					.FirstOrDefault();
-
-		if ( corpse.IsValid() )
+		// Cache the corpse — once found it doesn't change for the lifetime of the observer.
+		// Avoids scanning every component every frame just to find the same object.
+		if ( !_cachedCorpse.IsValid() )
 		{
-			RotateAround( corpse );
+			_cachedCorpse = Scene.GetAllComponents<DeathCameraTarget>()
+				.Where( x => x.Connection == Network.Owner )
+				.OrderByDescending( x => x.Created )
+				.FirstOrDefault();
+		}
+
+		if ( _cachedCorpse.IsValid() )
+		{
+			RotateAround( _cachedCorpse );
 		}
 
 		// Don't allow immediate respawn

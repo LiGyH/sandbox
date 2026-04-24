@@ -148,7 +148,13 @@ public class ControlSystem : GameObjectSystem<ControlSystem>
 		{
 			foreach ( var controllable in o.GetComponentsInChildren<IPlayerControllable>() )
 			{
-				controllable?.OnControl();
+				if ( controllable is null ) continue;
+
+				// Each controllable can veto control on a per-player basis (e.g. a turret
+				// refuses control while the player still has an active weapon in hand).
+				if ( !controllable.CanControl( player ) ) continue;
+
+				controllable.OnControl();
 			}
 		}
 	}
@@ -163,7 +169,8 @@ public class ControlSystem : GameObjectSystem<ControlSystem>
 | `LinkedGameObjectBuilder` | Строит граф физически связанных объектов (constraints, joints) |
 | `driven` | Предотвращает двойную обработку одной контрапции |
 | `PushScope` | Подменяет «текущего игрока» для ввода |
-| `IPlayerControllable.OnControl()` | Вызывается для каждого управляемого компонента |
+| `IPlayerControllable.CanControl( player )` | Контрапция может **отказаться** от управления конкретным игроком (например, оружие на стуле, если у игрока в руках уже есть пушка). |
+| `IPlayerControllable.OnControl()` | Вызывается для каждого управляемого компонента, **прошедшего `CanControl`** |
 
 ## Связь с другими системами
 

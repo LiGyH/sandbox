@@ -104,7 +104,22 @@ using Sandbox.UI.Inventory;
 /// </summary>
 public sealed partial class Player : Component, Component.IDamageable, PlayerController.IEvents, ISaveEvents, IKillSource
 {
-	public static Player FindLocalPlayer() => Game.ActiveScene.GetAll<Player>().FirstOrDefault( x => x.IsLocalPlayer );
+	/// <summary>
+	/// Cached reference to the local player on this client. Filled lazily on first
+	/// <see cref="FindLocalPlayer"/> call and cleared automatically when the
+	/// underlying GameObject becomes invalid (e.g. on map change).
+	/// </summary>
+	private static Player _localPlayer;
+
+	public static Player FindLocalPlayer()
+	{
+		if ( _localPlayer.IsValid() && _localPlayer.IsLocalPlayer )
+			return _localPlayer;
+
+		_localPlayer = Game.ActiveScene.GetAll<Player>().FirstOrDefault( x => x.IsLocalPlayer );
+		return _localPlayer;
+	}
+
 	public static T FindLocalWeapon<T>() where T : BaseCarryable => FindLocalPlayer()?.GetComponentInChildren<T>( true );
 	public static T FindLocalToolMode<T>() where T : ToolMode => FindLocalPlayer()?.GetComponentInChildren<T>( true );
 
@@ -558,12 +573,12 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 ### Статические хелперы (строки 11–13)
 
 ```csharp
-public static Player FindLocalPlayer() => ...
+public static Player FindLocalPlayer() { ... }   // c кэшем _localPlayer
 public static T FindLocalWeapon<T>() where T : BaseCarryable => ...
 public static T FindLocalToolMode<T>() where T : ToolMode => ...
 ```
 
-Удобные методы для быстрого доступа к локальному игроку и его оружию из любого места кода. `GetAll<Player>()` ищет по всей сцене.
+Удобные методы для быстрого доступа к локальному игроку и его оружию из любого места кода. **Кэш**: `_localPlayer` хранит ссылку на найденного игрока, чтобы не сканировать всю сцену каждый кадр (HUD, ScoreboardRow, Nameplate и т.д. дёргают `FindLocalPlayer()` десятки раз за тик). При смене карты/респавне ссылка автоматически становится «невалидной» (`IsValid()` вернёт `false`), и метод заново ищет игрока.
 
 ### Sync и сетевая синхронизация (строки 17–21)
 

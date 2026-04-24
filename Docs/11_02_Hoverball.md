@@ -123,7 +123,7 @@ public class HoverballTool : ToolMode
 ## Как это работает внутри движка?
 - Реализует `IPlayerControllable` для управления игроком.
 - `TargetZ` — целевая высота, которая изменяется входами `Up`/`Down`.
-- `Toggle` включает/выключает левитацию (при выключении возвращается гравитация). При переключении проигрывается `EnableSound` или `DisableSound`.
+- `Toggle` включает/выключает левитацию (при выключении возвращается гравитация). При переключении проигрывается `EnableSound` или `DisableSound` — оба теперь имеют тип **`SoundDefinition`** (см. [26.06](26_06_Sound.md)) с фильтром `[Metadata( SoundDefinition.Hoverball )]`, поэтому в редакторском пикере показываются только звуки с категорией `"hoverball"`.
 - В `OnFixedUpdate()` вычисляет разницу между текущей и целевой высотой, корректирует `Velocity.z`.
 - `AirResistance` добавляет горизонтальное торможение.
 - `Speed` регулирует скорость изменения высоты.
@@ -182,8 +182,8 @@ public class HoverballEntity : Component, IPlayerControllable
 	[Property]
 	public GameObject OnEffect { get; set; }
 
-	[Property] public SoundEvent EnableSound { get; set; }
-	[Property] public SoundEvent DisableSound { get; set; }
+	[Property, ClientEditable, Metadata( SoundDefinition.Hoverball )] public SoundDefinition EnableSound { get; set; }
+	[Property, ClientEditable, Metadata( SoundDefinition.Hoverball )] public SoundDefinition DisableSound { get; set; }
 
 	private float _zVelocity;
 	private bool _toggleWasHeld;
@@ -269,9 +269,9 @@ public class HoverballEntity : Component, IPlayerControllable
 		IsEnabled = !IsEnabled;
 
 		if ( IsEnabled )
-			Sound.Play( EnableSound, WorldPosition );
+			EnableSound?.Play( WorldPosition );
 		else
-			Sound.Play( DisableSound, WorldPosition );
+			DisableSound?.Play( WorldPosition );
 
 		var rb = GetComponent<Rigidbody>();
 		if ( !rb.IsValid() ) return;

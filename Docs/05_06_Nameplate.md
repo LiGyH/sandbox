@@ -30,7 +30,7 @@
 
 @if (Player.IsValid() && !Player.IsLocalPlayer && !(Player.FindLocalPlayer()?.WantsHideHud ?? false))
 {
-	<root>
+	<root class=@(IsVoicePlaying ? "speaking" : "")>
 
 		<div class="card">
 
@@ -126,6 +126,13 @@ Nameplate
     align-items: center;
     font-weight: bold;
 
+    &.speaking .card
+    {
+        // Soft outer glow when the player is currently speaking — visual cue
+        // that complements the volume_up icon.
+        box-shadow: 0 0 24px 4px rgba( 80, 200, 120, 0.6 );
+    }
+
     .card
     {
         flex-direction: row;
@@ -176,6 +183,7 @@ Nameplate
 |---------|----------|
 | `Nameplate` | Занимает весь доступный блок, центрирует содержимое. `white-space: nowrap` — имя не переносится на новую строку |
 | `.card` | Карточка: горизонтальная (`row`), полупрозрачный тёмный фон, скруглённые углы |
+| `&.speaking .card` | Когда `<root>` получает класс `speaking` (см. C#-разметку выше: `class=@(IsVoicePlaying ? "speaking" : "")`) — у карточки появляется мягкое зелёное свечение по периметру (`box-shadow`). Это визуальный «эфир» голоса в дополнение к иконке `volume_up`, чтобы говорящего было видно даже одним глазом боковым зрением. |
 | `.avatar` | Круглая аватарка 64×64 пикселя. `border-radius: 50%` делает квадрат кругом |
 | `.name` | Белый текст, при длинном имени обрезается с многоточием (`text-overflow: ellipsis`) |
 | `.voice` | Иконка динамика — маленький кружок в правом верхнем углу карточки |

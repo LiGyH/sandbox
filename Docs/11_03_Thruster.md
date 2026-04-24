@@ -148,9 +148,11 @@ public class ThrusterTool : ToolMode
 
 ## Как это работает внутри движка?
 - Реализует `IPlayerControllable` для получения управления от игрока.
-- `OnControl()` считывает аналоговые значения входов `Activate` и `Reverse`.
+- `OnControl()` считывает аналоговые значения входов `Activate` и `Reverse`. Сама логика управления выполняется **только на хосте** (`Networking.IsHost`) — клиенты не пересчитывают физику.
 - `AddThrust()` применяет импульс через `Rigidbody.ApplyImpulse()`.
-- Управляет визуальными эффектами (`OnEffect`) и звуком двигателя (`ThrusterSound`).
+- `SetActiveState()` помечен `[Rpc.Broadcast]` — изменение состояния включения и эффект `OnEffect` синхронизируются на всех клиентах одной RPC, без ручного `Network.Refresh()`.
+- Управляет визуальными эффектами (`OnEffect`) и **зацикленным звуком двигателя** через `SoundDefinition` (см. [26.06 — Sound](26_06_Sound.md)).
+- Звук стартует/останавливается в `OnUpdate()` — он опрашивает текущее `_state` и подгоняет состояние `_thrusterSound` под него. Раньше старт/стоп вызывались прямо из `SetActiveState`, но это терялось у клиентов; опрос-петля гарантирует, что звук тоже звучит на не-хост клиентах.
 - Свойство `Power` регулирует силу тяги, `Invert` меняет направление.
 
 ## Создай файл
@@ -184,13 +186,14 @@ public class ThrusterEntity : Component, IPlayerControllable
 	[Property, Sync, ClientEditable]
 	public ClientInput Reverse { get; set; }
 
-	private static SoundEvent _defaultSound = ResourceLibrary.Get<SoundEvent>( "entities/thruster/sounds/thruster_loop_default.sound" );
+	private static SoundDefinition _defaultSound => ResourceLibrary.Get<SoundDefinition>( "entities/thruster/sounds/thruster_basic.sndef" );
 
 	/// <summary>
 	/// Looping sound played while the thruster is active.
+	/// Filtered in the picker to only show <see cref="SoundDefinition"/>s with category "thruster".
 	/// </summary>
-	[Property, Group( "Sound" )]
-	public SoundEvent ThrusterSound { get; set; }
+	[Property, ClientEditable, Metadata( SoundDefinition.Thruster ), Group( "Sound" )]
+	public SoundDefinition ThrusterSound { get; set; }
 
 	/// <summary>
 	/// Current thrust output, -1 to 1. Updated every control frame.
@@ -208,7 +211,24 @@ public class ThrusterEntity : Component, IPlayerControllable
 
 	protected override void OnDisabled()
 	{
+		_state = false;
 		StopThrusterSound();
+	}
+
+	// Polled every frame on every client (host included): keeps the looping sound
+	// in sync with the networked _state without RPC plumbing.
+	protected override void OnUpdate()
+	{
+		if ( _state )
+		{
+			if ( !_thrusterSound.IsValid() )
+				StartThrusterSound();
+		}
+		else
+		{
+			if ( _thrusterSound.IsValid() )
+				StopThrusterSound();
+		}
 	}
 
 	void AddThrust( float amount )
@@ -223,6 +243,7 @@ public class ThrusterEntity : Component, IPlayerControllable
 
 	bool _state;
 
+	[Rpc.Broadcast]
 	public void SetActiveState( bool state )
 	{
 		if ( _state == state ) return;
@@ -231,58 +252,51 @@ public class ThrusterEntity : Component, IPlayerControllable
 
 		if ( !HideEffects )
 			OnEffect?.Enabled = state;
-
-		if ( state )
-		{
-			StartThrusterSound();
-			Sandbox.Services.Stats.Increment( "tool.thruster.activate", 1 );
-		}
-		else
-		{
-			StopThrusterSound();
-		}
-
-		Network.Refresh();
 	}
 
-	void StartThrusterSound()
+	private void StartThrusterSound()
 	{
-		if ( _thrusterSound.IsValid() && !_thrusterSound.IsStopped ) return;
+		if ( _thrusterSound.IsValid() )
+			StopThrusterSound();
 
 		var sound = ThrusterSound ?? _defaultSound;
 		if ( sound is null ) return;
 
-		_thrusterSound = Sound.Play( sound, WorldPosition );
-		_thrusterSound.Parent = GameObject;
-		_thrusterSound.FollowParent = true;
+		// SoundDefinition.Play( pos, parent ) wires up FollowParent for us.
+		_thrusterSound = sound.Play( WorldPosition, GameObject );
 	}
 
-	void StopThrusterSound()
+	private void StopThrusterSound()
 	{
 		if ( _thrusterSound.IsValid() )
 		{
-			_thrusterSound.Stop();
+			_thrusterSound.Stop( 0.5f );
 			_thrusterSound = default;
 		}
 	}
 
-	public void OnStartControl()
-	{
-	}
-
-	public void OnEndControl()
-	{
-	}
-
 	public void OnControl()
 	{
+		// Only the host evaluates input → physics → state changes.
+		// SetActiveState is broadcast, so clients still get the effect/state update.
+		if ( !Networking.IsHost ) return;
+
 		var forward = Activate.GetAnalog();
 		var backward = Reverse.GetAnalog();
 		var analog = forward - backward;
 		ThrustAmount = analog;
 
 		AddThrust( analog );
-		SetActiveState( MathF.Abs( analog ) > 0.1f );
+
+		var active = MathF.Abs( analog ) > 0.1f;
+
+		if ( active != _state )
+		{
+			if ( active )
+				Sandbox.Services.Stats.Increment( "tool.thruster.activate", 1 );
+
+			SetActiveState( active );
+		}
 	}
 }
 ```

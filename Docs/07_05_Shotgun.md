@@ -68,23 +68,9 @@ public class ShotgunWeapon : IronSightsWeapon
 
 		AddShootDelay( PrimaryFireRate );
 
-		Vector3 eyeForward;
-		Ray eyeRay;
-		GameObject ignoreRoot;
-
-		if ( HasOwner )
-		{
-			eyeForward = Owner.EyeTransform.Rotation.Forward;
-			eyeRay = Owner.EyeTransform.ForwardRay;
-			ignoreRoot = Owner.GameObject;
-		}
-		else
-		{
-			var muzzle = WeaponModel?.MuzzleTransform?.WorldTransform ?? WorldTransform;
-			eyeForward = muzzle.Rotation.Forward;
-			eyeRay = new Ray( muzzle.Position, eyeForward );
-			ignoreRoot = GameObject;
-		}
+		// Use the unified AimRay system from BaseCarryable (см. 06.01).
+		var eyeForward = AimRay.Forward;
+		var eyeRay = AimRay;
 
 		for ( var i = 0; i < PelletCount; i++ )
 		{
@@ -96,7 +82,7 @@ public class ShotgunWeapon : IronSightsWeapon
 				);
 
 			var tr = Scene.Trace.Ray( eyeRay with { Forward = forward }, Bullet.Range )
-				.IgnoreGameObjectHierarchy( ignoreRoot )
+				.IgnoreGameObjectHierarchy( AimIgnoreRoot )
 				.WithoutTags( "playercontroller" )
 				.Radius( Bullet.BulletRadius )
 				.UseHitboxes()

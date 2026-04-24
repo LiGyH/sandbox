@@ -97,6 +97,60 @@ SoundListener.Rotation = Player.Head.WorldRotation;
 - Каждый `SoundEvent` идёт через **микшер** — игрок крутит громкость отдельных категорий.
 - Для физических звуков пользуйся `Surface.ImpactSound`, не вызывай `Sound.Play` руками.
 
+## SoundDefinition — категоризированный звуковой ресурс (`.sndef`)
+
+Кроме «голого» `SoundEvent`, в проекте есть **`SoundDefinition`** — `GameResource`-обёртка, у которой кроме самого `Sound`-эвента есть `Title`, `Description` и **`Category`** (строковый тег). Категория позволяет в редакторском пикере **отфильтровать** звуки по типу — например, показывать в свойстве трастера только звуки с категорией `"thruster"`, а не всю звуковую библиотеку.
+
+| Поле | Назначение |
+|---|---|
+| `Title` / `Description` | Метаданные, отображаются в пикере |
+| `Category` | Строковый тег для фильтрации (например `"thruster"`, `"hoverball"`, `"emitter"`) |
+| `Sound` | Сам `SoundEvent`, который проигрывается |
+| `Play( pos )` / `Play( pos, parent )` | Удобные методы — играет звук и (опционально) приклеивает его к `GameObject` через `FollowParent = true` |
+
+В коде на `SoundDefinition` ссылаются точно так же, как на `SoundEvent`:
+
+```csharp
+[Property, ClientEditable, Metadata( SoundDefinition.Thruster ), Group( "Sound" )]
+public SoundDefinition ThrusterSound { get; set; }
+
+// и где-то в OnControl:
+ThrusterSound?.Play( WorldPosition, GameObject );
+```
+
+Атрибут **`[Metadata("thruster")]`** — это маркер для пикера: при открытии выбора ресурса для этого свойства в списке появятся только `SoundDefinition` с `Category == "thruster"`. Сам атрибут — обычный класс `MetadataAttribute` с одним полем `Tag`, ничего магического в нём нет.
+
+Файл-определение этого ассета: `[AssetType( Name = "Sound Definition", Extension = "sndef", Category = "Sandbox" )]` — то есть в редакторе он отображается как отдельный тип `Sound Definition (.sndef)`.
+
+### IResourcePreview — прослушать звук в пикере
+
+`SoundDefinition` реализует интерфейс **`IResourcePreview`** (см. `Code/Game/Sound/IResourcePreview.cs`):
+
+```csharp
+public interface IResourcePreview
+{
+    void OnPreview();      // нажали на пункт в пикере → проигрываем
+    void OnPreviewStop();  // выбрали другой / закрыли / подтвердили → остановили
+}
+```
+
+Любой `GameResource`, который реализует этот интерфейс, в пикере **превью-проигрывается одним кликом** (звук, эффект, анимация — что угодно), а финальный выбор подтверждается кнопкой **Select**. Для звуков это означает, что игрок (или маппер) может прослушать набор `.sndef`-ассетов в выпадающем списке, не сохраняя промежуточный выбор.
+
+### Где это используется в проекте
+
+- **[11.03 — Thruster](11_03_Thruster.md)** — `[Metadata( SoundDefinition.Thruster )]` на свойстве `ThrusterSound`.
+- **[11.02 — Hoverball](11_02_Hoverball.md)** — `EnableSound` / `DisableSound` теперь типа `SoundDefinition` с `[Metadata( SoundDefinition.Hoverball )]`.
+- В будущем сюда же лягут звуки эмиттера (`SoundDefinition.Emitter`) и других «строительных» сущностей.
+
+> 📖 **Документация движка:** интерфейс `IResourcePreview` — это часть редакторского API s&box (см. [официальные доки Facepunch/sbox-docs](https://github.com/Facepunch/sbox-docs/)). Для пикера важно, чтобы превью **гарантированно останавливалось** в `OnPreviewStop` — иначе звук будет продолжать играть после закрытия списка.
+
+## Что важно запомнить
+
+- `SoundEvent` — низкоуровневый ассет звука (`.sound`).
+- `SoundDefinition` (`.sndef`) — обёртка с категорией для фильтрации в пикере.
+- `[Metadata("...")]` на `[Property]` сужает список выбора в редакторе.
+- `IResourcePreview` даёт «прослушать перед выбором» прямо в окне пикера.
+
 ## Что дальше?
 
 В [26.07](26_07_Math_Types.md) — обзор математических типов: `Vector3`, `Rotation`, `Angles`, `Transform`, `BBox`, и почему их так много.
