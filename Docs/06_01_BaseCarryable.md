@@ -26,10 +26,13 @@
 |---|---|
 | `record struct TraceAttackInfo` | Неизменяемая структура с данными атаки. Фабричный метод `From()` создаёт её из `SceneTraceResult`, добавляя теги хитбокса. |
 | `IKillIcon` | Интерфейс для отображения иконки убийства в килфиде. |
-| `WeaponModel` (свойство) | Возвращает компонент `WeaponModel` из `ViewModel` или `WorldModel`, учитывая текущий вид камеры (firstperson / thirdperson). |
+| `WeaponModel` (свойство) | Возвращает компонент `WeaponModel` из `ViewModel` или `WorldModel`, учитывая текущий вид камеры (firstperson / thirdperson). Если ни одной модели нет — пробует найти `WeaponModel` напрямую в иерархии самого карриабла (это нужно для standalone-оружия в сиденьях, у которого `ViewModel`/`WorldModel` не созданы, но мировая модель встроена в префаб). |
 | `Owner` | Ищет компонент `Player` в родительской иерархии через `GetComponentInParent`. |
 | `MuzzleGameObject` | `[Property]` — опциональная явная точка вылета. Используется, когда нет `WeaponModel` (например, в режиме сиденья/standalone). Если не задан — берётся muzzle из `WeaponModel`, иначе сам `GameObject`. |
 | `MuzzleTransform` | Точка откуда вылетают эффекты выстрела. Новый порядок разрешения: 1) muzzle из `WeaponModel` (если валиден), 2) явный `MuzzleGameObject`, 3) сам `GameObject`. |
+| `IsTargetedAim` (`virtual bool`) | По умолчанию `false`. Если оружие переопределяет это в `true` — в режиме сидения/standalone луч прицеливания берётся **по направлению камеры игрока**, а не по дулу. Используют `RpgWeapon` (когда включён `IsTrackedAim`) и `Physgun` (когда включён `CanAim`). |
+| `AimRay` | Единый луч прицеливания для всех видов оружия. В порядке приоритета: 1) **Owner от 3-го лица** → ray из `Scene.Camera`; 2) **Owner от 1-го лица** → `Owner.EyeTransform.ForwardRay`; 3) **сидение + `IsTargetedAim`** → ray из `Scene.Camera`; 4) иначе — ray из `MuzzleTransform`. |
+| `AimIgnoreRoot` | `GameObject`, который трассировка должна игнорировать: `Owner.GameObject` если есть владелец, иначе сам `GameObject`. |
 | `OnEnabled / OnDisabled` | Создание/уничтожение мировой и вью-моделей при активации. |
 | `OnFrameUpdate` | Каждый кадр определяет, нужна ли вью-модель (первое лицо) или нет (третье лицо). |
 | `OnPlayerUpdate → OnControl` | Цепочка вызовов для обработки ввода владельца. |
@@ -110,6 +113,7 @@ public partial class BaseCarryable : Component, IKillIcon
 
 	/// <summary>
 	/// Gets a reference to the weapon model for this weapon - if there's a viewmodel, pick the viewmodel, if not, world model.
+	/// Falls back to scanning this carryable's own hierarchy for standalone weapons.
 	/// </summary>
 	public WeaponModel WeaponModel
 	{
@@ -120,9 +124,14 @@ public partial class BaseCarryable : Component, IKillIcon
 			if ( Scene.Camera.RenderExcludeTags.Contains( "firstperson" ) ) go = default;
 
 			if ( !go.IsValid() ) go = WorldModel;
-			if ( !go.IsValid() ) return null;
+			if ( !go.IsValid() ) go = GameObject;
 
-			return go.GetComponent<WeaponModel>();
+			var wm = go.GetComponentInChildren<WeaponModel>();
+			if ( wm.IsValid() )
+				return wm;
+
+			// Standalone weapons may have a WorldModel in their hierarchy without the stored reference
+			return GameObject.GetComponentInChildren<WeaponModel>();
 		}
 	}
 
@@ -138,6 +147,43 @@ public partial class BaseCarryable : Component, IKillIcon
 	}
 
 	public bool HasOwner => Owner.IsValid();
+
+	/// <summary>
+	/// When true, seated aim uses the scene camera direction instead of the weapon's muzzle direction.
+	/// Override in weapons that support player-directed aim (e.g. RPG tracked mode, Physgun aim mode).
+	/// </summary>
+	public virtual bool IsTargetedAim => false;
+
+	/// <summary>
+	/// Unified aim ray for all weapons. Returns the correct ray based on context:
+	/// first-person held, third-person held, seated (targeted or muzzle), or standalone.
+	/// </summary>
+	public Ray AimRay
+	{
+		get
+		{
+			if ( HasOwner )
+			{
+				var owner = Owner;
+				if ( owner.Controller.IsValid() && owner.Controller.ThirdPerson && Scene.Camera.IsValid() )
+					return Scene.Camera.Transform.World.ForwardRay;
+
+				return owner.EyeTransform.ForwardRay;
+			}
+
+			var seated = ClientInput.Current;
+			if ( seated.IsValid() && IsTargetedAim && Scene.Camera.IsValid() )
+				return Scene.Camera.Transform.World.ForwardRay;
+
+			var muzzle = MuzzleTransform.WorldTransform;
+			return new Ray( muzzle.Position, muzzle.Rotation.Forward );
+		}
+	}
+
+	/// <summary>
+	/// The root GameObject to ignore when tracing from AimRay.
+	/// </summary>
+	public GameObject AimIgnoreRoot => HasOwner ? Owner.GameObject : GameObject;
 
 	/// <summary>
 	/// Where shoot effects come from. Either the point on the world model or the viewmodel, whichever is currently being used.
@@ -208,8 +254,8 @@ public partial class BaseCarryable : Component, IKillIcon
 
 			if ( controller.ThirdPerson )
 			{
-				var tr = Scene.Trace.Ray( controller.EyeTransform.ForwardRay, 4096 )
-									.IgnoreGameObjectHierarchy( controller.GameObject )
+				var tr = Scene.Trace.Ray( AimRay, 4096 )
+									.IgnoreGameObjectHierarchy( AimIgnoreRoot )
 									.Run();
 
 				aimPos = Scene.Camera.PointToScreenPixels( tr.EndPosition );
@@ -342,6 +388,30 @@ public partial class BaseCarryable : Component, IKillIcon
 	}
 }
 ```
+
+## Единый луч прицеливания: `AimRay` / `AimIgnoreRoot` / `IsTargetedAim`
+
+Раньше каждое оружие само решало, **откуда** ему стрелять: в `BaseBulletWeapon` была своя ветка для «есть владелец / нет владельца», в `Shotgun` — отдельная такая же, в `MeleeWeapon` третья, в `Physgun` четвёртая со своей семантикой `CanAim`. Это привело к расходящимся правилам и багам в режиме сидения (контрапция с пушкой не понимала, целиться ей в крестик игрока или строго из дула).
+
+Сейчас вся логика собрана в одном месте — три члена `BaseCarryable`:
+
+| Член | Что возвращает |
+|---|---|
+| `Ray AimRay` | Луч прицеливания. Сама выбирает источник: глаз игрока (1-е лицо), камера (3-е лицо), камера сидящего игрока (если `IsTargetedAim`), либо дуло. |
+| `GameObject AimIgnoreRoot` | Корень для `IgnoreGameObjectHierarchy(...)` — игрок, если есть, иначе сам объект. |
+| `virtual bool IsTargetedAim` | Хук для оружия типа РПГ или Physgun: «в режиме сидения целиться по камере игрока». |
+
+Каждое наследующее оружие просто пишет:
+
+```csharp
+var tr = Scene.Trace.Ray( AimRay, Range )
+    .IgnoreGameObjectHierarchy( AimIgnoreRoot )
+    .Run();
+```
+
+…и работает корректно во всех четырёх режимах (1-е лицо / 3-е лицо / сидение в стуле / standalone-турель). Это упрощение видно во всех файлах оружия — см. [06.06 — BaseBulletWeapon](06_06_BaseBulletWeapon.md), [06.08 — MeleeWeapon](06_08_MeleeWeapon.md), [07.05 — Shotgun](07_05_Shotgun.md), [07.10 — RpgWeapon](07_10_Rpg.md), [08.01 — Physgun](08_01_Physgun.md).
+
+> 📖 **Совет от движка:** `Scene.Camera.Transform.World.ForwardRay` — это «куда сейчас смотрит активная камера сцены». Подробнее про работу камеры — [официальные доки s&box](https://github.com/Facepunch/sbox-docs/).
 
 ## Проверка
 

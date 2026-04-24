@@ -102,11 +102,11 @@ public class CameraWeapon : BaseWeapon
 
 	protected override void OnPreRender()
 	{
-		if ( _rtCamera is null ) return;
+		if ( !_rtCamera.IsValid() ) return;
 
 		EnsureRenderTexture();
 
-		if ( HasOwner && Scene.Camera is not null )
+		if ( HasOwner && Scene.Camera.IsValid() )
 		{
 			// Когда камеру держит игрок — зеркалим главную камеру,
 			// чтобы ТВ показывал ровно то, что видит фотограф.

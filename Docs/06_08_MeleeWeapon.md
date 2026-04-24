@@ -96,10 +96,9 @@ public class MeleeWeapon : BaseCarryable
 		if ( !CanAttack() )
 			return;
 
-		var forward = player.EyeTransform.Rotation.Forward;
-
-		var tr = Scene.Trace.Ray( player.EyeTransform.ForwardRay with { Forward = forward }, Range )
-							.IgnoreGameObjectHierarchy( player.GameObject )
+		// Use the unified AimRay so we work for held / 3rd-person / seated weapons (см. 06.01).
+		var tr = Scene.Trace.Ray( AimRay, Range )
+							.IgnoreGameObjectHierarchy( AimIgnoreRoot )
 							.WithoutTags( "playercontroller" )
 							.Radius( SwingRadius )
 							.UseHitboxes()

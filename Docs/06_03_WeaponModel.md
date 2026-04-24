@@ -286,7 +286,7 @@ public sealed partial class ViewModel : WeaponModel, ICameraSetup
 		Renderer.Set( "move_z", velocity.z );
 	}
 
-	public void OnAttack()
+	public virtual void OnAttack()
 	{
 		Renderer?.Set( "b_attack", true );
 
@@ -305,7 +305,7 @@ public sealed partial class ViewModel : WeaponModel, ICameraSetup
 		}
 	}
 
-	public void CreateRangedEffects( BaseWeapon weapon, Vector3 hitPoint, Vector3? origin )
+	public virtual void CreateRangedEffects( BaseWeapon weapon, Vector3 hitPoint, Vector3? origin )
 	{
 		DoTracerEffect( hitPoint, origin );
 	}
@@ -457,7 +457,7 @@ public partial class ViewModel
 ```csharp
 public sealed class WorldModel : WeaponModel
 {
-	public void OnAttack()
+	public override void OnAttack()
 	{
 		Renderer?.Set( "b_attack", true );
 
@@ -465,7 +465,7 @@ public sealed class WorldModel : WeaponModel
 		DoEjectBrass();
 	}
 
-	public void CreateRangedEffects( BaseWeapon weapon, Vector3 hitPoint, Vector3? origin )
+	public override void CreateRangedEffects( BaseWeapon weapon, Vector3 hitPoint, Vector3? origin )
 	{
 		if ( weapon.ViewModel.IsValid() )
 			return;

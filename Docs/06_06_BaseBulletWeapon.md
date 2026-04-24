@@ -107,33 +107,17 @@ public partial class BaseBulletWeapon : BaseWeapon
 
 		AddShootDelay( fireRate );
 
-		Vector3 forward;
-		Ray traceRay;
-		GameObject ignoreRoot;
-
-		if ( HasOwner )
-		{
-			// Player-held: shoot from eye with aim cone spread
-			var aimConeAmount = GetAimConeAmount( config.AimConeRecovery );
-			forward = Owner.EyeTransform.Rotation.Forward
-				.WithAimCone(
-					config.AimConeBase.x + aimConeAmount * config.AimConeSpread.x,
-					config.AimConeBase.y + aimConeAmount * config.AimConeSpread.y
-				);
-			traceRay = Owner.EyeTransform.ForwardRay with { Forward = forward };
-			ignoreRoot = Owner.GameObject;
-		}
-		else
-		{
-			// Standalone: shoot straight from the weapon's muzzle
-			var muzzle = WeaponModel?.MuzzleTransform?.WorldTransform ?? WorldTransform;
-			forward = muzzle.Rotation.Forward;
-			traceRay = new Ray( muzzle.Position, forward );
-			ignoreRoot = GameObject;
-		}
+		// Use the unified AimRay (eye / camera / muzzle, picked automatically — see 06.01).
+		var aimConeAmount = GetAimConeAmount( config.AimConeRecovery );
+		var forward = AimRay.Forward
+			.WithAimCone(
+				config.AimConeBase.x + aimConeAmount * config.AimConeSpread.x,
+				config.AimConeBase.y + aimConeAmount * config.AimConeSpread.y
+			);
+		var traceRay = AimRay with { Forward = forward };
 
 		var tr = Scene.Trace.Ray( traceRay, config.Range )
-			.IgnoreGameObjectHierarchy( ignoreRoot )
+			.IgnoreGameObjectHierarchy( AimIgnoreRoot )
 			.WithoutTags( "playercontroller" )
 			.Radius( config.BulletRadius )
 			.UseHitboxes()
@@ -177,16 +161,11 @@ public partial class BaseBulletWeapon : BaseWeapon
 
 		if ( !noEvents )
 		{
-			if ( ViewModel.IsValid() )
-			{
-				ViewModel.RunEvent<ViewModel>( x => x.OnAttack() );
-				ViewModel.RunEvent<ViewModel>( x => x.CreateRangedEffects( this, hitpoint, origin ) );
-			}
-			else if ( WorldModel.IsValid() )
-			{
-				WorldModel.RunEvent<WorldModel>( x => x.OnAttack() );
-				WorldModel.RunEvent<WorldModel>( x => x.CreateRangedEffects( this, hitpoint, origin ) );
-			}
+			// WeaponModel resolves to viewmodel/worldmodel/standalone-model automatically (see 06.01).
+			// OnAttack and CreateRangedEffects are virtual on WeaponModel, so this works for both
+			// ViewModel (animated 1st-person) and WorldModel (3rd-person / standalone).
+			WeaponModel.GameObject.RunEvent<WeaponModel>( x => x.OnAttack() );
+			WeaponModel.GameObject.RunEvent<WeaponModel>( x => x.CreateRangedEffects( this, hitpoint, origin ) );
 
 			if ( ShootSound.IsValid() )
 			{
