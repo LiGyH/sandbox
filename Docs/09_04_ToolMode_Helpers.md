@@ -184,6 +184,12 @@ SelectionPoint
             rb.OverrideMassCenter = part.OverrideMassCenter;
             rb.MassCenterOverride = part.MassCenterOverride;
             rb.GravityScale = part.GravityScale;
+
+            // Persist mass/gravity so they survive duplication & networking
+            // (see 12.04 — PhysicalProperties).
+            var props = go.GetOrAddComponent<PhysicalProperties>();
+            props.Mass = part.Mass;
+            props.GravityScale = part.GravityScale;
         }
     }
 }

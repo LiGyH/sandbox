@@ -172,6 +172,11 @@ public class Balloon : ToolMode
 			c.GravityScale = Force;
 		}
 
+		// Persist the gravity multiplier on the spawned object so it survives
+		// duplication and networking (see 12.04 — PhysicalProperties).
+		var props = go.GetOrAddComponent<PhysicalProperties>();
+		props.GravityScale = Force;
+
 		var undo = Player.Undo.Create();
 		undo.Name = "Balloon";
 		undo.Add( go );
@@ -187,7 +192,7 @@ public class Balloon : ToolMode
 - `attack1` — размещение с верёвкой, `attack2` — без верёвки.
 - `BalloonDefinition` загружается из ресурса `.bdef` через `ResourceLibrary`.
 - Верёвка создаётся аналогично инструменту Rope: `SpringJoint` + `VerletRope` + `LineRenderer`.
-- `GravityScale = Force` — отрицательное значение заставляет шар лететь вверх.
+- `GravityScale = Force` — отрицательное значение заставляет шар лететь вверх. Чтобы это значение **переживало дупликацию**, оно дополнительно записывается в компонент `PhysicalProperties` (см. [12.04](12_04_MassOverride.md)) — на дупе шарик поднимается так же, как оригинал.
 - В жёстком режиме шар размещается на высоте `Length` сразу над точкой привязки.
 - Тег `"removable"` добавляется для совместимости с инструментом Remover.
 - Превью с полупрозрачным шаром (`WithAlpha(0.9f)`) и случайным цветом.

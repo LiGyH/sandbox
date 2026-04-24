@@ -55,4 +55,4 @@ public sealed class ManualLink : Component
 
 ## ➡️ Следующий шаг
 
-Переходи к **[12.04 — Компонент: Переопределение массы (MassOverride) ⚖️](12_04_MassOverride.md)**.
+Переходи к **[12.04 — Компонент: Физические свойства (PhysicalProperties) ⚖️](12_04_MassOverride.md)**.
