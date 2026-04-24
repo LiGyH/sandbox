@@ -230,6 +230,7 @@ public class NoticePanel : Panel
 NoticePanel
 {
 	position: absolute;
+	left: 100%;            // start fully off-screen to the right; UpdatePosition() animates it in
 	backdrop-filter: blur( 4px ) brightness( 0.4 );
 	padding: 0.75rem 1.5rem;
 	border-radius: 10px;
@@ -300,7 +301,7 @@ span.key
 
 | Элемент | Описание |
 |---------|----------|
-| `NoticePanel` | Размытый затемнённый фон, скруглённые углы, белый текст |
+| `NoticePanel` | Размытый затемнённый фон, скруглённые углы, белый текст. **`left: 100%`** — стартовая позиция за правым краем экрана: пружина в `UpdatePosition()` сразу после первого кадра «всосёт» панель внутрь. Без этой строки уведомление мигало бы в верхнем-левом углу один кадр, пока спринг не отработал. |
 | `.icon` | Иконка слева — используется шрифт Material Icons |
 | `&.progress::after` | Полоса прогресса внизу уведомления — бегущая анимация |
 | `@keyframes progress-sweep` | Анимация полосы: слева направо, затем исчезает |

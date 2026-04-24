@@ -35,6 +35,10 @@ camera.WorldRotation *= new Angles( 0, 0, roll );
 3. **Скорость влияет на дистанцию** — чем быстрее едем, тем дальше камера
 4. **Трейс от центра до камеры** — не даём камере пройти сквозь стены
 
+### HUD пушки сиденья (`DrawSeatedWeaponHud`)
+
+Если в иерархии стула есть `BaseWeapon` (приваренная турель/пушка), `PostCameraSetup` теперь дополнительно вызывает её методы `DrawCrosshair` и `DrawHud` с центром экрана. Это даёт сидящему игроку **тот же визуальный фидбек прицеливания**, что и при оружии в руках, — крестик/ромб RPG/индикатор боезапаса. Раньше HUD рисовался только для активного оружия из инвентаря, и сидящие в турели игроки не видели крестик вообще.
+
 ### FOV (поле зрения)
 
 ```csharp
@@ -81,8 +85,33 @@ public sealed partial class Player
 
 		ApplyMovementCameraEffects( camera );
 		ApplySeatedCameraSetup( camera );
+		DrawSeatedWeaponHud( camera );
 
 		IPlayerEvent.Post( x => x.OnCameraPostSetup( camera ) );
+	}
+
+	/// <summary>
+	/// When the player is seated and there's a controllable weapon attached to the seat
+	/// (e.g. a turret on a vehicle), let it draw its crosshair / HUD even though the
+	/// player is not actively holding it. This lets seat-mounted weapons show aim feedback
+	/// the same way held weapons do (see <see cref="BaseWeapon.DrawCrosshair"/>).
+	/// </summary>
+	private void DrawSeatedWeaponHud( CameraComponent camera )
+	{
+		if ( !Controller.ThirdPerson ) return;
+
+		var seat = GetComponentInParent<ISitTarget>( false );
+		if ( seat is null ) return;
+
+		var seatRoot = (seat as Component).GameObject.Root;
+		var weapon = seatRoot.GetComponentInChildren<BaseWeapon>( true );
+		if ( !weapon.IsValid() ) return;
+
+		var hud = camera.Hud;
+		if ( hud is null ) return;
+
+		weapon.DrawCrosshair( hud, Screen.Size * 0.5f );
+		weapon.DrawHud( hud, Screen.Size * 0.5f );
 	}
 
 	private void ApplyMovementCameraEffects( CameraComponent camera )

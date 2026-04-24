@@ -178,10 +178,10 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 
 	/// <summary>
 	/// All weapons currently in the inventory, ordered by slot.
+	/// Returns an IEnumerable so callers can iterate without an extra allocation.
 	/// </summary>
-	public List<BaseCarryable> Weapons => GetComponentsInChildren<BaseCarryable>( true )
-		.OrderBy( x => x.InventorySlot )
-		.ToList();
+	public IEnumerable<BaseCarryable> Weapons => GetComponentsInChildren<BaseCarryable>( true )
+		.OrderBy( x => x.InventorySlot );
 
 	[Sync( SyncFlags.FromHost ), Change] public BaseCarryable ActiveWeapon { get; private set; }
 
@@ -527,6 +527,11 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		SaveLoadout();
 	}
 
+	/// <summary>
+	/// Sound played on the local client when picking up a new weapon (set in inspector).
+	/// </summary>
+	[Property] public SoundEvent PickupSound { get; set; }
+
 	[Rpc.Owner]
 	private void OnClientPickup( BaseCarryable weapon, bool justAmmo = false )
 	{
@@ -538,7 +543,13 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		}
 
 		if ( Player.IsLocalPlayer )
+		{
 			ILocalPlayerEvent.Post( e => e.OnPickup( weapon ) );
+
+			// New: feedback sound for picked-up weapons (skips ammo-only pickups).
+			if ( !justAmmo && PickupSound.IsValid() )
+				Sound.Play( PickupSound );
+		}
 	}
 
 	private bool ShouldAutoswitchTo( BaseCarryable item )

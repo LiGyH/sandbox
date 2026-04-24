@@ -50,9 +50,31 @@ target.OnStartControl();  // работает для машины, турели,
 ```csharp
 public interface IPlayerControllable
 {
-	public void OnStartControl();
-	public void OnEndControl();
+	/// <summary>
+	/// Called once when the player starts controlling this object.
+	/// Default no-op; override only if you need to react to the start of control.
+	/// </summary>
+	public void OnStartControl() { }
+
+	/// <summary>
+	/// Called once when the player stops controlling this object.
+	/// Default no-op.
+	/// </summary>
+	public void OnEndControl() { }
+
+	/// <summary>
+	/// Called every fixed tick while the player controls this object.
+	/// Required.
+	/// </summary>
 	public void OnControl();
+
+	/// <summary>
+	/// Returns true if this controllable accepts control from <paramref name="player"/>.
+	/// Default = true. Used to "veto" control — for example, a seat-mounted
+	/// weapon refuses to be controlled by a player who already has an active
+	/// weapon in their hands, so the player's own weapon input wins.
+	/// </summary>
+	public bool CanControl( PlayerController player ) => true;
 }
 ```
 
@@ -97,9 +119,14 @@ public void OnEndControl();
 - Разблокировать управление персонажем.
 - Воспроизвести анимацию «выхода».
 
-### Обратите внимание: нет реализации по умолчанию
+### Обратите внимание: реализации по умолчанию
 
-В отличие от `IKillSource` (02.01), здесь у методов нет тела `{ }`. Это означает, что каждый класс, реализующий `IPlayerControllable`, **обязан** реализовать все три метода. Это логично — если объект управляем, он должен знать, что делать на каждом этапе.
+В отличие от старой версии интерфейса, у `OnStartControl`, `OnEndControl` и `CanControl` теперь есть **тела по умолчанию** (C# default interface methods):
+
+- `OnStartControl()` / `OnEndControl()` — пустые. Это сделано потому, что большинству контрапций (балка с трастером, плавающий пропеллер) не нужно ничего делать по событию «сел/вышел» — они просто реагируют на ввод в `OnControl()`.
+- `CanControl(PlayerController)` — возвращает `true`. Переопредели только тогда, когда нужно **отказаться** от управления (например, оружие на сиденье отдаёт приоритет, если у игрока уже есть активное оружие — см. [06.04 — BaseWeapon](06_04_BaseWeapon.md)).
+
+Только `OnControl()` остаётся обязательным: если объект «управляем», он должен знать, что делать каждый кадр.
 
 ### Пример реализации
 
