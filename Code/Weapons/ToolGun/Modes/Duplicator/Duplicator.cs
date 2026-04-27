@@ -142,6 +142,9 @@ public partial class Duplicator : ToolMode
 	{
 		base.OnUpdate();
 
+		if ( Application.IsDedicatedServer )
+			return;
+
 		// this is called on every client, so we can see what the other
 		// players are placing. It's kind of cool.
 		DrawPreview();
@@ -217,6 +220,18 @@ public partial class Duplicator : ToolMode
 		var player = Player.FindForConnection( Rpc.Caller );
 		if ( player is null ) return;
 
+		var spawnData = new ISpawnEvents.SpawnData
+		{
+			Spawner = spawner,
+			Transform = dest,
+			Player = player.PlayerData
+		};
+
+		Scene.RunEvent<ISpawnEvents>( x => x.OnSpawn( spawnData ) );
+
+		if ( spawnData.Cancelled )
+			return;
+
 		var objects = await spawner.Spawn( dest, player );
 
 		if ( objects is { Count: > 0 } )
@@ -228,6 +243,14 @@ public partial class Duplicator : ToolMode
 			{
 				undo.Add( go );
 			}
+
+			Scene.RunEvent<ISpawnEvents>( x => x.OnPostSpawn( new ISpawnEvents.PostSpawnData
+			{
+				Spawner = spawner,
+				Transform = dest,
+				Player = player.PlayerData,
+				Objects = objects
+			} ) );
 
 			player.PlayerData?.AddStat( "tool.duplicator.spawn" );
 		}
