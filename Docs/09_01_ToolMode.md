@@ -44,9 +44,9 @@ Component (движок s&box)
 | `AbsorbMouseInput` | `bool` | Если `true` — мышь не двигает камеру (используется Weld для вращения) |
 | `Name` | `string` | Отображаемое имя инструмента |
 | `Description` | `string` | Описание инструмента |
-| `PrimaryAction` | `string` | Подсказка для ЛКМ (attack1) |
-| `SecondaryAction` | `string` | Подсказка для ПКМ (attack2) |
-| `ReloadAction` | `string` | Подсказка для R (reload) |
+| `PrimaryAction` | `string` | Подсказка для ЛКМ (attack1). По умолчанию — имя зарегистрированного `RegisterAction(ToolInput.Primary, …)` |
+| `SecondaryAction` | `string` | Подсказка для ПКМ (attack2). По умолчанию — имя `RegisterAction(ToolInput.Secondary, …)` |
+| `ReloadAction` | `string` | Подсказка для R (reload). По умолчанию — имя `RegisterAction(ToolInput.Reload, …)` |
 | `TraceIgnoreTags` | `IEnumerable<string>` | Теги, которые трассировка игнорирует (по умолчанию `"player"`) |
 | `TraceHitboxes` | `bool` | Если `true`, трассировка также попадает в хитбоксы |
 
@@ -69,6 +69,70 @@ Component (движок s&box)
 1. Находит все связанные объекты через `LinkedGameObjectBuilder`
 2. Считает колёса, двигатели, шарики, соединения, стулья
 3. Отправляет статистику в `Sandbox.Services.Stats`
+
+### Регистрация действий (новый API — `RegisterAction`) ⚙️
+
+Раньше каждый тул сам читал `Input.Pressed( "attack1" )` в `OnControl()`. Теперь это делает базовый класс — тул только **регистрирует** свои действия в `OnStart()`:
+
+```csharp
+protected override void OnStart()
+{
+    base.OnStart();
+
+    RegisterAction( ToolInput.Primary,   () => "#tool.hint.balloon.place_rope", OnPlaceWithRope );
+    RegisterAction( ToolInput.Secondary, () => "#tool.hint.balloon.place",      OnPlaceWithoutRope );
+    RegisterAction( ToolInput.Reload,    () => "#tool.hint.balloon.copy",       OnCopy );
+}
+```
+
+| Поле | Назначение |
+|------|------------|
+| `ToolInput` | `Primary` (attack1), `Secondary` (attack2) или `Reload` (reload). См. `ToolAction.cs`. |
+| `Func<string> name` | **Лямбда** для подсказки HUD — может зависеть от состояния тула (например, у Stacker на разных стадиях разный текст). Это значение автоматически отдаётся в `PrimaryAction` / `SecondaryAction` / `ReloadAction`, если вы их не переопределили. |
+| `Action callback` | Что выполнить, когда сработает кнопка. |
+| `InputMode mode` | `Pressed` (по умолчанию) — один раз при нажатии; `Down` — каждый кадр пока удерживается (нужно, например, для непрерывного «чёрчения»). |
+
+Все зарегистрированные действия диспатчит приватный метод `DispatchActions()`, вызываемый из `OnControl()` базового класса. На каждом срабатывании он:
+
+1. Проверяет соответствующий `Input.Pressed`/`Input.Down`.
+2. Стреляет `IToolActionEvents.OnToolAction(...)`. Если хоть один слушатель (например, [`LimitsSystem`](04_06_LimitsSystem.md)) выставит `Cancelled = true` — колбэк не вызывается.
+3. Очищает буфер `_createdObjects`, вызывает колбэк, после чего стреляет `OnPostToolAction(...)` со списком объектов из этого буфера.
+
+Подробнее о событиях — в **[09.11 — IToolActionEvents](09_11_IToolActionEvents.md)**.
+
+### Учёт созданных объектов — `Track(...)` 📦
+
+Внутри колбэка действия тул может пометить созданные `GameObject`-ы:
+
+```csharp
+[Rpc.Host]
+public void Spawn( … )
+{
+    var go = prefab.GetScene().Clone( … );
+    // … настройка …
+    go.NetworkSpawn( true, null );
+
+    Track( go );  // <-- попадёт в IToolActionEvents.PostActionData.CreatedObjects
+}
+```
+
+Это нужно, чтобы внешние системы (лимиты, статистика, Undo-расширения) сразу получили список созданного, не сканируя сцену. После `FirePostToolAction` буфер очищается.
+
+### Миграция старых тулов
+
+Если тул всё ещё читает `Input.Pressed( "attack1" )` и переопределяет `PrimaryAction`/`SecondaryAction` строкой:
+
+```csharp
+// СТАРО ❌
+public override string PrimaryAction => "#tool.hint.balloon.place_rope";
+public override void OnControl()
+{
+    base.OnControl();
+    if ( Input.Pressed( "attack1" ) ) DoPlaceWithRope();
+}
+```
+
+→ переписывай через `RegisterAction` (см. выше). Тулы на старом API не стреляют события и **не учитываются** [`LimitsSystem`](04_06_LimitsSystem.md).
 
 ## Ссылки на движок
 
@@ -111,18 +175,21 @@ public abstract partial class ToolMode : Component, IToolInfo
 
 	/// <summary>
 	/// Label for the primary action (attack1), or null if none.
+	/// Auto-populated from registered <see cref="ToolActionEntry"/> when not overridden.
 	/// </summary>
-	public virtual string PrimaryAction => null;
+	public virtual string PrimaryAction => GetActionName( ToolInput.Primary );
 
 	/// <summary>
 	/// Label for the secondary action (attack2), or null if none.
+	/// Auto-populated from registered <see cref="ToolActionEntry"/> when not overridden.
 	/// </summary>
-	public virtual string SecondaryAction => null;
+	public virtual string SecondaryAction => GetActionName( ToolInput.Secondary );
 
 	/// <summary>
 	/// Label for the reload action, or null if none.
+	/// Auto-populated from registered <see cref="ToolActionEntry"/> when not overridden.
 	/// </summary>
-	public virtual string ReloadAction => null;
+	public virtual string ReloadAction => GetActionName( ToolInput.Reload );
 
 	/// <summary>
 	/// Tags that TraceSelect will ignore. Override per-tool to filter out specific objects.
@@ -136,6 +203,103 @@ public abstract partial class ToolMode : Component, IToolInfo
 	public virtual bool TraceHitboxes => false;
 
 	public TypeDescription TypeDescription { get; protected set; }
+
+	private readonly List<ToolActionEntry> _actions = new();
+	private readonly List<GameObject> _createdObjects = new();
+
+	/// <summary>
+	/// Register a tool action that will be dispatched automatically by the base <see cref="OnControl"/>.
+	/// The display name is a lambda so it can vary with tool state (e.g. stage-dependent hints).
+	/// </summary>
+	protected void RegisterAction( ToolInput input, Func<string> name, Action callback, InputMode mode = InputMode.Pressed )
+	{
+		if ( IsProxy ) return;
+		_actions.Add( new ToolActionEntry( input, name, callback, mode ) );
+	}
+
+	/// <summary>
+	/// Track a GameObject created by this tool action. These are passed through
+	/// to <see cref="IToolActionEvents.PostActionData.CreatedObjects"/> when the post-event fires.
+	/// </summary>
+	protected void Track( params GameObject[] objects )
+	{
+		foreach ( var go in objects )
+		{
+			if ( go.IsValid() )
+				_createdObjects.Add( go );
+		}
+	}
+
+	private string GetActionName( ToolInput input )
+	{
+		foreach ( var action in _actions )
+		{
+			if ( action.Input == input )
+				return action.Name?.Invoke();
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// Fire <see cref="IToolActionEvents.OnToolAction"/> before executing an action.
+	/// Returns true if the action should proceed, false if cancelled.
+	/// </summary>
+	protected bool FireToolAction( ToolInput input )
+	{
+		var data = new IToolActionEvents.ActionData
+		{
+			Tool = this,
+			Input = input,
+			Player = Player?.PlayerData
+		};
+
+		Scene.RunEvent<IToolActionEvents>( x => x.OnToolAction( data ) );
+		return !data.Cancelled;
+	}
+
+	/// <summary>
+	/// Fire <see cref="IToolActionEvents.OnPostToolAction"/> after a successful action.
+	/// </summary>
+	protected void FirePostToolAction( ToolInput input )
+	{
+		var objects = _createdObjects.Count > 0 ? new List<GameObject>( _createdObjects ) : null;
+		_createdObjects.Clear();
+
+		Scene.RunEvent<IToolActionEvents>( x => x.OnPostToolAction( new IToolActionEvents.PostActionData
+		{
+			Tool = this,
+			Input = input,
+			Player = Player?.PlayerData,
+			CreatedObjects = objects
+		} ) );
+	}
+
+	/// <summary>
+	/// Check registered actions and invoke any whose input condition is met this frame.
+	/// Wraps each callback with <see cref="IToolActionEvents"/> pre/post events.
+	/// </summary>
+	private void DispatchActions()
+	{
+		foreach ( var action in _actions )
+		{
+			var inputName = action.InputAction;
+			if ( inputName is null ) continue;
+
+			bool active = action.Mode == InputMode.Down
+				? Input.Down( inputName )
+				: Input.Pressed( inputName );
+
+			if ( active )
+			{
+				if ( !FireToolAction( action.Input ) )
+					continue;
+
+				_createdObjects.Clear();
+				action.Callback?.Invoke();
+				FirePostToolAction( action.Input );
+			}
+		}
+	}
 
 	protected override void OnStart()
 	{
@@ -162,80 +326,26 @@ public abstract partial class ToolMode : Component, IToolInfo
 
 	public virtual void DrawScreen( Rect rect, HudPainter paint )
 	{
-		var t = $"{TypeDescription.Icon} {TypeDescription.Title}";
-
-		var text = new TextRendering.Scope( t, Color.White, 64 );
-		text.LineHeight = 0.75f;
-		text.FontName = "Poppins";
-		text.TextColor = Color.Orange;
-		text.FontWeight = 700;
-
-		var measured = text.Measure();
-		float textW = measured.x;
-		float textH = measured.y;
-
-		if ( textW <= rect.Width )
-		{
-			paint.DrawText( text, rect, TextFlag.Center );
-			return;
-		}
-
-		// Marquee: scroll text right-to-left, looping seamlessly.
-		// The render target viewport naturally clips anything outside [0, rect.Width].
-		const float scrollSpeed = 80f;
-		const float gap = 60f;
-		float cycle = textW + gap;
-		float offset = (Time.Now * scrollSpeed) % cycle;
-
-		float y = rect.Top + (rect.Height - textH) * 0.5f;
-
-		float x = rect.Width - offset;
-		paint.DrawText( text, new Rect( x, y, textW, textH ), TextFlag.SingleLine | TextFlag.Left );
-		paint.DrawText( text, new Rect( x - cycle, y, textW, textH ), TextFlag.SingleLine | TextFlag.Left );
+		// … рендер заголовка/marquee — см. полный исходник …
 	}
 
 	public virtual void DrawHud( HudPainter painter, Vector2 crosshair )
 	{
-		if ( IsValidState )
-		{
-			painter.SetBlendMode( BlendMode.Normal );
-			painter.DrawCircle( crosshair, 5, Color.Black );
-			painter.DrawCircle( crosshair, 3, Color.White );
-		}
-		else
-		{
-			Color redColor = "#e53";
-			painter.SetBlendMode( BlendMode.Normal );
-			painter.DrawCircle( crosshair, 5, redColor.Darken( 0.3f ) );
-			painter.DrawCircle( crosshair, 3, redColor );
-		}
+		// … рендер прицела (белый/красный) — см. полный исходник …
 	}
 
 	/// <summary>
-	/// Called on the host after placing an entity or constraint. Fires an RPC to the owning
-	/// client so it can walk the contraption graph and record achievement stats locally.
+	/// Called on the host after placing an entity or constraint.
 	/// </summary>
 	[Rpc.Owner]
 	protected void CheckContraptionStats( GameObject anchor )
 	{
-		var builder = new LinkedGameObjectBuilder();
-		builder.AddConnected( anchor );
-
-		var wheels = builder.Objects.Sum( o => o.GetComponentsInChildren<WheelEntity>().Count() );
-		var thrusters = builder.Objects.Sum( o => o.GetComponentsInChildren<ThrusterEntity>().Count() );
-		var hoverballs = builder.Objects.Sum( o => o.GetComponentsInChildren<HoverballEntity>().Count() );
-		var constraints = builder.Objects.Sum( o => o.GetComponentsInChildren<ConstraintCleanup>().Count() );
-		var chairs = builder.Objects.Sum( o => o.GetComponentsInChildren<BaseChair>().Count() );
-
-		Sandbox.Services.Stats.Increment( "tool.constraint.create", 1 );
-		Sandbox.Services.Stats.SetValue( "tool.contraption.wheel", wheels );
-		Sandbox.Services.Stats.SetValue( "tool.contraption.thruster", thrusters );
-		Sandbox.Services.Stats.SetValue( "tool.contraption.hoverball", hoverballs );
-		Sandbox.Services.Stats.SetValue( "tool.contraption.constraint", constraints );
-		Sandbox.Services.Stats.SetValue( "tool.contraption.chair", chairs );
+		// … подсчёт колёс/двигателей/шариков/констрейнтов/стульев и Stats.SetValue(...) …
 	}
 }
 ```
+
+> 📌 `DispatchActions()` приватный — конкретные тулы его не дёргают. Достаточно вызвать `base.OnControl()` в своём `OnControl()` (см. `ToolMode.Helpers.cs`/наследников), и базовый класс сам прочитает ввод и пройдётся по `_actions`.
 
 ## Что проверить?
 

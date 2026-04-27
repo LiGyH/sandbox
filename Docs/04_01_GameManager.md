@@ -13,8 +13,14 @@
 - Обрабатывает подключение/отключение игроков
 - Спавнит игроков на спавн-поинтах
 - Обрабатывает смерти и ленту убийств
-- Управляет спавном объектов (пропы, сущности, дупликаты)
+- Управляет спавном объектов (пропы, сущности, дупликаты) — через `ISpawnEvents`
 - Предоставляет RPC для удалённого изменения свойств
+
+> 📁 **Класс `partial`-ный.** В исходниках он разнесён по двум файлам:
+> - **`Code/GameLoop/GameManager.cs`** — лобби, подключения, спавн игроков, смерти, общие RPC (`ChangeProperty`, `DeleteInspectedObject`, `BreakInspectedProp`, морфы, материалы, выдача `SpawnerWeapon`).
+> - **`Code/GameLoop/GameManager.Spawn.cs`** — всё, что связано со спавном объектов через `ISpawner` (консольная команда `spawn`, парсинг `ident`, `FindDupe`, `SpawnAndUndo` с диспатчем [`ISpawnEvents`](14_01b_ISpawnEvents.md)).
+>
+> Раньше эти куски лежали в одном файле; разделение упростило подключение событий и поддержку.
 
 ## Архитектура
 
@@ -83,7 +89,7 @@ public void OnDeath( Player player, DamageInfo dmg )
 }
 ```
 
-### Спавн объектов (Spawn)
+### Спавн объектов (Spawn) — файл `GameManager.Spawn.cs`
 
 Универсальная система спавна по строковому идентификатору:
 
@@ -95,17 +101,23 @@ public void OnDeath( Player player, DamageInfo dmg )
 ```
 
 Алгоритм:
-1. Игрок вызывает `Spawn(ident)` (RPC)
-2. На клиенте: звук + статистика
-3. На хосте: трейс от глаз → определяем позицию
-4. Парсим тип и создаём соответствующий `ISpawner`
-5. Спавним и регистрируем в Undo-стеке
+1. Игрок вызывает `Spawn(ident)` (RPC `Rpc.Broadcast`).
+2. На клиенте-инициаторе: звук + статистика.
+3. На хосте: трейс от глаз → определяем позицию.
+4. Парсим тип через `SpawnlistItem.ParseIdent` и создаём соответствующий `ISpawner`.
+5. Передаём в **`SpawnAndUndo(spawner, transform, player)`**, который:
+   - стреляет [`ISpawnEvents.OnSpawn`](14_01b_ISpawnEvents.md) — слушатели (например, [`LimitsSystem`](04_06_LimitsSystem.md), античит, зональные блокировки) могут отменить спавн через `data.Cancelled = true`;
+   - если не отменено — вызывает `await spawner.Spawn(...)`;
+   - регистрирует созданные объекты в Undo-стеке игрока;
+   - стреляет `ISpawnEvents.OnPostSpawn` со списком созданных объектов.
+
+Тот же протокол использует [`SpawnerWeapon.DoSpawn`](14_06_SpawnerWeapon.md) — поэтому слушателю достаточно реализовать `ISpawnEvents` один раз, и он покроет оба источника спавна.
 
 ## Создай файл
 
-Путь: `Code/GameLoop/GameManager.cs`
+Путь: `Code/GameLoop/GameManager.cs` (основная логика) + `Code/GameLoop/GameManager.Spawn.cs` (универсальный спавн через `ISpawner`/`ISpawnEvents`).
 
-*(Полный код — 300+ строк — см. исходник в `Code/GameLoop/GameManager.cs`)*
+*(Полный код — см. исходники в репозитории.)*
 
 Ключевые секции файла:
 
@@ -186,6 +198,8 @@ var (type, path, source) = SpawnlistItem.ParseIdent( ident );
 <!-- seealso -->
 ## 🔗 См. также
 
+- [04.06 — LimitsSystem](04_06_LimitsSystem.md) — серверные ConVar-лимиты, использует `ISpawnEvents` из `GameManager.Spawn.cs`
+- [14.01b — ISpawnEvents](14_01b_ISpawnEvents.md) — события спавна, которые стреляет `SpawnAndUndo`
 - [23.01 — ISaveEvents](23_01_ISaveEvents.md)
 - [02.01 — IKillSource](02_01_IKillSource.md)
 - [14.01 — ISpawner](14_01_ISpawner.md)
