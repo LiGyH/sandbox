@@ -24,6 +24,8 @@
 - `OwnershipChecks` — `ConVar` с флагами `Replicated | Server | GameSetting`. Реплицируется на клиенты, но изменяется только на сервере.
 - `HasAccess()` — статический метод проверки доступа. Игроки с правом `admin` имеют доступ всегда (`Connection.HasPermission( "admin" )`). Если владелец не задан — доступ открыт всем.
 - `IPhysgunEvent.OnPhysgunGrab()` / `IToolgunEvent.OnToolgunSelect()` — явные реализации интерфейсов, отменяющие событие если нет доступа.
+- `OwnableExtensions.HasAccess(GameObject, Connection)` — extension-метод для удобной проверки прав на любой `GameObject`. Если на объекте нет компонента `Ownable`, считаем доступ разрешённым (`return true`). Используется, например, в `GameManager.DeleteInspectedObject` / `BreakInspectedProp` для проверки «можно ли вызывающему через инспектор удалить/сломать этот проп».
+- Метод `CallerHasAccess` помечен `internal` — внешним сборкам нужно ходить через `OwnableExtensions.HasAccess` или статический `Ownable.HasAccess(caller, owner)`.
 
 ## Создай файл
 
@@ -67,7 +69,7 @@ public sealed class Ownable : Component, IPhysgunEvent, IToolgunEvent
 	[ConVar( "sb.ownership_checks", ConVarFlags.Replicated | ConVarFlags.Server | ConVarFlags.GameSetting, Help = "Enforce ownership, players can only interact with their own props." )]
 	public static bool OwnershipChecks { get; set; } = false;
 
-	bool CallerHasAccess( Connection caller ) => HasAccess( caller, Owner );
+	internal bool CallerHasAccess( Connection caller ) => HasAccess( caller, Owner );
 
 	public static bool HasAccess( Connection caller, Connection owner )
 	{
@@ -88,6 +90,17 @@ public sealed class Ownable : Component, IPhysgunEvent, IToolgunEvent
 	{
 		if ( !CallerHasAccess( e.User ) )
 			e.Cancelled = true;
+	}
+}
+
+
+public static class OwnableExtensions
+{
+	public static bool HasAccess( this GameObject go, Connection caller )
+	{
+		if ( go.Components.TryGet<Ownable>( out var ownable ) )
+			return ownable.CallerHasAccess( caller );
+		return true;
 	}
 }
 ```

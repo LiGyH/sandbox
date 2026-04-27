@@ -27,8 +27,9 @@
 - **`Force`** — масштаб гравитации для Rigidbody шара. Отрицательное значение заставляет шар подниматься вверх.
 - **`Rigid`** — если `true`, верёвка натянута (без провисания), шар размещается сразу на высоте `Length`.
 - **`Tint`** — цвет шара. Если белый — используется случайный цвет (`Color.Random`).
-- **`OnControl()`** — показывает превью шара, `attack1` спавнит с верёвкой, `attack2` — без.
-- **`Spawn()`** — RPC-метод: клонирует префаб, настраивает верёвку (`SpringJoint` + `VerletRope` + `LineRenderer`), применяет цвет и физику.
+- **`OnStart()`** — регистрирует два действия через `RegisterAction(...)`: `Primary` (ЛКМ) ставит шар с верёвкой, `Secondary` (ПКМ) — без верёвки. Подсказки `PrimaryAction`/`SecondaryAction` подставляются автоматически из имён регистраций (см. [09.01 — ToolMode](09_01_ToolMode.md), раздел «Регистрация действий»).
+- **`OnControl()`** — только показывает превью шара. Чтение нажатий и вызов колбэков делает базовый класс через `DispatchActions()`.
+- **`Spawn()`** — RPC-метод: клонирует префаб, настраивает верёвку (`SpringJoint` + `VerletRope` + `LineRenderer`), применяет цвет и физику. В конце вызывает `Track(go)`, чтобы созданный шар попал в `IToolActionEvents.PostActionData.CreatedObjects` — это нужно [`LimitsSystem`](04_06_LimitsSystem.md) для учёта `sb.limit.balloons`.
 - `ApplyPhysicsProperties()` — применяет настройки физики из базового класса.
 
 ## Создай файл
@@ -62,14 +63,52 @@ public class Balloon : ToolMode
 	public Color Tint { get; set; } = Color.White;
 
 	public override string Description => "#tool.hint.balloon.description";
-	public override string PrimaryAction => "#tool.hint.balloon.place_rope";
-	public override string SecondaryAction => "#tool.hint.balloon.place";
 
 	Color _previewTint = Color.Random;
+
+	protected override void OnStart()
+	{
+		base.OnStart();
+
+		RegisterAction( ToolInput.Primary,   () => "#tool.hint.balloon.place_rope", OnPlaceWithRope );
+		RegisterAction( ToolInput.Secondary, () => "#tool.hint.balloon.place",      OnPlaceWithoutRope );
+	}
 
 	protected override void OnEnabled()
 	{
 		base.OnEnabled();
+		_previewTint = Color.Random;
+	}
+
+	void OnPlaceWithRope()
+	{
+		var select = TraceSelect();
+		if ( !select.IsValid() ) return;
+
+		var thrusterDef = ResourceLibrary.Get<BalloonDefinition>( Definition );
+		if ( thrusterDef == null ) return;
+
+		var pos = select.WorldTransform();
+		var placementTx = new Transform( pos.Position );
+
+		Spawn( select, thrusterDef.Prefab, placementTx, true, _previewTint );
+		ShootEffects( select );
+		_previewTint = Color.Random;
+	}
+
+	void OnPlaceWithoutRope()
+	{
+		var select = TraceSelect();
+		if ( !select.IsValid() ) return;
+
+		var thrusterDef = ResourceLibrary.Get<BalloonDefinition>( Definition );
+		if ( thrusterDef == null ) return;
+
+		var pos = select.WorldTransform();
+		var placementTx = new Transform( pos.Position );
+
+		Spawn( select, thrusterDef.Prefab, placementTx, false, _previewTint );
+		ShootEffects( select );
 		_previewTint = Color.Random;
 	}
 
@@ -80,24 +119,11 @@ public class Balloon : ToolMode
 		var select = TraceSelect();
 		if ( !select.IsValid() ) return;
 
-		var pos = select.WorldTransform();
-		var placementTx = new Transform( pos.Position );
-
 		var thrusterDef = ResourceLibrary.Get<BalloonDefinition>( Definition );
 		if ( thrusterDef == null ) return;
 
-		if ( Input.Pressed( "attack1" ) )
-		{
-			Spawn( select, thrusterDef.Prefab, placementTx, true, _previewTint );
-			ShootEffects( select );
-			_previewTint = Color.Random;
-		}
-		else if ( Input.Pressed( "attack2" ) )
-		{
-			Spawn( select, thrusterDef.Prefab, placementTx, false, _previewTint );
-			ShootEffects( select );
-			_previewTint = Color.Random;
-		}
+		var pos = select.WorldTransform();
+		var placementTx = new Transform( pos.Position );
 
 		var previewTint = Tint == Color.White ? _previewTint : Tint;
 		DebugOverlay.GameObject( thrusterDef.Prefab.GetScene(), transform: placementTx, castShadows: true, color: previewTint.WithAlpha( 0.9f ) );
@@ -177,6 +203,10 @@ public class Balloon : ToolMode
 		var props = go.GetOrAddComponent<PhysicalProperties>();
 		props.GravityScale = Force;
 
+		// Track for IToolActionEvents.PostActionData.CreatedObjects
+		// (used by LimitsSystem to enforce sb.limit.balloons).
+		Track( go );
+
 		var undo = Player.Undo.Create();
 		undo.Name = "Balloon";
 		undo.Add( go );
@@ -189,13 +219,14 @@ public class Balloon : ToolMode
 ## Проверка
 
 - Класс `Balloon` наследуется от `ToolMode` (не от `BaseConstraintToolMode`).
-- `attack1` — размещение с верёвкой, `attack2` — без верёвки.
+- Действия регистрируются в `OnStart()` через `RegisterAction(...)`: `Primary` — с верёвкой, `Secondary` — без верёвки. Базовый класс сам читает ввод, стреляет [`IToolActionEvents`](09_11_IToolActionEvents.md), вызывает колбэк.
 - `BalloonDefinition` загружается из ресурса `.bdef` через `ResourceLibrary`.
 - Верёвка создаётся аналогично инструменту Rope: `SpringJoint` + `VerletRope` + `LineRenderer`.
 - `GravityScale = Force` — отрицательное значение заставляет шар лететь вверх. Чтобы это значение **переживало дупликацию**, оно дополнительно записывается в компонент `PhysicalProperties` (см. [12.04](12_04_MassOverride.md)) — на дупе шарик поднимается так же, как оригинал.
 - В жёстком режиме шар размещается на высоте `Length` сразу над точкой привязки.
 - Тег `"removable"` добавляется для совместимости с инструментом Remover.
 - Превью с полупрозрачным шаром (`WithAlpha(0.9f)`) и случайным цветом.
+- `Track(go)` в конце `Spawn()` — обязательный шаг, чтобы [`LimitsSystem`](04_06_LimitsSystem.md) знал об этом шарике и считал его в `sb.limit.balloons`.
 
 
 ---

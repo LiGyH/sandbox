@@ -104,6 +104,7 @@
 | [04.03](04_03_GameManager_Util.md) | Утилиты GameManager: кик игроков (GameManager.Util) 🥾 |
 | [04.04](04_04_GamePreferences.md) | Игровые настройки (GamePreferences) ⚙️ |
 | [04.05](04_05_ServerSettings.md) | Серверные настройки (ServerSettings) 🖥️ |
+| [04.06](04_06_LimitsSystem.md) | Серверные лимиты на спавн и тулган (LimitsSystem) 🚦 |
 
 ## Фаза 5: HUD и внутриигровой UI 🖼️
 
@@ -174,6 +175,7 @@
 | [09.08](09_08_IToolgunEvent.md) | Компонент: Событие тул-гана (IToolgunEvent) 🔧 |
 | [09.09](09_09_ToolInfoPanel.md) | Этап 09_09 — ToolInfoPanel (Панель информации об инструменте) |
 | [09.10](09_10_Stacker.md) | 📚 Stacker — Инструмент «Стэкер» (массовое копирование объектов) |
+| [09.11](09_11_IToolActionEvents.md) | ⚡ ToolAction.cs + IToolActionEvents — система регистрации и событий действий тулгана |
 
 ## Фаза 10: Тулы и констрейнты 🔗
 
@@ -236,6 +238,7 @@
 | Файл | Тема |
 |------|------|
 | [14.01](14_01_ISpawner.md) | Этап 14_01 — ISpawner |
+| [14.01b](14_01b_ISpawnEvents.md) | Этап 14_01b — ISpawnEvents (события спавна: `OnSpawn` / `OnPostSpawn`) 📡 |
 | [14.02](14_02_PropSpawner.md) | Этап 14_02 — PropSpawner |
 | [14.03](14_03_EntitySpawner.md) | Этап 14_03 — EntitySpawner |
 | [14.04](14_04_MountSpawner.md) | Этап 14_04 — MountSpawner |
