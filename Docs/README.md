@@ -334,6 +334,27 @@
 - [27_09 — Архитектуры под жанры (FPS, BR, MOBA, RP, MMO-light, симулятор)](27_09_Genre_Examples.md)
 - [27_10 — Эксплуатация: хостинг, мониторинг, обновление, защита](27_10_Hosting_Operations.md)
 
+### Фаза 28: Анимации и шейдеры 🎞️🎨
+
+> Углублённый разбор анимаций (AnimGraph, CitizenAnimationHelper, IK, морфы, anim events) и шейдеров (`.shader`/`.vmat`, surface vs post-process). По мотивам [официальной документации Facepunch → animation](https://github.com/Facepunch/sbox-docs/tree/master/docs/animation) и [shaders](https://github.com/Facepunch/sbox-docs/tree/master/docs/shaders), с разбором реальных файлов Sandbox: `Code/Npcs/Layers/AnimationLayer.Hold.cs`, `Code/Game/Weapon/WeaponModel/ViewModel.cs`, `Code/Weapons/Sniper/SniperScopeEffect.cs`, `Assets/shaders/snap_grid.shader`.
+
+- [28_01 — Анимации: общая картина (vmdl, vanmgrph, SkinnedModelRenderer)](28_01_Animation_Overview.md)
+- [28_02 — AnimGraph: стейты, переходы, BlendSpace 1D/2D, Layer/Mask](28_02_AnimGraph_Basics.md)
+- [28_03 — Параметры AnimGraph и API SkinnedModelRenderer (Set/Get)](28_03_AnimGraph_Parameters.md)
+- [28_04 — CitizenAnimationHelper: WithVelocity/WithLook/HoldType/IK](28_04_CitizenAnimationHelper.md)
+- [28_05 — Разбор `AnimationLayer.Hold.cs` (NPC держит пропу)](28_05_AnimationLayer_Hold.md)
+- [28_06 — Анимации view-модели оружия (`ViewModel.cs`)](28_06_ViewModel_Animations.md)
+- [28_07 — Процедурная IK: руки на оружии/пропе, ноги по рельефу](28_07_Procedural_IK.md)
+- [28_08 — События анимаций: tags, generic events, footsteps](28_08_Animation_Events.md)
+- [28_09 — Морфы (blendshapes), MorphState и FacePose](28_09_MorphState_FacePose.md)
+- [28_10 — Шейдеры: общая картина (.shader / .shader_c / .vmat, surface/post)](28_10_Shaders_Overview.md)
+- [28_11 — Анатомия `.shader`-файла: HEADER/MODES/COMMON/VS/PS](28_11_Shader_Anatomy.md)
+- [28_12 — Material System: `.vmat`, `SceneObject.Attributes.Set`, override материала](28_12_Material_System.md)
+- [28_13 — Построчный разбор `Assets/shaders/snap_grid.shader`](28_13_SnapGrid_Shader.md)
+- [28_14 — Пост-обработка: связь с PostProcessResource/Manager (Фаза 18)](28_14_PostProcess_Shaders.md)
+- [28_15 — Свой пост-эффект: BlitMode, RenderTarget, регистрация (SniperScope)](28_15_Custom_PostProcess.md)
+- [28_16 — Отладка шейдеров: ConVars, RenderDoc/PIX, debug-вывод](28_16_Shader_Debugging.md)
+
 ---
 
 ## Ссылки

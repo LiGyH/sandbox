@@ -2,7 +2,9 @@
 
 ## Что мы делаем?
 
-Создаём структуру `ClientInput`, которая предоставляет удобный интерфейс для опроса состояния кнопок (нажата, отпущена, удерживается) конкретного игрока через его сетевое подключение (`Connection`). Структура используется системой управления (`ControlSystem`), чтобы каждый `PlayerController` мог считывать ввод именно своего клиента — даже на сервере.
+Создаём структуру `ClientInput`, которая предоставляет удобный интерфейс для опроса состояния кнопок (нажата, отпущена, удерживается) конкретного игрока через его сетевое подключение (`Connection`). Структура используется системой управления (`ControlSystem`), чтобы каждый `Player` мог считывать ввод именно своего клиента — даже на сервере.
+
+> ℹ️ **Что изменилось:** scope раньше переключали на `PlayerController`. Сейчас передаётся целиком `Player` — это даёт коду, читающему `ClientInput.Current`, доступ ко всему, что есть у игрока: `Controller`, `PlayerInventory`, `PlayerData`, `GameObject`. Никаких лишних `GetComponentInParent<Player>()`.
 
 ## Как это работает внутри движка
 
@@ -11,9 +13,10 @@
 `ClientInput` оборачивает этот механизм:
 
 1. **Поле `Action`** хранит имя действия (input action), к которому привязана данная кнопка.
-2. **Статическое поле `_currentState`** содержит текущий контекст: какой `Connection` и какой `PlayerController` сейчас обрабатываются.
+2. **Статическое поле `_currentState`** содержит текущий контекст: какой `Connection` и какой `Player` сейчас обрабатываются.
 3. **Метод `PushScope`** устанавливает контекст перед обработкой ввода конкретного игрока и возвращает `IDisposable`, который восстанавливает предыдущий контекст при завершении (паттерн «scope guard»).
-4. Методы `Down()`, `Pressed()`, `Released()` делегируют вызов к `Connection`, привязанному к текущему scope.
+4. **Свойство `Current`** возвращает `Player`, чей scope сейчас активен (или `null` вне `using`-блока). Используется кодом «standalone»-оружий, чтобы определить, **кто** именно жмёт триггер (см. [06.01 — `BaseCarryable.EffectiveAttacker`](06_01_BaseCarryable.md) и [07.10 — RPG](07_10_Rpg.md)).
+5. Методы `Down()`, `Pressed()`, `Released()` делегируют вызов к `Connection`, привязанному к текущему scope.
 
 Таким образом, код игровой логики пишет просто `myInput.Pressed()`, а нужный `Connection` подставляется автоматически через scope.
 
@@ -29,7 +32,7 @@ using Sandbox.Utility;
 
 public struct ClientInput
 {
-	readonly record struct State( Connection connection, PlayerController playerController );
+	readonly record struct State( Connection connection, Player player );
 
 	static State _currentState;
 
@@ -78,13 +81,19 @@ public struct ClientInput
 		return Connection?.Pressed( Action ) ?? false;
 	}
 
-	internal static IDisposable PushScope( PlayerController player )
+	internal static IDisposable PushScope( Player player )
 	{
 		var previousState = _currentState;
 		_currentState = new State( player?.Network?.Owner, player );
 
 		return DisposeAction.Create( () => _currentState = previousState );
 	}
+
+	/// <summary>
+	/// The player currently running an <see cref="IPlayerControllable.OnControl"/> tick,
+	/// or null when not inside a control scope (e.g. during regular player input).
+	/// </summary>
+	public static Player Current => _currentState.player;
 }
 ```
 
@@ -93,10 +102,10 @@ public struct ClientInput
 ### Вложенная запись `State`
 
 ```csharp
-readonly record struct State( Connection connection, PlayerController playerController );
+readonly record struct State( Connection connection, Player player );
 ```
 
-`record struct` — компактная неизменяемая структура с двумя полями. Она хранит пару: сетевое подключение игрока (`Connection`) и его контроллер (`PlayerController`). Модификатор `readonly` гарантирует, что экземпляр `State` нельзя изменить после создания.
+`record struct` — компактная неизменяемая структура с двумя полями. Она хранит пару: сетевое подключение игрока (`Connection`) и сам объект `Player`. Модификатор `readonly` гарантирует, что экземпляр `State` нельзя изменить после создания.
 
 ### Статическое состояние
 
@@ -174,7 +183,7 @@ public readonly bool Pressed()
 ### Метод `PushScope()`
 
 ```csharp
-internal static IDisposable PushScope( PlayerController player )
+internal static IDisposable PushScope( Player player )
 {
     var previousState = _currentState;
     _currentState = new State( player?.Network?.Owner, player );
@@ -186,8 +195,16 @@ internal static IDisposable PushScope( PlayerController player )
 Это ключевой метод всей структуры. Он:
 
 1. Сохраняет предыдущее состояние в локальную переменную `previousState`.
-2. Устанавливает новый контекст — подключение берётся из `player.Network.Owner` (владелец сетевого объекта — это клиент, которому принадлежит данный `PlayerController`).
+2. Устанавливает новый контекст — подключение берётся из `player.Network.Owner` (владелец сетевого объекта — это клиент, которому принадлежит данный `Player`).
 3. Возвращает `IDisposable`, при вызове `Dispose()` которого восстанавливается предыдущий контекст.
+
+### Свойство `Current`
+
+```csharp
+public static Player Current => _currentState.player;
+```
+
+Возвращает `Player`, в чьём `PushScope`-блоке мы сейчас находимся, или `null` за его пределами. Это «обратный» канал из системы управления: контрапция (например, RPG в стандалоне) внутри `OnControl` не получает игрока в параметрах — но может прочитать `ClientInput.Current` и узнать, кто на самом деле жмёт триггер. См. реальные примеры: `BaseCarryable.EffectiveAttacker` ([06.01](06_01_BaseCarryable.md)) и `RpgWeapon.CreateProjectile` ([07.10](07_10_Rpg.md)).
 
 Типичное использование:
 

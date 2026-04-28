@@ -411,6 +411,29 @@
 | [27.09](27_09_Genre_Examples.md) | Архитектуры под жанры (FPS, BR, MOBA, RP, MMO-light, симулятор) 🎮 |
 | [27.10](27_10_Hosting_Operations.md) | Хостинг, мониторинг, обновление, бэкапы, защита 🛡️ |
 
+## Фаза 28: Анимации и шейдеры 🎞️🎨
+
+> Углублённый разбор анимаций (AnimGraph, CitizenAnimationHelper, IK, морфы, anim events) и шейдеров (`.shader`/`.vmat`, surface vs post-process, разбор реальных шейдеров Sandbox `snap_grid` и `sniper_scope`). Источники: [официальная документация Facepunch → animation](https://github.com/Facepunch/sbox-docs/tree/master/docs/animation) и [shaders](https://github.com/Facepunch/sbox-docs/tree/master/docs/shaders), плюс реальный код в `Code/Player`, `Code/Npcs`, `Code/Game/Weapon/WeaponModel/ViewModel.cs`, `Code/Weapons/Sniper`, `Assets/shaders`.
+
+| Файл | Тема |
+|------|------|
+| [28.01](28_01_Animation_Overview.md) | Анимации: общая картина (vmdl, vanmgrph, SkinnedModelRenderer) 🎬 |
+| [28.02](28_02_AnimGraph_Basics.md) | AnimGraph: стейты, переходы, BlendSpace 1D/2D, Layer/Mask 🧩 |
+| [28.03](28_03_AnimGraph_Parameters.md) | Параметры AnimGraph и API SkinnedModelRenderer (Set/Get) 🎚️ |
+| [28.04](28_04_CitizenAnimationHelper.md) | CitizenAnimationHelper: WithVelocity/WithLook/HoldType/IK 🤖 |
+| [28.05](28_05_AnimationLayer_Hold.md) | Разбор `AnimationLayer.Hold.cs`: NPC берёт пропу 📦 |
+| [28.06](28_06_ViewModel_Animations.md) | Анимации view-модели оружия (`ViewModel.cs`): bob, sway, attack, reload 🔫 |
+| [28.07](28_07_Procedural_IK.md) | Процедурная IK: руки на оружии/пропе, ноги по рельефу 🦵 |
+| [28.08](28_08_Animation_Events.md) | События анимаций: tags, generic events, footsteps 🎯 |
+| [28.09](28_09_MorphState_FacePose.md) | Морфы (blendshapes), MorphState и FacePose 😀 |
+| [28.10](28_10_Shaders_Overview.md) | Шейдеры: общая картина (.shader / .shader_c / .vmat, surface/post) 🖌️ |
+| [28.11](28_11_Shader_Anatomy.md) | Анатомия `.shader`-файла: HEADER/MODES/COMMON/VS/PS, Attribute, RenderState 📐 |
+| [28.12](28_12_Material_System.md) | Material System: `.vmat`, `SceneObject.Attributes.Set`, override материала 🎨 |
+| [28.13](28_13_SnapGrid_Shader.md) | Построчный разбор `Assets/shaders/snap_grid.shader` 🔲 |
+| [28.14](28_14_PostProcess_Shaders.md) | Пост-обработка: связь с PostProcessResource/Manager (Фаза 18), стадии и порядок ✨ |
+| [28.15](28_15_Custom_PostProcess.md) | Свой пост-эффект: BlitMode, RenderTarget, регистрация (на примере SniperScope) 🔭 |
+| [28.16](28_16_Shader_Debugging.md) | Отладка шейдеров: ConVars, RenderDoc/PIX, debug-вывод цвета 🐛 |
+
 ---
 
 ## Полезные ссылки

@@ -26,7 +26,7 @@ using Sandbox.Utility;
 
 public struct ClientInput
 {
-	readonly record struct State( Connection connection, PlayerController playerController );
+	readonly record struct State( Connection connection, Player player );
 
 	static State _currentState;
 
@@ -75,15 +75,23 @@ public struct ClientInput
 		return Connection?.Pressed( Action ) ?? false;
 	}
 
-	internal static IDisposable PushScope( PlayerController player )
+	internal static IDisposable PushScope( Player player )
 	{
 		var previousState = _currentState;
 		_currentState = new State( player?.Network?.Owner, player );
 
 		return DisposeAction.Create( () => _currentState = previousState );
 	}
+
+	/// <summary>
+	/// The player currently running an <see cref="IPlayerControllable.OnControl"/> tick,
+	/// or null when not inside a control scope (e.g. during regular player input).
+	/// </summary>
+	public static Player Current => _currentState.player;
 }
 ```
+
+> ℹ️ **Что изменилось:** `PushScope` теперь принимает `Player`, а не `PlayerController`. Внутри `Player` хранится и контроллер, и инвентарь, и `PlayerData` — поэтому код, которому раньше приходилось ходить через `playerController.GetComponentInParent<Player>()`, теперь работает напрямую. Заодно появилось публичное свойство **`ClientInput.Current`** — его читают «standalone»-оружия (см. [06.01 — `BaseCarryable.EffectiveAttacker`](06_01_BaseCarryable.md) и [07.10 — `RpgWeapon.CreateProjectile`](07_10_Rpg.md)), чтобы понять, **кому** атрибутировать урон, когда оружием управляет сидящий в стуле игрок.
 
 ### Зачем PushScope?
 
@@ -139,7 +147,10 @@ public class ControlSystem : GameObjectSystem<ControlSystem>
 
 	void RunControl( BaseChair chair, LinkedGameObjectBuilder builder )
 	{
-		var player = chair.GetOccupant();
+		var controller = chair.GetOccupant();
+		if ( !controller.IsValid() ) return;
+
+		var player = controller.GetComponent<Player>();
 		if ( !player.IsValid() ) return;
 
 		using var scope = ClientInput.PushScope( player );

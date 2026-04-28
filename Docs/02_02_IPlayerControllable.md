@@ -74,7 +74,7 @@ public interface IPlayerControllable
 	/// weapon refuses to be controlled by a player who already has an active
 	/// weapon in their hands, so the player's own weapon input wins.
 	/// </summary>
-	public bool CanControl( PlayerController player ) => true;
+	public bool CanControl( Player player ) => true;
 }
 ```
 
@@ -124,7 +124,9 @@ public void OnEndControl();
 В отличие от старой версии интерфейса, у `OnStartControl`, `OnEndControl` и `CanControl` теперь есть **тела по умолчанию** (C# default interface methods):
 
 - `OnStartControl()` / `OnEndControl()` — пустые. Это сделано потому, что большинству контрапций (балка с трастером, плавающий пропеллер) не нужно ничего делать по событию «сел/вышел» — они просто реагируют на ввод в `OnControl()`.
-- `CanControl(PlayerController)` — возвращает `true`. Переопредели только тогда, когда нужно **отказаться** от управления (например, оружие на сиденье отдаёт приоритет, если у игрока уже есть активное оружие — см. [06.04 — BaseWeapon](06_04_BaseWeapon.md)).
+- `CanControl(Player)` — возвращает `true`. Переопредели только тогда, когда нужно **отказаться** от управления (например, оружие на сиденье отдаёт приоритет, если у игрока уже есть активное оружие — см. [06.04 — BaseWeapon](06_04_BaseWeapon.md)).
+
+> ℹ️ **Что изменилось:** раньше параметр был `PlayerController`. Сейчас сигнатура унифицирована к `Player` — это удобнее, потому что у `Player` есть и `Controller`, и `PlayerInventory`, и `PlayerData`. Внутри своей реализации обращайся к `player.GetComponent<PlayerInventory>()` или `player.Controller`, как в `BaseWeapon.CanControl` (см. [06.04](06_04_BaseWeapon.md)).
 
 Только `OnControl()` остаётся обязательным: если объект «управляем», он должен знать, что делать каждый кадр.
 

@@ -475,7 +475,7 @@ Inventory.hidden
             }
             else
             {
-                var totalMass = Target.SelectMany( go => go.GetComponentsInChildren<Rigidbody>() ).Sum( rb => rb.Mass );
+                var totalMass = Target.SelectMany( go => go.GetComponentsInChildren<Rigidbody>() ).Sum( ResolveMass );
                 var health = Target.Select( go => go.GetComponent<Prop>() ).FirstOrDefault( p => p.IsValid() );
 
                 <div class="object-info">
@@ -553,12 +553,23 @@ Inventory.hidden
         return Target == null || HasContent();
     }
 
+    // Frozen rigidbodies report Mass = 0 from the live physics body, so fall back
+    // to PhysicalProperties.Mass and MassOverride before giving up.
+    static float ResolveMass( Rigidbody rb )
+    {
+        if ( !rb.IsValid() ) return 0f;
+        var mo = rb.GetComponent<PhysicalProperties>();
+        if ( mo.IsValid() && mo.Mass > 0f ) return mo.Mass;
+        if ( rb.MassOverride > 0f ) return rb.MassOverride;
+        return rb.Mass;
+    }
+
     bool HasContent()
     {
         if ( Target == null ) return false;
         if ( Properties.Count > 0 || Renderers.Count > 0 ) return true;
 
-        var totalMass = Target.SelectMany( go => go.GetComponentsInChildren<Rigidbody>() ).Sum( rb => rb.Mass );
+        var totalMass = Target.SelectMany( go => go.GetComponentsInChildren<Rigidbody>() ).Sum( ResolveMass );
         if ( totalMass > 0 ) return true;
 
         var health = Target.Select( go => go.GetComponent<Prop>() ).FirstOrDefault( p => p.IsValid() );
@@ -577,7 +588,7 @@ Inventory.hidden
         foreach ( var go in Target ?? [] )
         {
             hc.Add( go.Id );
-            hc.Add( go.GetComponent<Rigidbody>()?.Mass ?? 0f );
+            hc.Add( ResolveMass( go.GetComponent<Rigidbody>() ) );
             hc.Add( go.GetComponent<Prop>()?.Health ?? -1f );
             hc.Add( go.GetComponent<ModelRenderer>()?.MaterialGroup );
         }
@@ -995,6 +1006,18 @@ public string Title => Target?.Count switch
 - Если есть выбор — показывает массу (⚖️), здоровье (❤️), `ControlSheet` для редактируемых свойств, скин модели и список материалов.
 - Каждый материал можно заменить через `ResourceSelectPopup`.
 - Переопределённые материалы помечаются зелёным и имеют кнопку сброса (`x`).
+
+#### `ResolveMass` — корректная масса для замороженных тел
+
+Здесь есть тонкость движка: у `Rigidbody`, который **заморожен** (frozen, например, прибитый physgun’ом проп), live-физическое тело отсутствует и `rb.Mass` возвращает `0`. Если просто суммировать `rb.Mass`, инспектор для замороженного пропа показывал бы «0 kg», что неверно.
+
+Хелпер `ResolveMass( Rigidbody )` пытается достать массу из трёх источников по порядку:
+
+1. **`PhysicalProperties.Mass`** — если на объекте есть компонент `PhysicalProperties` с положительной массой, берём его. Это «дизайн-таймовое» значение, не зависящее от того, активно физтело или нет (см. также [12.x — PhysicalProperties](README.md)).
+2. **`Rigidbody.MassOverride`** — пользовательский override на самом Rigidbody.
+3. **`Rigidbody.Mass`** — фактическая масса live-тела (работает только для не-замороженных).
+
+Этот же хелпер используется в `BuildHash()`, чтобы инспектор перерисовывался при изменении массы через инспектор движка.
 
 #### `PropertyChanged`
 
