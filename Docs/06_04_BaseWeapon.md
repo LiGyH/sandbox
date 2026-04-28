@@ -245,9 +245,9 @@ public partial class BaseWeapon : BaseCarryable, IPlayerControllable
 	/// <summary>
 	/// Сидя в стуле, оружие может управлять только тот, у кого нет своего активного оружия.
 	/// Это нужно, чтобы игрок с РПГ в руках не «перехватывал» наводку у пушки контрапции.
-	/// См. <see cref="IPlayerControllable.CanControl(PlayerController)"/>.
+	/// См. <see cref="IPlayerControllable.CanControl(Player)"/>.
 	/// </summary>
-	public bool CanControl( PlayerController player )
+	public bool CanControl( Player player )
 	{
 		var inventory = player.GetComponent<PlayerInventory>();
 		return inventory is null || !inventory.ActiveWeapon.IsValid();

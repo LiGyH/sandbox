@@ -97,7 +97,7 @@ public partial class BaseCarryable : Component, IKillIcon
 	public virtual string InventoryIconOverride => null;
 
 	/// <summary>
-	/// Wether this weapon should be avoided when determining an item to swap to
+	/// Whether this weapon should be avoided when determining an item to swap to
 	/// </summary>
 	public virtual bool ShouldAvoid => false;
 
@@ -184,6 +184,22 @@ public partial class BaseCarryable : Component, IKillIcon
 	/// The root GameObject to ignore when tracing from AimRay.
 	/// </summary>
 	public GameObject AimIgnoreRoot => HasOwner ? Owner.GameObject : GameObject;
+
+	/// <summary>
+	/// The effective attacker to use in damage attribution.
+	/// Returns the owning player's GameObject if held, the seated player's GameObject if
+	/// controlled from a contraption seat, or this weapon's own GameObject as a last resort.
+	/// </summary>
+	protected GameObject EffectiveAttacker
+	{
+		get
+		{
+			if ( HasOwner ) return Owner.GameObject;
+			var seatedPlayer = ClientInput.Current;
+			if ( seatedPlayer.IsValid() ) return seatedPlayer.GameObject;
+			return GameObject;
+		}
+	}
 
 	/// <summary>
 	/// Where shoot effects come from. Either the point on the world model or the viewmodel, whichever is currently being used.
@@ -355,8 +371,9 @@ public partial class BaseCarryable : Component, IKillIcon
 		if ( !attack.Target.IsValid() )
 			return;
 
-		// Use owner as attacker when held by a player; fall back to the weapon itself (standalone mode)
-		var attacker = HasOwner ? Owner.GameObject : GameObject;
+		// Use owner as attacker when held by a player, seated player when controlled from a
+		// contraption seat, or fall back to the weapon itself (standalone/world weapon)
+		var attacker = EffectiveAttacker;
 
 		var damagable = attack.Target.GetComponentInParent<IDamageable>();
 		if ( damagable is not null )
@@ -412,6 +429,18 @@ var tr = Scene.Trace.Ray( AimRay, Range )
 …и работает корректно во всех четырёх режимах (1-е лицо / 3-е лицо / сидение в стуле / standalone-турель). Это упрощение видно во всех файлах оружия — см. [06.06 — BaseBulletWeapon](06_06_BaseBulletWeapon.md), [06.08 — MeleeWeapon](06_08_MeleeWeapon.md), [07.05 — Shotgun](07_05_Shotgun.md), [07.10 — RpgWeapon](07_10_Rpg.md), [08.01 — Physgun](08_01_Physgun.md).
 
 > 📖 **Совет от движка:** `Scene.Camera.Transform.World.ForwardRay` — это «куда сейчас смотрит активная камера сцены». Подробнее про работу камеры — [официальные доки s&box](https://github.com/Facepunch/sbox-docs/).
+
+## Атрибуция урона: `EffectiveAttacker`
+
+`TraceAttack` создаёт `DamageInfo`, и в нём нужно указать **кого** считать атакующим. Раньше тут было одно условие: «если у оружия есть владелец → `Owner.GameObject`, иначе → сам weapon». Это ломалось в одном важном кейсе — **standalone-оружие в контрапции, которым управляет сидящий в стуле игрок**: убийство атрибутировалось не игроку, а самой пушке. Теперь логика собрана в одном свойстве `EffectiveAttacker`:
+
+| Случай | Что возвращается |
+|---|---|
+| Оружие в руках (`HasOwner`) | `Owner.GameObject` (игрок-владелец) |
+| Standalone, но управляется через стул (`ClientInput.Current.IsValid()`) | `seatedPlayer.GameObject` (сидящий игрок) |
+| Никто не управляет (мировое оружие) | сам `GameObject` оружия |
+
+`ClientInput.Current` приходит из `ControlSystem.PushScope(player)` — см. [17.01 — ControlSystem](17_01_ControlSystem.md) и [17.02 — ClientInput](17_02_ClientInput.md). Это же свойство использует `RpgWeapon` для `projectile.Instigator` — см. [07.10 — RPG](07_10_Rpg.md).
 
 ## Проверка
 

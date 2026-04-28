@@ -14,7 +14,7 @@
 ## Зачем это нужно?
 
 - **Единый интерфейс для снарядов**: любая «летящая штука» с физикой выигрывает от базовой логики «удар → событие → уничтожение».
-- **Корректное отношение к стрелявшему**: в `Instigator` хранится `PlayerData` того, кто выстрелил, и при столкновении со стрелком снаряд **не** взрывается — удобно для RPG, гранат и т.п.
+- **Корректное отношение к стрелявшему**: в `Instigator` хранится `Player` того, кто выстрелил, и при столкновении со стрелком снаряд **не** взрывается — удобно для RPG, гранат и т.п.
 - **Хост-авторитет**: `ICollisionListener.OnCollisionStart` сразу выходит, если компонент — прокси. Логика удара выполняется только на владельце/хосте.
 - **Физика из коробки**: `[RequireComponent] Rigidbody` гарантирует, что на GameObject со снарядом всегда есть физическое тело. `UpdateDirection()` выставляет ориентацию и скорость одним вызовом.
 
@@ -23,7 +23,7 @@
 | Элемент | Описание |
 |---|---|
 | `[RequireComponent] Rigidbody` | Принудительное наличие `Rigidbody` на том же GameObject. |
-| `[Sync( SyncFlags.FromHost )] Instigator` | `PlayerData` стрелявшего. Реплицируется с хоста. |
+| `[Sync( SyncFlags.FromHost )] Instigator` | `Player` стрелявшего. Реплицируется с хоста. Раньше тут был `PlayerData` — поменяли на сам `Player`, чтобы не ходить через лишний `player.PlayerData == Instigator` и иметь прямой доступ к `Instigator.GameObject` для атрибуции урона (см. [07.10 — RPG, `RpgProjectile.Explode`](07_10_Rpg.md)). |
 | `TimeSinceCreated` | Время с момента включения, сбрасывается в `OnEnabled`. Полезно для тайм-аутов у наследников. |
 | `OnStart()` | Добавляет тег `"projectile"` (для траcсировок и игнорирования). |
 | `OnCollisionStart(collision)` | На non-proxy: если другая сторона — `Player` и это `Instigator`, игнорируем (не взрываемся в руках стрелка). Иначе — `OnHit(collision)`. |
@@ -43,7 +43,7 @@ public class Projectile : Component, Component.ICollisionListener
 {
 	[RequireComponent] public Rigidbody Rigidbody { get; set; }
 
-	[Sync( SyncFlags.FromHost )] public PlayerData Instigator { get; set; }
+	[Sync( SyncFlags.FromHost )] public Player Instigator { get; set; }
 
 	protected TimeSince TimeSinceCreated;
 
@@ -63,7 +63,7 @@ public class Projectile : Component, Component.ICollisionListener
 			return;
 
 		var player = collision.Other.GameObject.GetComponentInParent<Player>();
-		if ( Instigator.IsValid() && player.IsValid() && player.PlayerData == Instigator )
+		if ( Instigator.IsValid() && player.IsValid() && player == Instigator )
 		{
 			return;
 		}
@@ -83,7 +83,7 @@ public class Projectile : Component, Component.ICollisionListener
 	{
 		if ( !Instigator.IsValid() ) return;
 
-		var connection = Instigator.Connection;
+		var connection = Instigator.Network.Owner;
 		if ( connection is null ) return;
 
 		// TODO: implement me
