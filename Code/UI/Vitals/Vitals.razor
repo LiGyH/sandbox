@@ -12,22 +12,29 @@
         {
             <div class="stat armour hud-panel">
                 <Image class="icon" Texture=@ArmourIcon />
-                <label class="value">@(ArmourPercent)</label>
+                <label class="value">@(DisplayArmour)</label>
             </div>
         }
         <div class="stat health hud-panel">
             <Image class="icon" Texture=@HealthIcon />
-            <label class="value">@(HealthPercent)</label>
+            <label class="value">@(DisplayHealth)</label>
         </div>
     </div>
 
     @if ( Weapon.IsValid() && Weapon.UsesAmmo )
     {
         <div class="ammo hud-panel">
-            <label class="value">@(Weapon.UsesClips ? Weapon.ClipContents : Weapon.ReserveAmmo)</label>
-            @if ( Weapon.UsesClips )
+            @if ( WeaponConVars.UnlimitedAmmo )
             {
-                <label class="alternate">@Weapon.ReserveAmmo</label>
+                <label class="value">∞</label>
+            }
+            else
+            {
+                <label class="value">@(Weapon.UsesClips ? Weapon.ClipContents.ToString() : (WeaponConVars.InfiniteReserves ? "∞" : Weapon.ReserveAmmo.ToString()))</label>
+                @if ( Weapon.UsesClips )
+                {
+                    <label class="alternate">@(WeaponConVars.InfiniteReserves ? "∞" : Weapon.ReserveAmmo.ToString())</label>
+                }
             }
             <Image class="icon" Texture=@AmmoIcon />
         </div>
@@ -43,8 +50,8 @@
     Player Player => Player.FindLocalPlayer();
     BaseWeapon Weapon => Player?.GetComponent<PlayerInventory>()?.ActiveWeapon as BaseWeapon;
 
-    int HealthPercent => (int)(Player.Health / Player.MaxHealth * 100);
-    int ArmourPercent => (int)(Player.Armour / Player.MaxArmour * 100);
+    int DisplayHealth => (int)Player.Health;
+    int DisplayArmour => (int)Player.Armour;
 
     bool IsSpawnMenuOpen()
     {

@@ -98,6 +98,7 @@ public partial class BaseWeapon
 	public bool TakeAmmo( int count )
 	{
 		if ( !UsesAmmo ) return true;
+		if ( WeaponConVars.UnlimitedAmmo ) return true;
 
 		if ( UsesClips )
 		{
@@ -109,6 +110,8 @@ public partial class BaseWeapon
 		}
 
 		// No clips — take directly from reserve
+		if ( WeaponConVars.InfiniteReserves ) return true;
+
 		if ( AmmoType is not null )
 		{
 			var inv = GetAmmoInventory();
@@ -129,9 +132,12 @@ public partial class BaseWeapon
 	public bool HasAmmo()
 	{
 		if ( !UsesAmmo ) return true;
+		if ( WeaponConVars.UnlimitedAmmo ) return true;
 
 		if ( UsesClips )
 			return ClipContents > 0;
+
+		if ( WeaponConVars.InfiniteReserves ) return true;
 
 		return ReserveAmmo > 0;
 	}
