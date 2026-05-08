@@ -7,7 +7,7 @@
 
 ## Что мы делаем?
 
-Создаём компонент **урона от падения** — если игрок падает с большой высоты, он получает урон пропорционально скорости падения. Этот компонент слушает событие `IPlayerEvent.OnLand` и применяет урон.
+Создаём компонент **урона от падения** — если игрок падает с большой высоты, он получает урон пропорционально скорости падения. Этот компонент слушает событие `Local.IPlayerEvents.OnLand` и применяет урон.
 
 ## Как это работает?
 
@@ -55,7 +55,7 @@ public void TakeFallDamage( float amount )
 /// <summary>
 /// Apply fall damage to the player
 /// </summary>
-public class PlayerFallDamage : Component, IPlayerEvent
+public class PlayerFallDamage : Component, Local.IPlayerEvents
 {
 	[RequireComponent] public Player Player { get; set; }
 
@@ -85,7 +85,7 @@ public class PlayerFallDamage : Component, IPlayerEvent
 		GameObject.PlaySound( FallSound );
 	}
 
-	void IPlayerEvent.OnLand( float distance, Vector3 velocity )
+	void Local.IPlayerEvents.OnLand( float distance, Vector3 velocity )
 	{
 		var fallSpeed = Math.Abs( velocity.z );
 
@@ -122,7 +122,7 @@ public class PlayerFallDamage : Component, IPlayerEvent
 
 ## Ключевые концепции
 
-### IPlayerEvent.OnLand
+### Local.IPlayerEvents.OnLand
 
 Это событие вызывается когда `PlayerController` обнаруживает, что игрок коснулся земли после падения. Параметры:
 - `distance` — пройденное расстояние (не используется здесь)

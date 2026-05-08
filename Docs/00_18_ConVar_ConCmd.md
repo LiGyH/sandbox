@@ -162,6 +162,68 @@ Log.Info( $"Игрок {player.Name} убил {victim.Name}" );
 | `disconnect` | Отключиться |
 | `host_timescale 0.5` | Замедлить игру (если не отключено) |
 
+## ConVar'ы режима sandbox
+
+Sandbox объявляет свои `[ConVar]` в выделенных статических классах рядом с соответствующей подсистемой. Все они помечены `ConVarFlags.Replicated`, поэтому хост ставит — клиенты видят то же значение, и UI (см. ниже) не «врёт».
+
+### Оружие — `WeaponConVars`
+
+Файл: `Code/Game/Weapon/WeaponConVars.cs`.
+
+```csharp
+public static class WeaponConVars
+{
+    [ConVar( "sb.weapon.unlimitedammo", ConVarFlags.Replicated,
+        Help = "When enabled, weapons have unlimited ammo." )]
+    public static bool UnlimitedAmmo { get; set; } = false;
+
+    [ConVar( "sb.weapon.infinitereserves", ConVarFlags.Replicated,
+        Help = "When enabled, reserve ammo is infinite — clip ammo is still consumed." )]
+    public static bool InfiniteReserves { get; set; } = false;
+}
+```
+
+| ConVar | Что делает |
+|---|---|
+| `sb.weapon.unlimitedammo` | Стрельба не съедает патроны вообще (читерский режим для теста). |
+| `sb.weapon.infinitereserves` | Запас патронов не убывает, но магазин расходуется как обычно — приходится перезаряжаться. |
+
+UI-переключатели для этих ConVar'ов лежат в `Code/UI/SpawnMenu/WeaponSettingsPage.razor` и доступны в Utility-вкладке меню спавна (только админ — `Connection.Local.HasPermission("admin")`).
+
+### NPC / AI — `NpcConVars`
+
+Файл: `Code/Npcs/NpcConVars.cs`, неймспейс `Sandbox.Npcs`.
+
+```csharp
+public static class NpcConVars
+{
+    [ConVar( "sb.ai.enabled", ConVarFlags.Replicated,
+        Help = "Enable or disable NPC AI thinking." )]
+    public static bool Enabled { get; set; } = true;
+
+    [ConVar( "sb.ai.notarget", ConVarFlags.Replicated,
+        Help = "When enabled, NPCs cannot target players." )]
+    public static bool NoTarget { get; set; } = false;
+}
+```
+
+| ConVar | Что делает |
+|---|---|
+| `sb.ai.enabled` | Полностью выключает мышление NPC: они стоят, ничего не делают. |
+| `sb.ai.notarget` | NPC «думают», но не выбирают игроков как цель — удобно для съёмок и дебага. |
+
+UI-переключатели для них — `Code/UI/SpawnMenu/AiSettingsPage.razor` (тоже Utility-вкладка, тоже админ).
+
+### Менять из консоли
+
+```
+] sb.weapon.unlimitedammo 1
+] sb.ai.notarget 1
+] sb.ai.enabled 0
+```
+
+Поскольку все четыре `Replicated`, на сервере значение применится глобально и придёт всем клиентам.
+
 ## Результат
 
 После этого этапа ты знаешь:
@@ -171,6 +233,7 @@ Log.Info( $"Игрок {player.Name} убил {victim.Name}" );
 - ✅ Флаги `Saved`, `Replicated`, `UserInfo`, `Server`, `Hidden` — что они делают.
 - ✅ Как определить вызвавшего команду через `Connection caller`.
 - ✅ Как логировать через `Log.Info`/`Warning`/`Error`.
+- ✅ Какие ConVar'ы добавляет режим sandbox: `sb.weapon.*` и `sb.ai.*`.
 
 ---
 

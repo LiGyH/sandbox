@@ -34,16 +34,26 @@
 ### Базовое наследование
 
 ```csharp
-public interface ISpawnEvents : ISceneEvent<ISpawnEvents>
+public static partial class Global
 {
-    void OnSpawn( SpawnData e ) { }
-    void OnPostSpawn( PostSpawnData e ) { }
+    public interface ISpawnEvents : ISceneEvent<ISpawnEvents>
+    {
+        public class SpawnData { /* ... */ }
+        public class PostSpawnData : SpawnData { /* ... */ }
+
+        void OnSpawn( SpawnData e ) { }
+        void OnPostSpawn( PostSpawnData e ) { }
+    }
 }
 ```
 
-`ISceneEvent<T>` — стандартный интерфейс s&box: любой компонент сцены, реализующий `ISpawnEvents`, автоматически попадает в список получателей `Scene.RunEvent<ISpawnEvents>(...)`. Методы — с дефолтной реализацией, поэтому реализовывать обязательно только то, что нужно.
+`ISceneEvent<T>` — стандартный интерфейс s&box: любой компонент сцены, реализующий `Global.ISpawnEvents`, автоматически попадает в список получателей `Scene.RunEvent<Global.ISpawnEvents>(...)`. Методы — с дефолтной реализацией, поэтому реализовывать обязательно только то, что нужно.
+
+> ⚠️ **Изменение в актуальной версии sandbox:** интерфейс теперь объявлен внутри `public static partial class Global` — рядом с `Global.ISaveEvents` ([23.01](23_01_ISaveEvents.md)) и `Global.IPlayerEvents` ([02.03](02_03_PlayerEvent.md)). Поэтому в коде на него ссылаются как `Global.ISpawnEvents`, а вложенные `SpawnData` и `PostSpawnData` — как `Global.ISpawnEvents.SpawnData` / `Global.ISpawnEvents.PostSpawnData`.
 
 ### Данные `SpawnData` и `PostSpawnData`
+
+Оба класса теперь объявлены **внутри** `Global.ISpawnEvents` (вложенные типы):
 
 ```csharp
 public class SpawnData
@@ -73,14 +83,14 @@ public class PostSpawnData : SpawnData
 В обоих случаях идиома одинакова:
 
 ```csharp
-var spawnData = new ISpawnEvents.SpawnData
+var spawnData = new Global.ISpawnEvents.SpawnData
 {
     Spawner = spawner,
     Transform = transform,
     Player = player?.PlayerData
 };
 
-Scene.RunEvent<ISpawnEvents>( x => x.OnSpawn( spawnData ) );
+Scene.RunEvent<Global.ISpawnEvents>( x => x.OnSpawn( spawnData ) );
 
 if ( spawnData.Cancelled )
     return;
@@ -91,7 +101,7 @@ if ( objects is { Count: > 0 } )
 {
     // … добавить в Undo …
 
-    Scene.RunEvent<ISpawnEvents>( x => x.OnPostSpawn( new ISpawnEvents.PostSpawnData
+    Scene.RunEvent<Global.ISpawnEvents>( x => x.OnPostSpawn( new Global.ISpawnEvents.PostSpawnData
     {
         Spawner = spawner,
         Transform = transform,
@@ -113,34 +123,37 @@ if ( objects is { Count: > 0 } )
 /// Implement this on a <see cref="Component"/> to receive callbacks before
 /// and after objects are spawned.
 /// </summary>
-public interface ISpawnEvents : ISceneEvent<ISpawnEvents>
+public static partial class Global
 {
-    public class SpawnData
+    public interface ISpawnEvents : ISceneEvent<ISpawnEvents>
     {
-        public ISpawner Spawner { get; init; }
-        public Transform Transform { get; init; }
-        public PlayerData Player { get; init; }
-        public bool Cancelled { get; set; }
-    }
+        public class SpawnData
+        {
+            public ISpawner Spawner { get; init; }
+            public Transform Transform { get; init; }
+            public PlayerData Player { get; init; }
+            public bool Cancelled { get; set; }
+        }
 
-    public class PostSpawnData : SpawnData
-    {
-        public List<GameObject> Objects { get; init; }
-    }
+        public class PostSpawnData : SpawnData
+        {
+            public List<GameObject> Objects { get; init; }
+        }
 
-    void OnSpawn( SpawnData e ) { }
-    void OnPostSpawn( PostSpawnData e ) { }
+        void OnSpawn( SpawnData e ) { }
+        void OnPostSpawn( PostSpawnData e ) { }
+    }
 }
 ```
 
 ## Пример: запретить спавн взрывчатки в зоне
 
 ```csharp
-public sealed class NoExplosivesZone : Component, ISpawnEvents
+public sealed class NoExplosivesZone : Component, Global.ISpawnEvents
 {
     [Property] public BBox Zone { get; set; }
 
-    void ISpawnEvents.OnSpawn( ISpawnEvents.SpawnData e )
+    void Global.ISpawnEvents.OnSpawn( Global.ISpawnEvents.SpawnData e )
     {
         if ( e.Spawner is PropSpawner p
              && p.Model?.Data?.Explosive == true
@@ -157,11 +170,11 @@ public sealed class NoExplosivesZone : Component, ISpawnEvents
 ## Пример: лог в чат
 
 ```csharp
-public sealed class SpawnLog : GameObjectSystem<SpawnLog>, ISpawnEvents
+public sealed class SpawnLog : GameObjectSystem<SpawnLog>, Global.ISpawnEvents
 {
     public SpawnLog( Scene scene ) : base( scene ) { }
 
-    void ISpawnEvents.OnPostSpawn( ISpawnEvents.PostSpawnData e )
+    void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e )
     {
         Scene.Get<Chat>()?.AddSystemText(
             $"{e.Player?.DisplayName} spawned {e.Spawner.DisplayName} ({e.Objects.Count} obj.)" );

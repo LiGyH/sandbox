@@ -213,8 +213,8 @@
 
 ### Фаза 16: Объекты карты
 - [ ] `Code/Map/BaseToggle.cs`
-- [ ] `Code/Map/Button.cs`
-- [ ] `Code/Map/Door.cs`
+- [ ] ~~`Code/Map/Button.cs`~~ — удалён в актуальной версии sandbox; см. [16.02 (deprecated)](16_02_Button_Door.md)
+- [ ] ~~`Code/Map/Door.cs`~~ — удалён в актуальной версии sandbox; см. [16.02b (deprecated)](16_02b_Door.md)
 - [ ] `Code/Map/FuncMover.cs`
 - [ ] `Code/Map/TriggerPush.cs`
 - [ ] `Code/Map/TriggerTeleport.cs`

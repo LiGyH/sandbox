@@ -33,46 +33,54 @@ namespace Sandbox;
 /// Allows listening to events related to the <see cref="SaveSystem"/>.
 /// Implement this on a <see cref="Component"/> to receive callbacks before and after saves and loads.
 /// </summary>
-public interface ISaveEvents : ISceneEvent<ISaveEvents>
+public static partial class Global
 {
-	/// <summary>
-	/// Called before the scene state is captured for saving.
-	/// Use this to prepare any transient state that needs to be persisted.
-	/// </summary>
-	void BeforeSave( string filename ) { }
+	public interface ISaveEvents : ISceneEvent<ISaveEvents>
+	{
+		/// <summary>
+		/// Called before the scene state is captured for saving.
+		/// Use this to prepare any transient state that needs to be persisted.
+		/// </summary>
+		void BeforeSave( string filename ) { }
 
-	/// <summary>
-	/// Called after the save file has been written to disk.
-	/// </summary>
-	void AfterSave( string filename ) { }
+		/// <summary>
+		/// Called after the save file has been written to disk.
+		/// </summary>
+		void AfterSave( string filename ) { }
 
-	/// <summary>
-	/// Called before a save file is loaded — the current scene is still active.
-	/// Use this to clean up any state that won't survive the scene reload.
-	/// </summary>
-	void BeforeLoad( string filename ) { }
+		/// <summary>
+		/// Called before a save file is loaded — the current scene is still active.
+		/// Use this to clean up any state that won't survive the scene reload.
+		/// </summary>
+		void BeforeLoad( string filename ) { }
 
-	/// <summary>
-	/// Called after a save file has been loaded and the scene is fully restored.
-	/// Use this to re-initialize any runtime state from the loaded data.
-	/// </summary>
-	void AfterLoad( string filename ) { }
+		/// <summary>
+		/// Called after a save file has been loaded and the scene is fully restored.
+		/// Use this to re-initialize any runtime state from the loaded data.
+		/// </summary>
+		void AfterLoad( string filename ) { }
+	}
 }
 ```
+
+> ⚠️ **Изменение в актуальной версии sandbox:** интерфейс теперь объявлен внутри `public static partial class Global`. Поэтому в коде на него ссылаются как `Global.ISaveEvents`, а реализация выглядит так: `class MyThing : Component, Global.ISaveEvents`. Это сделано, чтобы явно отделять «глобальные» события сцены от локальных (см. [02.03 — PlayerEvent](02_03_PlayerEvent.md), где есть `Local.IPlayerEvents` и `Global.IPlayerEvents`).
 
 ## Разбор кода
 
 ### Наследование
 
 ```csharp
-public interface ISaveEvents : ISceneEvent<ISaveEvents>
+public static partial class Global
+{
+	public interface ISaveEvents : ISceneEvent<ISaveEvents> { ... }
+}
 ```
 
-`ISceneEvent<ISaveEvents>` — generic-интерфейс, который регистрирует `ISaveEvents` в системе событий сцены. Это позволяет `SaveSystem` вызывать методы на **всех** компонентах, реализующих `ISaveEvents`, одной командой:
+`ISceneEvent<ISaveEvents>` — generic-интерфейс, который регистрирует `ISaveEvents` в системе событий сцены. Это позволяет `SaveSystem` вызывать методы на **всех** компонентах, реализующих `Global.ISaveEvents`, одной командой:
 
 ```csharp
 // Внутри SaveSystem (примерная логика)
-ISaveEvents.Post( x => x.BeforeSave( filename ) );
+Global.ISaveEvents.Post( x => x.BeforeSave( filename ) );
 ```
 
 Метод `Post` автоматически находит все активные компоненты в сцене и вызывает указанный метод.
@@ -134,19 +142,19 @@ void AfterLoad( string filename ) { }
 ### Пример использования
 
 ```csharp
-public class InventoryManager : Component, ISaveEvents
+public class InventoryManager : Component, Global.ISaveEvents
 {
     [Property] public string SavedInventoryJson { get; set; }
     
     private Dictionary<string, int> _runtimeInventory = new();
 
-    void ISaveEvents.BeforeSave( string filename )
+    void Global.ISaveEvents.BeforeSave( string filename )
     {
         // Сохраняем рантайм-словарь в сериализуемое свойство
         SavedInventoryJson = Json.Serialize( _runtimeInventory );
     }
 
-    void ISaveEvents.AfterLoad( string filename )
+    void Global.ISaveEvents.AfterLoad( string filename )
     {
         // Восстанавливаем рантайм-словарь из загруженных данных
         _runtimeInventory = Json.Deserialize<Dictionary<string, int>>( SavedInventoryJson )

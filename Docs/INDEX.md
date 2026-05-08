@@ -85,6 +85,7 @@
 | [03.06](03_06_PlayerData.md) | Данные игрока (PlayerData) 📊 |
 | [03.07](03_07_PlayerStats.md) | Статистика игрока (PlayerStats) 📈 |
 | [03.08](03_08_PlayerInventory.md) | Инвентарь игрока (PlayerInventory) 🎒 |
+| [03.08b](03_08b_PlayerLoadout.md) | Loadout игрока (PlayerLoadout) 🎒💾 |
 | [03.09](03_09_PlayerFlashlight.md) | Фонарик игрока (PlayerFlashlight) 🔦 |
 | [03.10](03_10_PlayerFallDamage.md) | Урон от падения (PlayerFallDamage) 🦴 |
 | [03.11](03_11_PlayerDamageIndicators.md) | Индикаторы урона (PlayerDamageIndicators) 🎯 |
@@ -105,6 +106,7 @@
 | [04.04](04_04_GamePreferences.md) | Игровые настройки (GamePreferences) ⚙️ |
 | [04.05](04_05_ServerSettings.md) | Серверные настройки (ServerSettings) 🖥️ |
 | [04.06](04_06_LimitsSystem.md) | Серверные лимиты на спавн и тулган (LimitsSystem) 🚦 |
+| [04.07](04_07_GameManager_Water.md) | Вода и плавучесть (GameManager.Water) 🌊 |
 
 ## Фаза 5: HUD и внутриигровой UI 🖼️
 
