@@ -96,7 +96,7 @@ private readonly HashSet<GameObject> _allTracked = new();
 После успешного спавна — **трекаем** созданные объекты:
 
 ```csharp
-void ISpawnEvents.OnPostSpawn( ISpawnEvents.PostSpawnData e )
+void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e )
     => Track( e.Player.SteamId, e.Objects );
 ```
 
@@ -130,7 +130,7 @@ Notices.SendNotice( target, "block", Color.Red,
 
 ```csharp
 public sealed class LimitsSystem
-    : GameObjectSystem<LimitsSystem>, ISpawnEvents, IToolActionEvents
+    : GameObjectSystem<LimitsSystem>, Global.ISpawnEvents, IToolActionEvents
 {
     [Range( -1, 1024 )]
     [Title( "Max Props Per Player" ), Group( "Limits" )]
@@ -146,8 +146,8 @@ public sealed class LimitsSystem
     private static bool IsExceeded( int limit, int count )
         => limit >= 0 && count >= limit;
 
-    void ISpawnEvents.OnSpawn( ISpawnEvents.SpawnData e )      { /* … */ }
-    void ISpawnEvents.OnPostSpawn( ISpawnEvents.PostSpawnData e ) { /* … */ }
+    void Global.ISpawnEvents.OnSpawn( Global.ISpawnEvents.SpawnData e )      { /* … */ }
+    void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e ) { /* … */ }
 
     void IToolActionEvents.OnToolAction( IToolActionEvents.ActionData e ) { /* … */ }
     void IToolActionEvents.OnPostToolAction( IToolActionEvents.PostActionData e ) { /* … */ }

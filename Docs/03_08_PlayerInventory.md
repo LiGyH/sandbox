@@ -21,12 +21,12 @@
 
 ## Что мы делаем?
 
-Создаём **систему инвентаря** — самый большой компонент в системе игрока (865 строк). Он управляет:
+Создаём **систему инвентаря** — крупный компонент игрока (`PlayerInventory.cs`, ~620 строк после рефакторинга). Он управляет:
 - Слотами оружия (до 6 штук)
 - Подбором, выбросом и переключением оружия
-- Сохранением/загрузкой loadout'а (набора оружия)
 - Автопереключением на лучшее оружие
-- Пресетами (предустановленные наборы)
+
+> 🔄 **Важно:** в актуальной версии sandbox логика **сохранения/загрузки loadout'а и пресетов вынесена в отдельный компонент `PlayerLoadout`** — см. [03.08b — PlayerLoadout](03_08b_PlayerLoadout.md). Этот документ описывает только `PlayerInventory`. Ниже секция «Система Loadout» оставлена как историческая справка о том, как эти две системы взаимодействуют.
 
 ## Архитектура
 
@@ -69,7 +69,7 @@ Slot 5: —            (MaxSlots = 6)
 3. Клонируем префаб → делаем дочерним объектом игрока через `SetParent( GameObject, false )` и обнуляем `LocalTransform`, чтобы оружие было ровно на хозяине
 4. **Удаляем GameObject из всех undo-стеков** (`UndoSystem.Current.Remove`) — иначе кто-то может «отменить» спавн прямо у нас из рук
 5. `NetworkSpawn` — регистрируем в сети (владелец = владелец игрока)
-6. Вызываем `OnAdded` на оружии и `IPlayerEvent.OnPickup`
+6. Вызываем `OnAdded` на оружии и `Local.IPlayerEvents.OnPickup`
 7. Если нужно — автопереключение (`ShouldAutoswitchTo`)
 
 ### Выброс оружия (Drop)
@@ -111,10 +111,12 @@ private bool ShouldAutoswitchTo( BaseCarryable item )
 
 ## Система Loadout (сохранение/загрузка набора)
 
+> 🔄 **Перенесено в `PlayerLoadout`.** Описание ниже сохранено как обзор того, как loadout-система работает в связке с инвентарём. Полная актуальная документация и код — в [03.08b — PlayerLoadout](03_08b_PlayerLoadout.md).
+
 ### Сериализация
 
 ```csharp
-private struct LoadoutEntry
+public struct LoadoutEntry  // объявлен в PlayerLoadout
 {
     public string PrefabPath { get; set; }
     public int Slot { get; set; }
@@ -128,49 +130,34 @@ private struct LoadoutEntry
 
 - **Локальный игрок** → `LocalData.Set("hotbar", json)` (файл на диске)
 - **Удалённый игрок** → хост отправляет через `PushLoadoutToClient`
-- **Сохранение карты** → `SaveSystem.SetMetadata("Loadout_{steamId}", json)`
+- **Сохранение карты** → `SaveSystem.SetMetadata("Loadout_{steamId}", json)` (через `Global.ISaveEvents` на `PlayerLoadout`)
 
 ### При спавне
 
-```csharp
-void IPlayerEvent.OnSpawned()
-{
-    if ( Player.IsLocalPlayer )
-    {
-        var json = LocalData.Get<string>( "hotbar" );
-        if ( !string.IsNullOrEmpty( json ) )
-        {
-            GiveLoadoutWeapons( json );
-            return;
-        }
-    }
-    else
-    {
-        RequestClientLoadout();  // RPC — запрашиваем loadout с клиента
-    }
-    GiveDefaultWeapons();  // fallback: physgun + toolgun + camera
-}
-```
+`PlayerLoadout` подписан на `Global.IPlayerEvents.OnPlayerSpawned`. Когда игрок появляется в мире, `PlayerLoadout` сам решает: восстановить сохранённый набор с диска (`LocalData`), забрать его с клиента (`RequestClientLoadout` RPC) или выдать дефолтный (`Inventory.GiveDefaultWeapons()`).
 
 ### Пресеты
 
 ```csharp
+public static IReadOnlyList<SavedPreset> GetLoadoutPresets()
 public static void SaveLoadoutPreset( string name, string loadoutJson )
 public static void DeleteLoadoutPreset( string name )
 public void SwitchToPreset( string loadoutJson )
 public void ResetToDefault()
 ```
 
-Игрок может сохранять именованные наборы оружия и переключаться между ними.
+Игрок может сохранять именованные наборы оружия и переключаться между ними. UI пресетов — `Code/UI/Inventory/HotbarPresetsButton.razor`.
 
 ## Создай файл
 
 Путь: `Code/Player/PlayerInventory.cs`
 
+> ℹ️ Код ниже **исторический**: показывает прежнюю монолитную версию инвентаря. Актуальный исходник в репозитории разделён на `PlayerInventory.cs` (~620 строк) и `PlayerLoadout.cs` (~330 строк). Он короче и не содержит ни `LoadoutEntry`, ни `SavedPreset`, ни `Global.ISaveEvents` — всё это переехало в `PlayerLoadout`. Используй этот листинг для общего понимания и сверяйся с актуальными файлами в `Code/Player/`.
+
 ```csharp
 using Sandbox.Citizen;
 
-public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
+public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISaveEvents
 {
 	[Property] public int MaxSlots { get; set; } = 6;
 
@@ -381,7 +368,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		weapon.InventorySlot = targetSlot;
 		weapon.OnAdded( Player );
 
-		IPlayerEvent.PostToGameObject( Player.GameObject, e => e.OnPickup( weapon ) );
+		Local.IPlayerEvents.PostToGameObject( Player.GameObject, e => e.OnPickup( weapon ) );
 
 		if ( notice )
 			OnClientPickup( weapon );
@@ -429,7 +416,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 
 		item.OnAdded( Player );
 
-		IPlayerEvent.PostToGameObject( GameObject, e => e.OnPickup( item ) );
+		Local.IPlayerEvents.PostToGameObject( GameObject, e => e.OnPickup( item ) );
 		OnClientPickup( item );
 	}
 
@@ -544,7 +531,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 
 		if ( Player.IsLocalPlayer )
 		{
-			ILocalPlayerEvent.Post( e => e.OnPickup( weapon ) );
+			Global.IPlayerEvents.Post( e => e.OnPickup( weapon ) );
 
 			// New: feedback sound for picked-up weapons (skips ammo-only pickups).
 			if ( !justAmmo && PickupSound.IsValid() )
@@ -957,7 +944,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		}
 	}
 
-	void IPlayerEvent.OnSpawned()
+	void Local.IPlayerEvents.OnSpawned()
 	{
 		_ = OnSpawnedAsync();
 	}
@@ -982,7 +969,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		GiveDefaultWeapons();
 	}
 
-	void IPlayerEvent.OnDied( IPlayerEvent.DiedParams args )
+	void Local.IPlayerEvents.OnDied( PlayerDiedParams args )
 	{
 		if ( ActiveWeapon.IsValid() )
 		{
@@ -996,21 +983,21 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		}
 	}
 
-	void IPlayerEvent.OnCameraMove( ref Angles angles )
+	void Local.IPlayerEvents.OnCameraMove( ref Angles angles )
 	{
 		if ( !ActiveWeapon.IsValid() ) return;
 
 		ActiveWeapon.OnCameraMove( Player, ref angles );
 	}
 
-	void IPlayerEvent.OnCameraPostSetup( Sandbox.CameraComponent camera )
+	void Local.IPlayerEvents.OnCameraPostSetup( Sandbox.CameraComponent camera )
 	{
 		if ( !ActiveWeapon.IsValid() ) return;
 
 		ActiveWeapon.OnCameraSetup( Player, camera );
 	}
 
-	void ISaveEvents.BeforeSave( string filename )
+	void Global.ISaveEvents.BeforeSave( string filename )
 	{
 		if ( !Networking.IsHost ) return;
 
@@ -1024,7 +1011,7 @@ public sealed class PlayerInventory : Component, IPlayerEvent, ISaveEvents
 		SaveSystem.Current?.SetMetadata( $"Loadout_{steamId}", json );
 	}
 
-	void ISaveEvents.AfterLoad( string filename )
+	void Global.ISaveEvents.AfterLoad( string filename )
 	{
 		if ( !Networking.IsHost ) return;
 

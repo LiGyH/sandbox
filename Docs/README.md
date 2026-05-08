@@ -82,6 +82,7 @@
 - [03_06 — PlayerData.cs](03_06_PlayerData.md)
 - [03_07 — PlayerStats.cs](03_07_PlayerStats.md)
 - [03_08 — PlayerInventory.cs](03_08_PlayerInventory.md)
+- [03_08b — PlayerLoadout.cs](03_08b_PlayerLoadout.md)
 - [03_09 — PlayerFlashlight.cs](03_09_PlayerFlashlight.md)
 - [03_10 — PlayerFallDamage.cs](03_10_PlayerFallDamage.md)
 - [03_11 — PlayerDamageIndicators.cs](03_11_PlayerDamageIndicators.md)
@@ -98,6 +99,8 @@
 - [04_03 — GameManager.Util.cs](04_03_GameManager_Util.md)
 - [04_04 — GamePreferences.cs](04_04_GamePreferences.md)
 - [04_05 — ServerSettings.cs](04_05_ServerSettings.md)
+- [04_06 — LimitsSystem.cs](04_06_LimitsSystem.md)
+- [04_07 — GameManager.Water.cs](04_07_GameManager_Water.md)
 
 ### Фаза 5: Базовый UI (HUD)
 - [05_01 — Стили: Theme.scss и Hud.scss](05_01_Стили_Theme_Hud.md)

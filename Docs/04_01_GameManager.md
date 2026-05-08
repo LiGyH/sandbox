@@ -71,7 +71,7 @@ public void SpawnPlayer( PlayerData playerData )
     playerGo.NetworkSpawn( owner );
 
     // 6. Вызываем OnSpawned (даёт оружие)
-    IPlayerEvent.PostToGameObject( player.GameObject, x => x.OnSpawned() );
+    Local.IPlayerEvents.PostToGameObject( player.GameObject, x => x.OnSpawned() );
 }
 ```
 
@@ -123,7 +123,7 @@ public void OnDeath( Player player, DamageInfo dmg )
 
 ```csharp
 public sealed partial class GameManager : GameObjectSystem<GameManager>, 
-    Component.INetworkListener, ISceneStartup, IScenePhysicsEvents, ICleanupEvents, ISaveEvents
+    Component.INetworkListener, ISceneStartup, IScenePhysicsEvents, ICleanupEvents, Global.ISaveEvents
 {
     // Конструктор GameObjectSystem
     public GameManager( Scene scene ) : base( scene ) { }

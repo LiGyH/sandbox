@@ -62,7 +62,7 @@ Inventory (PanelComponent)
 ﻿@using Sandbox;
 @using Sandbox.UI;
 @inherits PanelComponent
-@implements ILocalPlayerEvent
+@implements Global.IPlayerEvents
 
 @if ( Player.IsValid() && Player.WantsHideHud )
     return;
@@ -90,7 +90,7 @@ Inventory (PanelComponent)
 
     protected override int BuildHash() => HashCode.Combine( inventory, activeSlot, Player?.WantsHideHud );
 
-    void ILocalPlayerEvent.OnPickup(BaseCarryable weapon)
+    void Global.IPlayerEvents.OnPickup(BaseCarryable weapon)
     {
         StateHasChanged();
     }
@@ -185,7 +185,7 @@ Inventory (PanelComponent)
 
 ### Разбор ключевых частей
 
-- **`@implements ILocalPlayerEvent`** — подписка на события локального игрока. Метод `OnPickup` вызывается при подборе оружия и обновляет UI.
+- **`@implements Global.IPlayerEvents`** — подписка на события локального игрока. Метод `OnPickup` вызывается при подборе оружия и обновляет UI.
 - **`BuildHash()`** — Razor пересобирает панель только когда хеш изменился (инвентарь, активный слот, скрытие HUD).
 - **`HandleInput()`** — центральный метод обработки ввода. Колёсико мыши (`MouseWheel.y`) переключает слоты, `invprev` возвращает к предыдущему оружию.
 - **`SelectSlot(slot)`** — при нажатии числовой клавиши: переключает на оружие в слоте. Если слот пуст или уже активен — убирает оружие.

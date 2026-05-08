@@ -141,7 +141,7 @@ public const string FullSelfDamage = "full_self_damage";
 
 ```csharp
 // При создании урона от взрыва
-var damage = new IPlayerEvent.DamageParams
+var damage = new PlayerDamageParams
 {
     Damage = 100f,
     Tags = new TagSet( DamageTags.Explosion, DamageTags.GibAlways )

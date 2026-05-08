@@ -37,9 +37,15 @@
 ```
 Component.IDamageable     — получение урона
 PlayerController.IEvents  — обработка ввода и камеры
-ISaveEvents               — сохранение/загрузка
+Global.ISaveEvents        — сохранение/загрузка (см. 23.01)
 IKillSource               — информация об убийце в ленте фрагов
 ```
+
+> 🔄 В актуальной версии sandbox `Player` реализует именно `Global.ISaveEvents` (интерфейс теперь объявлен внутри `partial class Global` — см. [23.01](23_01_ISaveEvents.md)). Вся событийная система игрока также разбита на `Local.IPlayerEvents` (рассылается только на GO игрока) и `Global.IPlayerEvents` (рассылается по всей сцене) — подробнее в [02.03](02_03_PlayerEvent.md). Большинство пост-вызовов в `Player.cs` теперь дублированы:
+> ```csharp
+> Local.IPlayerEvents.PostToGameObject( GameObject, x => x.OnDied( args ) );
+> Global.IPlayerEvents.Post( x => x.OnPlayerDied( this, args ) );
+> ```
 
 ### Ключевые свойства
 
@@ -82,6 +88,8 @@ IKillSource               — информация об убийце в лент
 5. Добавляем `DeathCameraTarget` — камера следит за телом
 6. Копируем масштабы костей (для нестандартных моделей)
 
+> 🔄 **Изменение в актуальной версии sandbox:** `CreateRagdoll` теперь принимает параметры `(Vector3 velocity, Vector3 origin)` — скорость и точку приложения импульса. Скорость считается в `GetDeathLaunchVelocity(DamageInfo)` на основе урона/тегов (взрыв/падение/обычная смерть), а сам импульс к костям ragdoll'а применяется отдельным методом `ApplyRagdollForce(...)`. Также `Player` хранит `[Sync] public bool IsNoclipping` (чтобы клиенты видели чужой noclip) и при `OnStart` вызывает `ApplyHeightFromDresser()` — берёт рост модели из компонента-«дрессера». Подробности — в актуальном `Code/Player/Player.cs`.
+
 ### Ввод (OnControl)
 
 Вызывается каждый кадр через `PlayerController.IEvents.PreInput`:
@@ -102,7 +110,7 @@ using Sandbox.UI.Inventory;
 /// <summary>
 /// Holds player information like health
 /// </summary>
-public sealed partial class Player : Component, Component.IDamageable, PlayerController.IEvents, ISaveEvents, IKillSource
+public sealed partial class Player : Component, Component.IDamageable, PlayerController.IEvents, Global.ISaveEvents, IKillSource
 {
 	/// <summary>
 	/// Cached reference to the local player on this client. Filled lazily on first
@@ -283,13 +291,13 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	/// Broadcasts death to other players
 	/// </summary>
 	[Rpc.Broadcast( NetFlags.HostOnly | NetFlags.Reliable )]
-	void NotifyDeath( IPlayerEvent.DiedParams args )
+	void NotifyDeath( PlayerDiedParams args )
 	{
-		IPlayerEvent.PostToGameObject( GameObject, x => x.OnDied( args ) );
+		Local.IPlayerEvents.PostToGameObject( GameObject, x => x.OnDied( args ) );
 
 		if ( args.Attacker == GameObject )
 		{
-			IPlayerEvent.PostToGameObject( GameObject, x => x.OnSuicide() );
+			Local.IPlayerEvents.PostToGameObject( GameObject, x => x.OnSuicide() );
 		}
 	}
 
@@ -321,7 +329,7 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		// Let everyone know about the death
 		//
 
-		NotifyDeath( new IPlayerEvent.DiedParams() { Attacker = d.Attacker } );
+		NotifyDeath( new PlayerDiedParams() { Attacker = d.Attacker } );
 
 		var inventory = GetComponent<PlayerInventory>();
 		if ( inventory.IsValid() )
@@ -412,9 +420,9 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	private SoundHandle _dmgSound;
 
 	[Rpc.Broadcast( NetFlags.HostOnly | NetFlags.Reliable )]
-	private void NotifyOnDamage( IPlayerEvent.DamageParams args )
+	private void NotifyOnDamage( PlayerDamageParams args )
 	{
-		IPlayerEvent.PostToGameObject( GameObject, x => x.OnDamage( args ) );
+		Local.IPlayerEvents.PostToGameObject( GameObject, x => x.OnDamage( args ) );
 
 		Effects.Current.SpawnBlood( args.Position, (args.Origin - args.Position).Normal, args.Damage );
 
@@ -466,7 +474,7 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 
 		Health -= damage;
 
-		NotifyOnDamage( new IPlayerEvent.DamageParams()
+		NotifyOnDamage( new PlayerDamageParams()
 		{
 			Damage = damage,
 			Attacker = dmg.Attacker,
@@ -509,7 +517,7 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 
 	void PlayerController.IEvents.OnLanded( float distance, Vector3 impactVelocity )
 	{
-		IPlayerEvent.PostToGameObject( GameObject, x => x.OnLand( distance, impactVelocity ) );
+		Local.IPlayerEvents.PostToGameObject( GameObject, x => x.OnLand( distance, impactVelocity ) );
 
 		var player = Components.Get<Player>();
 		if ( !player.IsValid() ) return;
@@ -521,7 +529,7 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 
 	void PlayerController.IEvents.OnJumped()
 	{
-		IPlayerEvent.PostToGameObject( GameObject, x => x.OnJump() );
+		Local.IPlayerEvents.PostToGameObject( GameObject, x => x.OnJump() );
 
 		var player = Components.Get<Player>();
 
@@ -549,7 +557,7 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		GameObject.SetParent( null, true );
 	}
 
-	void ISaveEvents.AfterLoad( string filename )
+	void Global.ISaveEvents.AfterLoad( string filename )
 	{
 		if ( !Body.IsValid() ) return;
 
