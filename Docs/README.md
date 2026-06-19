@@ -275,7 +275,7 @@
 - [22_09 — CombatNpc и его расписания](22_09_CombatNpc.md)
 - [22_10 — ScientistNpc и его расписания](22_10_ScientistNpc.md)
 - [22_11 — RollerNpc и его задачи](22_11_RollermineNpc.md)
-- [22_12 — SubtitleExtension.cs](22_12_SubtitleExtension.md)
+- [22_12 — SubtitleExtension.cs](22_12_SubtitleExtension.md) (удалён — историческая справка)
 
 ### Фаза 23: Сохранение и очистка
 - [23_01 — ISaveEvents.cs](23_01_ISaveEvents.md)

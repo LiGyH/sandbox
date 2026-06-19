@@ -164,7 +164,7 @@ Log.Info( $"Игрок {player.Name} убил {victim.Name}" );
 
 ## ConVar'ы режима sandbox
 
-Sandbox объявляет свои `[ConVar]` в выделенных статических классах рядом с соответствующей подсистемой. Все они помечены `ConVarFlags.Replicated`, поэтому хост ставит — клиенты видят то же значение, и UI (см. ниже) не «врёт».
+Sandbox объявляет свои `[ConVar]` в выделенных статических классах рядом с соответствующей подсистемой. Все они помечены `ConVarFlags.Replicated`, поэтому хост ставит — клиенты видят то же значение, и UI (см. ниже) не «врёт». Читерско-отладочные переключатели (`sb.weapon.unlimitedammo`, `sb.weapon.infinitereserves`, `sb.ai.enabled`, `sb.ai.notarget`) дополнительно помечены `ConVarFlags.Saved` — их значение сохраняется между сессиями.
 
 ### Оружие — `WeaponConVars`
 
@@ -173,11 +173,11 @@ Sandbox объявляет свои `[ConVar]` в выделенных стат�
 ```csharp
 public static class WeaponConVars
 {
-    [ConVar( "sb.weapon.unlimitedammo", ConVarFlags.Replicated,
+    [ConVar( "sb.weapon.unlimitedammo", ConVarFlags.Replicated | ConVarFlags.Saved,
         Help = "When enabled, weapons have unlimited ammo." )]
     public static bool UnlimitedAmmo { get; set; } = false;
 
-    [ConVar( "sb.weapon.infinitereserves", ConVarFlags.Replicated,
+    [ConVar( "sb.weapon.infinitereserves", ConVarFlags.Replicated | ConVarFlags.Saved,
         Help = "When enabled, reserve ammo is infinite — clip ammo is still consumed." )]
     public static bool InfiniteReserves { get; set; } = false;
 }
@@ -197,11 +197,11 @@ UI-переключатели для этих ConVar'ов лежат в `Code/UI
 ```csharp
 public static class NpcConVars
 {
-    [ConVar( "sb.ai.enabled", ConVarFlags.Replicated,
+    [ConVar( "sb.ai.enabled", ConVarFlags.Replicated | ConVarFlags.Saved,
         Help = "Enable or disable NPC AI thinking." )]
     public static bool Enabled { get; set; } = true;
 
-    [ConVar( "sb.ai.notarget", ConVarFlags.Replicated,
+    [ConVar( "sb.ai.notarget", ConVarFlags.Replicated | ConVarFlags.Saved,
         Help = "When enabled, NPCs cannot target players." )]
     public static bool NoTarget { get; set; } = false;
 }

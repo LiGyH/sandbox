@@ -277,7 +277,7 @@
 - [ ] `Code/Npcs/Combat/CombatNpc.cs` + расписания
 - [ ] `Code/Npcs/Scientist/ScientistNpc.cs` + расписания
 - [ ] `Code/Npcs/Roller/RollerNpc.cs` + задачи
-- [ ] `Code/Npcs/Speech/SubtitleExtension.cs`
+- [ ] ~~`Code/Npcs/Speech/SubtitleExtension.cs`~~ (удалён в обновлении движка)
 
 ### Фаза 23: Сохранение и очистка
 - [ ] `Code/Save/ISaveEvents.cs`

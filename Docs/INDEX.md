@@ -338,7 +338,7 @@
 | [22.09](22_09_CombatNpc.md) | NPC: Боевой NPC (CombatNpc) ⚔️ |
 | [22.10](22_10_ScientistNpc.md) | NPC: Учёный (ScientistNpc) 🔬 |
 | [22.11](22_11_RollermineNpc.md) | NPC: Роллермайн (RollerNpc) 🔵 |
-| [22.12](22_12_SubtitleExtension.md) | Расширение субтитров (SubtitleExtension) |
+| [22.12](22_12_SubtitleExtension.md) | Расширение субтитров (SubtitleExtension) — удалён, историческая справка |
 
 ## Фаза 23: Сохранение и очистка 💾
 
