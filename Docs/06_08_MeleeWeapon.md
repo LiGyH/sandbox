@@ -12,10 +12,11 @@
 
 ## Зачем это нужно?
 
-- **Ближний бой**: трассировка сферой (`SwingRadius`) на короткой дистанции (`Range`) для определения попадания.
+- **Ближний бой**: сначала точная трассировка лучом, и только при промахе — трассировка сферой (`SwingRadius`) на короткой дистанции (`Range`). Так точные удары не «цепляют» соседние объекты, но широкий замах всё ещё прощает небольшой промах.
 - **Раздельные кулдауны**: `SwingDelay` при попадании, `MissSwingDelay` при промахе — промах «штрафуется» более длинной задержкой.
 - **Физический импульс**: `SwingForce` — сила, прикладываемая к цели при попадании.
 - **Эффекты камеры**: при ударе — тряска камеры (`CameraNoise.Punch`, `CameraNoise.Shake`) и лёгкая отдача.
+- **Звук удара по поверхности**: проигрывается `Surface.SoundCollection.ImpactHard` (с откатом на `HitSound`) из точки попадания, плюс анимационный флаг `b_attack_has_hit`.
 - **Декали попаданий**: аналогично огнестрельному оружию — декаль из `Surface.PrefabCollection.BulletImpact`, привязка к костям.
 - **Простой прицел**: кружок, меняющий цвет (белый/красный) в зависимости от готовности к атаке.
 
@@ -26,10 +27,10 @@
 | `SwingDelay / MissSwingDelay` | Раздельные кулдауны для попаданий и промахов. |
 | `Damage` | Урон за удар. |
 | `Range` | Дальность трассировки. |
-| `SwingRadius` | Радиус сферы трассировки. |
+| `SwingRadius` | Радиус сферы трассировки (используется как запасной замах, если точный луч промахнулся). |
 | `SwingForce` | Физический импульс при попадании. |
-| `Swing(Player)` | Основной метод: трассировка → установка кулдауна → эффекты → `TraceAttack()` → отдача + тряска камеры. |
-| `SwingEffects()` | `[Rpc.Broadcast]` — анимация атаки, звук удара/промаха, декаль попадания. |
+| `Swing(Player)` | Основной метод: точный луч → (при промахе) сфера → установка кулдауна → эффекты → `TraceAttack()` → отдача + тряска камеры. |
+| `SwingEffects()` | `[Rpc.Broadcast]` — анимация атаки, звук замаха, звук попадания по поверхности (`SoundCollection.ImpactHard`/`HitSound`), флаг `b_attack_has_hit`, декаль попадания. |
 | `CameraNoise.Punch` | Одноразовый толчок камеры при ударе. |
 | `CameraNoise.Shake` | Короткая тряска камеры. |
 | `DrawCrosshair()` | Рисует кружок через `HudPainter.DrawCircle()` с режимом `BlendMode.Lighten`. |
@@ -97,16 +98,21 @@ public class MeleeWeapon : BaseCarryable
 			return;
 
 		// Use the unified AimRay so we work for held / 3rd-person / seated weapons (см. 06.01).
-		var tr = Scene.Trace.Ray( AimRay, Range )
+		// Сначала точная трассировка лучом; если не попали — повторяем сферой радиуса SwingRadius.
+		var trace = Scene.Trace.Ray( AimRay, Range )
 							.IgnoreGameObjectHierarchy( AimIgnoreRoot )
 							.WithoutTags( "playercontroller" )
-							.Radius( SwingRadius )
-							.UseHitboxes()
-							.Run();
+							.UseHitboxes();
+
+		var tr = trace.Run();
+		if ( !tr.Hit )
+		{
+			tr = trace.Radius( SwingRadius ).Run();
+		}
 
 		timeUntilSwing = tr.GameObject.IsValid() ? SwingDelay : MissSwingDelay;
 
-		SwingEffects( tr.EndPosition, tr.Hit, tr.Normal, tr.GameObject, tr.Surface );
+		SwingEffects( tr.HitPosition, tr.Hit, tr.Normal, tr.GameObject, tr.Surface );
 		TraceAttack( TraceAttackInfo.From( tr, Damage, localise: false ) );
 
 		player.Controller.EyeAngles += new Angles( Random.Shared.Float( -0.2f, -0.3f ), Random.Shared.Float( -0.1f, 0.1f ), 0 );
@@ -134,15 +140,17 @@ public class MeleeWeapon : BaseCarryable
 
 		GameObject.PlaySound( SwingSound );
 
-		if ( hitObject.IsValid() )
-			GameObject.PlaySound( HitSound );
-
 		if ( !hit || !hitObject.IsValid() )
 			return;
 
-		var prefab = hitSurface.PrefabCollection.BulletImpact ?? hitSurface.GetBaseSurface()?.PrefabCollection.BulletImpact;
+		if ( ViewModel.IsValid() )
+			ViewModel.RunEvent<ViewModel>( x => x.Renderer.Set( "b_attack_has_hit", true ) );
 
-		// Still null?
+		hitObject.PlaySound(
+			hitSurface.SoundCollection.ImpactHard ?? hitSurface.GetBaseSurface()?.SoundCollection.ImpactHard ?? HitSound,
+			hitObject.WorldTransform.PointToLocal( hitpoint ) );
+
+		var prefab = hitSurface.PrefabCollection.BulletImpact ?? hitSurface.GetBaseSurface()?.PrefabCollection.BulletImpact;
 		if ( prefab is null )
 			return;
 
