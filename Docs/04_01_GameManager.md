@@ -55,7 +55,7 @@ GameManager : GameObjectSystem<GameManager>
 public void SpawnPlayer( PlayerData playerData )
 {
     // 1. Проверяем: уже есть Player для этого подключения?
-    if ( Scene.GetAll<Player>().Any( x => x.Network.Owner?.Id == playerData.PlayerId ) )
+    if ( Scene.GetAll<Player>().Any( x => x.Network.Owner == playerData.Network.Owner ) )
         return;
 
     // 2. Ищем спавн-поинт (случайный)
@@ -137,8 +137,12 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>,
     // При отключении — удаляем PlayerData
     void Component.INetworkListener.OnDisconnected( Connection channel ) { ... }
 
-    // Спавн игрока на спавн-поинте
-    public void SpawnPlayer( PlayerData playerData ) { ... }
+    // Спавн игрока на спавн-поинте (host-only)
+    internal void SpawnPlayer( PlayerData playerData ) { ... }
+
+    // Респавн по запросу клиента (через PlayerObserver), host-RPC
+    [Rpc.Host]
+    internal void RequestRespawn() { ... }
 
     // Обработка смерти — лента убийств
     public void OnDeath( Player player, DamageInfo dmg ) { ... }

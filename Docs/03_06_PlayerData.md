@@ -8,96 +8,69 @@
 
 ## Что мы делаем?
 
-Создаём компонент **PlayerData** — постоянное хранилище данных об игроке: SteamId, имя, убийства, смерти, режим бога, логика респавна. В отличие от `Player` (который уничтожается при смерти), `PlayerData` живёт всю сессию.
+Создаём компонент **PlayerData** — постоянное хранилище игровой статистики: убийства, смерти, режим бога. В отличие от `Player` (который уничтожается при смерти), `PlayerData` живёт всю сессию.
+
+> ℹ️ Идентичность игрока (SteamId, имя, ping) больше **не** хранится в `PlayerData`. Её даёт само подключение — `Network.Owner` (тип `Connection`): `Network.Owner.SteamId`, `Network.Owner.DisplayName`, `Network.Owner.Ping`. Логика респавна тоже вынесена из `PlayerData` в `GameManager` (см. `GameManager.RequestRespawn`).
 
 ## Зачем два компонента: Player и PlayerData?
 
 | | Player | PlayerData |
 |--|--------|-----------|
 | Жизненный цикл | Создаётся при спавне, уничтожается при смерти | Живёт всю сессию |
-| Данные | Здоровье, броня, ввод | Kills, Deaths, SteamId, GodMode |
+| Данные | Здоровье, броня, ввод | Kills, Deaths, GodMode |
 | Сеть | На объекте игрока | На отдельном объекте |
 
-Когда игрок умирает, `Player.GameObject` уничтожается. Но мы не хотим терять счёт убийств или Steam-имя. Поэтому `PlayerData` хранится на отдельном GameObject и переживает смерть.
+Когда игрок умирает, `Player.GameObject` уничтожается. Но мы не хотим терять счёт убийств. Поэтому `PlayerData` хранится на отдельном GameObject и переживает смерть.
 
 ## Как это работает?
 
 ### Основные свойства
 
 ```csharp
-[Property] public Guid PlayerId { get; set; }      // Уникальный ID = Connection.Id
-[Property] public long SteamId { get; set; }        // Steam ID
-[Property] public string DisplayName { get; set; }  // Имя игрока
-
-[Sync] public int Kills { get; set; }       // Убийства
-[Sync] public int Deaths { get; set; }      // Смерти
-[Sync] public bool IsGodMode { get; set; }  // Режим бога
+[Sync( SyncFlags.FromHost )] public int Kills { get; internal set; }       // Убийства
+[Sync( SyncFlags.FromHost )] public int Deaths { get; internal set; }      // Смерти
+[Sync( SyncFlags.FromHost )] public bool IsGodMode { get; internal set; }  // Режим бога
 ```
 
-`[Sync]` без `SyncFlags.FromHost` — значит значение синхронизируется от владельца. Но `Kills`/`Deaths` меняются только на хосте, так что это безопасно.
+`SyncFlags.FromHost` — значение синхронизируется **от хоста** ко всем клиентам (а не от владельца). `internal set` запрещает менять статистику откуда попало: её обновляет только серверный код. Идентификатор игрока (`IsMe`) определяется через подключение-владельца:
+
+```csharp
+public bool IsMe => Network.Owner == Connection.Local;
+```
 
 ### Статические хелперы
 
 ```csharp
 public static IEnumerable<PlayerData> All => Game.ActiveScene.GetAll<PlayerData>();
-public static PlayerData For( Connection connection ) => For( connection.Id );
-public static PlayerData For( Guid playerId ) => All.FirstOrDefault( x => x.PlayerId == playerId );
+public static PlayerData For( Connection connection ) =>
+    connection == null ? default : All.FirstOrDefault( x => x.Network.Owner == connection );
 ```
 
-Удобный доступ к данным любого игрока из любого места кода.
-
-### Система респавна
-
-```csharp
-private bool _needsRespawn;
-private RealTimeSince _timeSinceDied;
-
-public void MarkForRespawn()          // Вызывается при смерти
-{
-    _needsRespawn = true;
-    _timeSinceDied = 0;
-}
-
-protected override void OnUpdate()    // Каждый кадр на хосте
-{
-    if ( !_needsRespawn ) return;
-    if ( _timeSinceDied < 4f ) return; // ждём 4 секунды
-    RequestRespawn();                  // автореспавн
-}
-
-[Rpc.Host( NetFlags.OwnerOnly | NetFlags.Reliable )]
-public void RequestRespawn()          // Можно вызвать раньше (кнопка)
-{
-    _needsRespawn = false;
-    // удалить все PlayerObserver для этого подключения
-    GameManager.Current?.SpawnPlayer( this );
-}
-```
-
-Два пути респавна:
-1. **Автоматический** — через 4 секунды в `OnUpdate()`
-2. **Ручной** — игрок нажимает кнопку → `PlayerObserver` вызывает `RequestRespawn()`
+Удобный доступ к данным любого игрока по его подключению (`Connection`).
 
 ### Статистика Steam
 
 ```csharp
-[Rpc.Broadcast]
+[Rpc.Broadcast( NetFlags.HostOnly )]
 private void RpcAddStat( string identifier, int amount = 1 )
 {
     Sandbox.Services.Stats.Increment( identifier, amount );
 }
 
-public void AddStat( string identifier, int amount = 1 )
+internal void AddStat( string identifier, int amount = 1 )
 {
     if ( Application.CheatsEnabled ) return;  // без читов
-    using ( Rpc.FilterInclude( Connection ) )
+    Assert.True( Networking.IsHost, "PlayerData.AddStat is host-only!" );
+    using ( Rpc.FilterInclude( Network.Owner ) )
     {
         RpcAddStat( identifier, amount );     // отправить только этому игроку
     }
 }
 ```
 
-`AddStat` вызывается на хосте, но статистика записывается на клиенте (через RPC). `Rpc.FilterInclude` ограничивает broadcast только одним подключением.
+`AddStat` вызывается на хосте, но статистика записывается на клиенте (через RPC). `Rpc.FilterInclude( Network.Owner )` ограничивает broadcast только подключением-владельцем. `NetFlags.HostOnly` гарантирует, что RPC отправляет только хост.
+
+> 🔁 **Где же респавн?** Раньше `PlayerData` отслеживал таймер смерти и вызывал `RequestRespawn`. Теперь это делает `GameManager.RequestRespawn` (`[Rpc.Host]`), а `PlayerObserver` дёргает `GameManager.Current?.RequestRespawn()`. См. этапы `04.01 — GameManager` и `03.13 — PlayerObserver`.
 
 ## Создай файл
 
@@ -107,29 +80,16 @@ public void AddStat( string identifier, int amount = 1 )
 /// <summary>
 /// Holds persistent player information like deaths, kills
 /// </summary>
-public sealed partial class PlayerData : Component, Global.ISaveEvents
+public sealed partial class PlayerData : Component
 {
-	/// <summary>
-	/// Unique Id per each player and bot, equal to owning Player connection Id if it's a real player.
-	/// </summary>
-	[Property] public Guid PlayerId { get; set; }
-	[Property] public long SteamId { get; set; } = -1L;
-	[Property] public string DisplayName { get; set; }
-
-	[Sync] public int Kills { get; set; }
-	[Sync] public int Deaths { get; set; }
-
-	[Sync] public bool IsGodMode { get; set; }
-
-	public Connection Connection => Connection.Find( PlayerId );
+	[Sync( SyncFlags.FromHost )] public int Kills { get; internal set; }
+	[Sync( SyncFlags.FromHost )] public int Deaths { get; internal set; }
+	[Sync( SyncFlags.FromHost )] public bool IsGodMode { get; internal set; }
 
 	/// <summary>
 	/// Is this player data me?
 	/// </summary>
-	public bool IsMe => PlayerId == Connection.Local.Id;
-
-	/// <inheritdoc cref="Connection.Ping"/>
-	public float Ping => Connection?.Ping ?? 0;
+	public bool IsMe => Network.Owner == Connection.Local;
 
 	/// <summary>
 	/// Data for all players
@@ -141,61 +101,9 @@ public sealed partial class PlayerData : Component, Global.ISaveEvents
 	/// </summary>
 	/// <param name="connection"></param>
 	/// <returns></returns>
-	public static PlayerData For( Connection connection ) => connection == null ? default : For( connection.Id );
+	public static PlayerData For( Connection connection ) => connection == null ? default : All.FirstOrDefault( x => x.Network.Owner == connection );
 
-	/// <summary>
-	/// Get player data for a player's id
-	/// </summary>
-	/// <param name="playerId"></param>
-	/// <returns></returns>
-	public static PlayerData For( Guid playerId )
-	{
-		return All.FirstOrDefault( x => x.PlayerId == playerId );
-	}
-
-	// Host-side respawn tracking. No sync required.
-	private bool _needsRespawn;
-	private RealTimeSince _timeSinceDied;
-
-	/// <summary>
-	/// Called on the host when the player dies. Starts the respawn countdown so that
-	/// PlayerData can trigger a respawn if the PlayerObserver is destroyed (e.g. by cleanup)
-	/// before it fires.
-	/// </summary>
-	public void MarkForRespawn()
-	{
-		_needsRespawn = true;
-		_timeSinceDied = 0;
-	}
-
-	/// <summary>
-	/// Called by PlayerObserver (owner-only RPC) when the player presses to respawn early,
-	/// or by OnUpdate after the timeout. Single entry point for all respawn logic.
-	/// </summary>
-	[Rpc.Host( NetFlags.OwnerOnly | NetFlags.Reliable )]
-	public void RequestRespawn()
-	{
-		_needsRespawn = false;
-
-		// Clean up any lingering observer for this connection.
-		foreach ( var observer in Scene.GetAllComponents<PlayerObserver>().Where( x => x.Network.Owner?.Id == PlayerId ).ToArray() )
-		{
-			observer.GameObject.Destroy();
-		}
-
-		GameManager.Current?.SpawnPlayer( this );
-	}
-
-	protected override void OnUpdate()
-	{
-		if ( !Networking.IsHost ) return;
-		if ( !_needsRespawn ) return;
-		if ( _timeSinceDied < 4f ) return;
-
-		RequestRespawn();
-	}
-
-	[Rpc.Broadcast]
+	[Rpc.Broadcast( NetFlags.HostOnly )]
 	private void RpcAddStat( string identifier, int amount = 1 )
 	{
 		Sandbox.Services.Stats.Increment( identifier, amount );
@@ -206,25 +114,15 @@ public sealed partial class PlayerData : Component, Global.ISaveEvents
 	/// </summary>
 	/// <param name="identifier"></param>
 	/// <param name="amount"></param>
-	public void AddStat( string identifier, int amount = 1 )
+	internal void AddStat( string identifier, int amount = 1 )
 	{
 		if ( Application.CheatsEnabled ) return;
 
 		Assert.True( Networking.IsHost, "PlayerData.AddStat is host-only!" );
 
-		using ( Rpc.FilterInclude( Connection ) )
+		using ( Rpc.FilterInclude( Network.Owner ) )
 		{
 			RpcAddStat( identifier, amount );
-		}
-	}
-
-	void Global.ISaveEvents.AfterLoad( string filename )
-	{
-		var connection = Connection;
-		if ( connection == null )
-		{
-			// Get new PlayerId from SteamId if this is a new session
-			PlayerId = Connection.All.FirstOrDefault( x => x.SteamId == SteamId )?.Id ?? Guid.Empty;
 		}
 	}
 }
@@ -232,16 +130,15 @@ public sealed partial class PlayerData : Component, Global.ISaveEvents
 
 ## Ключевые концепции
 
-### Guid vs SteamId
+### Идентичность через Connection
 
-- **PlayerId (Guid)** = `Connection.Id` — уникален для каждой сессии, меняется при переподключении
-- **SteamId (long)** — постоянный Steam ID, не меняется никогда
+- Постоянного `SteamId`/`DisplayName`/`PlayerId` в `PlayerData` больше нет. Имя, Steam ID и ping берутся напрямую у подключения-владельца: `Network.Owner.DisplayName`, `(long)Network.Owner.SteamId`, `Network.Owner.Ping`.
+- `Network.Owner` — это `Connection` владельца объекта; сравнение `Network.Owner == Connection.Local` отвечает на вопрос «это мои данные?».
+- Поиск данных игрока: `PlayerData.For( connection )` сопоставляет `x.Network.Owner == connection`.
 
-При загрузке сохранения (`AfterLoad`) подключение может иметь **новый** `Connection.Id`, но **тот же** `SteamId`. Поэтому код ищет подключение по SteamId и обновляет PlayerId.
+### SyncFlags.FromHost
 
-### ISaveEvents
-
-`PlayerData` реализует `ISaveEvents` для правильной работы с системой сохранений. При загрузке карты нужно переназначить PlayerId на актуальное подключение.
+`Kills`/`Deaths`/`IsGodMode` помечены `[Sync( SyncFlags.FromHost )]` — синхронизируются строго от хоста, а сеттеры `internal`, чтобы статистику нельзя было подменить с клиента.
 
 ## Проверка
 
@@ -260,5 +157,5 @@ public sealed partial class PlayerData : Component, Global.ISaveEvents
 ## 🔗 См. также
 
 - [04.01 — GameManager](04_01_GameManager.md)
-- [23.01 — ISaveEvents](23_01_ISaveEvents.md)
+- [03.13 — PlayerObserver](03_13_PlayerObserver.md)
 
