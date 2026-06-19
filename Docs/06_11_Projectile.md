@@ -1,4 +1,4 @@
-# 06.11 — Базовый снаряд (Projectile) 🚀
+# 06.11 — Базовый снаряд (ProjectileEntity) 🚀
 
 <!-- phase05-links -->
 > **📚 Основы движка (см. Фаза 0.5):**
@@ -9,7 +9,7 @@
 
 ## Что мы делаем?
 
-Создаём базовый класс `Projectile` — универсальный снаряд, который летит в пространстве, реагирует на столкновения и уничтожается при ударе. Это общий фундамент для гранат-снарядов (дальше появится [RPG-ракета](07_10_Rpg.md)) и любых будущих снарядов.
+Создаём базовый класс `ProjectileEntity` — универсальный снаряд, который летит в пространстве, реагирует на столкновения и уничтожается при ударе. Это общий фундамент для гранат-снарядов (дальше появится [RPG-ракета](07_10_Rpg.md)) и любых будущих снарядов.
 
 ## Зачем это нужно?
 
@@ -33,13 +33,13 @@
 
 ## Создай файл
 
-**Путь:** `Code/Game/Weapon/Projectile.cs`
+**Путь:** `Code/Game/Weapon/ProjectileEntity.cs`
 
 ```csharp
 /// <summary>
 /// A projectile. It explodes when it hits something.
 /// </summary>
-public class Projectile : Component, Component.ICollisionListener
+public class ProjectileEntity : Component, Component.ICollisionListener
 {
 	[RequireComponent] public Rigidbody Rigidbody { get; set; }
 
@@ -103,7 +103,7 @@ public class Projectile : Component, Component.ICollisionListener
 ## Проверка
 
 - [ ] Файл компилируется
-- [ ] Добавление `Projectile` на GameObject автоматически требует `Rigidbody`
+- [ ] Добавление `ProjectileEntity` на GameObject автоматически требует `Rigidbody`
 - [ ] GameObject получает тег `"projectile"` после старта
 - [ ] Столкновение снаряда со стрелявшим игнорируется
 - [ ] В проксях (`IsProxy == true`) `OnCollisionStart` ничего не делает
@@ -112,7 +112,7 @@ public class Projectile : Component, Component.ICollisionListener
 ## Смотри также
 
 - [07.10 — RPG (RpgWeapon + RpgProjectile)](07_10_Rpg.md) — конкретный наследник с взрывом.
-- [13.03 — DynamiteEntity](13_03_DynamiteEntity.md) — альтернативная «взрывная сущность» без `Projectile`-базы.
+- [13.03 — DynamiteEntity](13_03_DynamiteEntity.md) — альтернативная «взрывная сущность» без `ProjectileEntity`-базы.
 
 ---
 

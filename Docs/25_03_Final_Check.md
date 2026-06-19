@@ -276,7 +276,7 @@
 - [ ] `Code/Npcs/Tasks/DropProp.cs`
 - [ ] `Code/Npcs/Combat/CombatNpc.cs` + расписания
 - [ ] `Code/Npcs/Scientist/ScientistNpc.cs` + расписания
-- [ ] `Code/Npcs/Rollermine/RollermineNpc.cs` + задачи
+- [ ] `Code/Npcs/Roller/RollerNpc.cs` + задачи
 - [ ] `Code/Npcs/Speech/SubtitleExtension.cs`
 
 ### Фаза 23: Сохранение и очистка

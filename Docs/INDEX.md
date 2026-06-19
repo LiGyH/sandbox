@@ -337,7 +337,7 @@
 | [22.08](22_08_Tasks_Advanced.md) | Продвинутые задачи NPC (Say, FireWeapon, PickUpProp, DropProp) |
 | [22.09](22_09_CombatNpc.md) | NPC: Боевой NPC (CombatNpc) ⚔️ |
 | [22.10](22_10_ScientistNpc.md) | NPC: Учёный (ScientistNpc) 🔬 |
-| [22.11](22_11_RollermineNpc.md) | NPC: Роллермайн (RollermineNpc) 🔵 |
+| [22.11](22_11_RollermineNpc.md) | NPC: Роллермайн (RollerNpc) 🔵 |
 | [22.12](22_12_SubtitleExtension.md) | Расширение субтитров (SubtitleExtension) |
 
 ## Фаза 23: Сохранение и очистка 💾

@@ -274,7 +274,7 @@
 - [22_08 — Tasks: Say, FireWeapon, PickUp/DropProp](22_08_Tasks_Advanced.md)
 - [22_09 — CombatNpc и его расписания](22_09_CombatNpc.md)
 - [22_10 — ScientistNpc и его расписания](22_10_ScientistNpc.md)
-- [22_11 — RollermineNpc и его задачи](22_11_RollermineNpc.md)
+- [22_11 — RollerNpc и его задачи](22_11_RollermineNpc.md)
 - [22_12 — SubtitleExtension.cs](22_12_SubtitleExtension.md)
 
 ### Фаза 23: Сохранение и очистка
