@@ -38,15 +38,13 @@ GameManager : GameObjectSystem<GameManager>
 ```
 Игрок подключается
   → OnActive(Connection)
-    → CreatePlayerInfo()    // создать PlayerData
+    → CreatePlayerInfo()    // создать PlayerData (владелец = подключение)
     → SpawnPlayer()         // создать Player
     → CheckAchievement()   // проверить ачивки
-    → Chat: "X has joined" // уведомление в чат
 
 Игрок отключается
   → OnDisconnected(Connection)
     → PlayerData.Destroy()
-    → Chat: "X has left"
 ```
 
 ### Спавн игрока

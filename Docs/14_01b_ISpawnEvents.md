@@ -176,11 +176,13 @@ public sealed class SpawnLog : GameObjectSystem<SpawnLog>, Global.ISpawnEvents
 
     void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e )
     {
-        Scene.Get<Chat>()?.AddSystemText(
+        GameManager.Current?.Notify(
             $"{e.Player?.DisplayName} spawned {e.Spawner.DisplayName} ({e.Objects.Count} obj.)" );
     }
 }
 ```
+
+> ℹ️ В актуальной версии sandbox кастомный компонент `Chat` удалён — для системных сообщений используйте `GameManager.Notify( string )` (host-only), который пишет в движковый чат через `Sandbox.Platform.Chat.AddText`. `e.Player` теперь имеет тип `Connection`, поэтому имя берётся напрямую: `e.Player?.DisplayName`.
 
 ## Проверка
 

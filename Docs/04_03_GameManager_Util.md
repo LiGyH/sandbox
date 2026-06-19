@@ -12,7 +12,7 @@
 private readonly HashSet<Guid> _kickedPlayers = new();
 ```
 
-Когда игрок кикается, его `Connection.Id` добавляется в `_kickedPlayers`. При отключении (`OnDisconnected`) проверяем: если игрок в этом списке — не показываем сообщение «X has left» (уже показали «X was kicked»).
+Когда игрок кикается, его `Connection.Id` добавляется в `_kickedPlayers`. В актуальной версии sandbox сообщения о входе/выходе игроков («X has joined»/«X has left») убраны, поэтому `OnDisconnected` больше не показывает текст в чате (поле `_kickedPlayers` сохранено для возможной будущей логики). Системные уведомления (кик/бан) теперь идут через `GameManager.Notify`, который вызывает `Sandbox.Platform.Chat.AddText`.
 
 ### Кик по Connection
 
@@ -20,7 +20,7 @@ private readonly HashSet<Guid> _kickedPlayers = new();
 public void Kick( Connection connection, string reason = "Kicked" )
 {
     _kickedPlayers.Add( connection.Id );
-    Scene.Get<Chat>()?.AddSystemText( $"{connection.DisplayName} was kicked: {reason}", "🥾" );
+    GameManager.Current.Notify( $"🥾 {connection.DisplayName} was kicked: {reason}" );
     connection.Kick( reason );
 }
 ```
@@ -79,7 +79,7 @@ public sealed partial class GameManager
 		Assert.True( Networking.IsHost, "Only the host may kick players." );
 
 		_kickedPlayers.Add( connection.Id );
-		Scene.Get<Chat>()?.AddSystemText( $"{connection.DisplayName} was kicked: {reason}", "🥾" );
+		GameManager.Current.Notify( $"🥾 {connection.DisplayName} was kicked: {reason}" );
 		connection.Kick( reason );
 	}
 

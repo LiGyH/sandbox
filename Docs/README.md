@@ -105,7 +105,7 @@
 ### Фаза 5: Базовый UI (HUD)
 - [05_01 — Стили: Theme.scss и Hud.scss](05_01_Стили_Theme_Hud.md)
 - [05_02 — Vitals (здоровье)](05_02_Vitals.md)
-- [05_03 — Chat (чат)](05_03_Chat.md)
+- [05_03 — Chat (чат, удалён — историческая справка)](05_03_Chat.md)
 - [05_04 — Feed (килл-фид)](05_04_Feed.md)
 - [05_05 — Scoreboard (таблица)](05_05_Scoreboard.md)
 - [05_06 — Nameplate (имена)](05_06_Nameplate.md)
