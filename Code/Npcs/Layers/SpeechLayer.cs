@@ -64,15 +64,9 @@ public class SpeechLayer : BaseNpcLayer
 			_soundHandle.Parent = Npc.GameObject;
 		}
 
-		// Use the explicit subtitle, or fall back to the extension on the resolved sound file
 		if ( !string.IsNullOrEmpty( subtitle ) )
 		{
 			CurrentSpeech = subtitle;
-		}
-		else
-		{
-			var ext = SubtitleExtension.FindForResourceOrDefault( soundFile );
-			CurrentSpeech = ext?.Text;
 		}
 
 		_subtitleEnd = duration;
@@ -145,9 +139,19 @@ public class SpeechLayer : BaseNpcLayer
 	/// </summary>
 	private void DrawSpeech()
 	{
+		var camera = Npc.Scene.Camera;
+		if ( !camera.IsValid() ) return;
+
 		var worldPos = Npc.WorldPosition + Vector3.Up * 80f;
-		var screenPos = Npc.Scene.Camera.PointToScreenPixels( worldPos, out var behind );
+		var screenPos = camera.PointToScreenPixels( worldPos, out var behind );
 		if ( behind ) return;
+
+		// Don't show subtitles through walls
+		var tr = Npc.Scene.Trace.Ray( camera.WorldPosition, worldPos )
+			.WithTag( "world" )
+			.Run();
+
+		if ( tr.Hit ) return;
 
 		var text = TextRendering.Scope.Default;
 		text.Text = CurrentSpeech;

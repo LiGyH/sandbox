@@ -1,6 +1,6 @@
 ﻿using Sandbox.Rendering;
 
-public class ShotgunWeapon : IronSightsWeapon
+public sealed class ShotgunWeapon : IronSightsWeapon
 {
 	[Property] public float PrimaryFireRate { get; set; } = 0.8f;
 	[Property] public int PelletCount { get; set; } = 8;
@@ -45,6 +45,7 @@ public class ShotgunWeapon : IronSightsWeapon
 
 			var tr = Scene.Trace.Ray( eyeRay with { Forward = forward }, Bullet.Range )
 				.IgnoreGameObjectHierarchy( AimIgnoreRoot )
+				.WithCollisionRules( "bullet" )
 				.WithoutTags( "playercontroller" )
 				.Radius( Bullet.BulletRadius )
 				.UseHitboxes()

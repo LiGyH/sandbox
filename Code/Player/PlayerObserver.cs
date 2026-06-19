@@ -1,7 +1,7 @@
 /// <summary>
 /// Dead players become these. They try to observe their last corpse. 
 /// </summary>
-public sealed class PlayerObserver : Component
+internal sealed class PlayerObserver : Component
 {
 	Angles EyeAngles;
 	TimeSince timeSinceStarted;
@@ -31,7 +31,7 @@ public sealed class PlayerObserver : Component
 		// If pressed a button, or has been too long
 		if ( Input.Pressed( "attack1" ) || Input.Pressed( "jump" ) || timeSinceStarted > 4f )
 		{
-			PlayerData.For( Network.Owner )?.RequestRespawn();
+			GameManager.Current?.RequestRespawn();
 			GameObject.Destroy();
 		}
 	}

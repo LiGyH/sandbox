@@ -2,7 +2,7 @@ using Sandbox.Citizen;
 
 public sealed class PlayerInventory : Component, Local.IPlayerEvents
 {
-	[Property] public int MaxSlots { get; set; } = 6;
+	[Property] public int MaxSlots { get; private set; } = 6;
 
 	[RequireComponent] public Player Player { get; set; }
 
@@ -14,7 +14,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 
 	[Sync( SyncFlags.FromHost ), Change] public BaseCarryable ActiveWeapon { get; private set; }
 
-	public void OnActiveWeaponChanged( BaseCarryable oldWeapon, BaseCarryable newWeapon )
+	internal void OnActiveWeaponChanged( BaseCarryable oldWeapon, BaseCarryable newWeapon )
 	{
 		if ( oldWeapon.IsValid() )
 			oldWeapon.GameObject.Enabled = false;
@@ -40,6 +40,28 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 	}
 
 	/// <summary>
+	/// Returns whether the given item could be inserted into the inventory.
+	/// Checks for existing weapons that can receive ammo, and empty slots.
+	/// </summary>
+	public bool CanTake( BaseCarryable item )
+	{
+		if ( !item.IsValid() )
+			return false;
+
+		var existing = Weapons.FirstOrDefault( x => x.GetType() == item.GetType() );
+		if ( existing.IsValid() )
+		{
+			// We already have this weapon — only allow if it can receive ammo
+			if ( existing is BaseWeapon existingWeapon && existingWeapon.UsesAmmo )
+				return existingWeapon.ReserveAmmo < existingWeapon.MaxReserveAmmo;
+
+			return false;
+		}
+
+		return FindEmptySlot() >= 0;
+	}
+
+	/// <summary>
 	/// Returns the first empty slot index, or -1 if the inventory is full.
 	/// </summary>
 	public int FindEmptySlot()
@@ -58,7 +80,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 		return -1;
 	}
 
-	public void GiveDefaultWeapons()
+	internal void GiveDefaultWeapons()
 	{
 		Pickup( "weapons/physgun/physgun.prefab", false );
 		Pickup( "weapons/toolgun/toolgun.prefab", false );
@@ -68,28 +90,60 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 	/// <summary>
 	/// Activates the named tool mode, giving and equipping the toolgun first if the player doesn't have one.
 	/// </summary>
-	public void SetToolMode( string toolModeName )
+	public void SetToolMode( string name )
 	{
 		if ( !Networking.IsHost )
 		{
-			HostSetToolMode( toolModeName );
+			HostSetToolMode( name );
 			return;
 		}
 
 		if ( !HasWeapon<Toolgun>() )
+		{
 			Pickup( "weapons/toolgun/toolgun.prefab", false );
+		}
 
-		var toolgun = GetWeapon<Toolgun>();
-		if ( !toolgun.IsValid() ) return;
+		var toolGun = GetWeapon<Toolgun>();
+		if ( !toolGun.IsValid() ) 
+			return;
 
-		SwitchWeapon( toolgun );
-		toolgun.SetToolMode( toolModeName );
+		SwitchWeapon( toolGun );
+		toolGun.SetToolMode( name );
 	}
 
 	[Rpc.Host]
 	private void HostSetToolMode( string toolModeName )
 	{
 		SetToolMode( toolModeName );
+	}
+
+	/// <summary>
+	/// If we already own a weapon matching this prefab, try to give it ammo.
+	/// Returns true if handled (caller should stop). False means no existing weapon found.
+	/// </summary>
+	private bool TryGiveAmmoToExisting( GameObject prefab, bool notice )
+	{
+		var baseCarry = prefab.Components.Get<BaseCarryable>( true );
+		if ( !baseCarry.IsValid() )
+			return false;
+
+		var existing = Weapons.FirstOrDefault( x => x.GameObject.Name == prefab.Name );
+		if ( !existing.IsValid() )
+			return false;
+
+		if ( existing is BaseWeapon existingWeapon && baseCarry is BaseWeapon pickupWeapon && existingWeapon.UsesAmmo )
+		{
+			if ( existingWeapon.ReserveAmmo >= existingWeapon.MaxReserveAmmo )
+				return true;
+
+			var ammoToGive = pickupWeapon.UsesClips ? pickupWeapon.ClipContents : pickupWeapon.StartingAmmo;
+			existingWeapon.AddReserveAmmo( ammoToGive );
+
+			if ( notice )
+				OnClientPickup( existing, true );
+		}
+
+		return true;
 	}
 
 	public bool Pickup( string prefabName, bool notice = true )
@@ -103,6 +157,9 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 			Log.Warning( $"Prefab not found: {prefabName}" );
 			return false;
 		}
+
+		if ( TryGiveAmmoToExisting( prefab, notice ) )
+			return true;
 
 		var slot = FindEmptySlot();
 		if ( slot < 0 )
@@ -134,6 +191,9 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 
 	public bool Pickup( GameObject prefab, bool notice = true )
 	{
+		if ( TryGiveAmmoToExisting( prefab, notice ) )
+			return true;
+
 		var slot = FindEmptySlot();
 		if ( slot < 0 )
 			return false;
@@ -171,23 +231,8 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 		if ( !baseCarry.IsValid() )
 			return false;
 
-		var existing = Weapons.Where( x => x.GameObject.Name == prefab.Name ).FirstOrDefault();
-		if ( existing.IsValid() )
-		{
-			if ( existing is BaseWeapon existingWeapon && baseCarry is BaseWeapon pickupWeapon && existingWeapon.UsesAmmo )
-			{
-				if ( existingWeapon.ReserveAmmo >= existingWeapon.MaxReserveAmmo )
-					return false;
-
-				var ammoToGive = pickupWeapon.UsesClips ? pickupWeapon.ClipContents : pickupWeapon.StartingAmmo;
-				existingWeapon.AddReserveAmmo( ammoToGive );
-
-				if ( notice )
-					OnClientPickup( existing, true );
-
-				return true;
-			}
-		}
+		if ( TryGiveAmmoToExisting( prefab, notice ) )
+			return true;
 
 		// Reject if the target slot is already occupied
 		var occupant = GetSlot( targetSlot );
@@ -227,29 +272,46 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 		return true;
 	}
 
-	public void Take( BaseCarryable item, bool includeNotices )
+	/// <summary>
+	/// If we already own a weapon of the same type as this live item, try to transfer its ammo.
+	/// Returns true if handled (caller should stop). False means no existing weapon found.
+	/// </summary>
+	private bool TryGiveAmmoFromItem( BaseCarryable item, bool notice )
 	{
 		var existing = Weapons.FirstOrDefault( x => x.GetType() == item.GetType() );
-		if ( existing.IsValid() )
+		if ( !existing.IsValid() )
+			return false;
+
+		if ( existing is BaseWeapon existingWeapon && item is BaseWeapon pickupWeapon && existingWeapon.UsesAmmo )
 		{
-			if ( existing is BaseWeapon existingWeapon && item is BaseWeapon pickupWeapon && existingWeapon.UsesAmmo )
+			if ( existingWeapon.ReserveAmmo >= existingWeapon.MaxReserveAmmo )
 			{
-				if ( existingWeapon.ReserveAmmo < existingWeapon.MaxReserveAmmo )
-				{
-					existingWeapon.AddReserveAmmo( pickupWeapon.ClipContents );
-					OnClientPickup( existing, true );
-				}
+				item.DestroyGameObject();
+				return true;
 			}
 
+			var ammoToGive = pickupWeapon.UsesClips ? pickupWeapon.ClipContents : pickupWeapon.StartingAmmo;
+			existingWeapon.AddReserveAmmo( ammoToGive );
+
+			if ( notice )
+				OnClientPickup( existing, true );
+
 			item.DestroyGameObject();
-			return;
+			return true;
 		}
 
-		// Reject if the inventory is full
-		var slot = FindEmptySlot();
-		if ( slot < 0 )
-			return;
+		return true;
+	}
 
+	public bool Take( BaseCarryable item, bool includeNotices )
+	{
+		if ( !CanTake( item ) )
+			return false;
+
+		if ( TryGiveAmmoFromItem( item, includeNotices ) )
+			return true;
+
+		var slot = FindEmptySlot();
 		item.GameObject.SetParent( GameObject, false );
 		item.LocalTransform = global::Transform.Zero;
 		item.InventorySlot = slot;
@@ -272,10 +334,33 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 		if ( pickupEvent.Cancelled )
 		{
 			item.DestroyGameObject();
-			return;
+			return false;
 		}
 
 		OnClientPickup( item );
+		return true;
+	}
+
+	/// <summary>
+	/// Spawns a dropped item into the world from a prefab, assigns ownership, and applies velocity.
+	/// </summary>
+	private void SpawnDroppedItem( GameObject prefab, Vector3 position, Vector3 velocity )
+	{
+		var pickup = prefab.Clone( new CloneConfig
+		{
+			Transform = new Transform( position ),
+			StartEnabled = true
+		} );
+
+		Ownable.Set( pickup, Player.Network.Owner );
+		pickup.Tags.Add( "removable" );
+		pickup.NetworkSpawn();
+
+		if ( pickup.GetComponent<Rigidbody>() is { } rb )
+		{
+			rb.Velocity = Player.Controller.Velocity + velocity;
+			rb.AngularVelocity = Vector3.Random * 8.0f;
+		}
 	}
 
 	/// <summary>
@@ -319,21 +404,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 				var prefab = GameObject.GetPrefab( prefabSource );
 				if ( prefab.IsValid() )
 				{
-					var pickup = prefab.Clone( new CloneConfig
-					{
-						Transform = new Transform( dropPosition ),
-						StartEnabled = true
-					} );
-
-					Ownable.Set( pickup, Player.Network.Owner );
-					pickup.Tags.Add( "removable" );
-					pickup.NetworkSpawn();
-
-					if ( pickup.GetComponent<Rigidbody>() is { } rb )
-					{
-						rb.Velocity = Player.Controller.Velocity + dropVelocity;
-						rb.AngularVelocity = Vector3.Random * 8.0f;
-					}
+					SpawnDroppedItem( prefab, dropPosition, dropVelocity );
 				}
 			}
 
@@ -348,22 +419,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 				return true;
 			}
 
-			var pickup = weapon.ItemPrefab.Clone( new CloneConfig
-			{
-				Transform = new Transform( dropPosition ),
-				StartEnabled = true
-			} );
-
-			Ownable.Set( pickup, Player.Network.Owner );
-			pickup.Tags.Add( "removable" );
-			pickup.NetworkSpawn();
-
-			if ( pickup.GetComponent<Rigidbody>() is { } rb )
-			{
-				rb.Velocity = Player.Controller.Velocity + dropVelocity;
-				rb.AngularVelocity = Vector3.Random * 8.0f;
-			}
-
+			SpawnDroppedItem( weapon.ItemPrefab, dropPosition, dropVelocity );
 			weapon.DestroyGameObject();
 		}
 
@@ -597,8 +653,6 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents
 	{
 		Remove( weapon );
 	}
-
-	// --- Event Handlers ---
 
 	void Local.IPlayerEvents.OnDied( PlayerDiedParams args )
 	{

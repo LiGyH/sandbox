@@ -5,7 +5,7 @@ using Sandbox.UI;
 [Icon( "💨" )]
 [ClassName( "emittertool" )]
 [Group( "#tool.group.building" )]
-public class EmitterTool : ToolMode
+public sealed class EmitterTool : ToolMode
 {
 	public override bool UseSnapGrid => true;
 	public override IEnumerable<string> TraceIgnoreTags => ["constraint", "collision"];
@@ -29,6 +29,7 @@ public class EmitterTool : ToolMode
 		base.OnStart();
 
 		RegisterAction( ToolInput.Primary, () => "#tool.hint.emittertool.place", OnPlace );
+		RegisterAction( ToolInput.Secondary, () => "#tool.hint.emittertool.place_no_weld", OnPlaceNoWeld );
 	}
 
 	void OnPlace()
@@ -44,7 +45,24 @@ public class EmitterTool : ToolMode
 		placementTrans.Rotation = pos.Rotation;
 
 		var effectDef = ResourceLibrary.Get<ScriptedEmitter>( EffectDef );
-		Spawn( select, baseDef.Prefab, effectDef, placementTrans );
+		Spawn( select, baseDef.Prefab, effectDef, placementTrans, false );
+		ShootEffects( select );
+	}
+
+	void OnPlaceNoWeld()
+	{
+		var select = TraceSelect();
+		if ( !select.IsValid() ) return;
+
+		var baseDef = ResourceLibrary.Get<ScriptedEmitterModel>( BaseDef );
+		if ( baseDef == null ) return;
+
+		var pos = select.WorldTransform();
+		var placementTrans = new Transform( pos.Position );
+		placementTrans.Rotation = pos.Rotation;
+
+		var effectDef = ResourceLibrary.Get<ScriptedEmitter>( EffectDef );
+		Spawn( select, baseDef.Prefab, effectDef, placementTrans, true );
 		ShootEffects( select );
 	}
 
@@ -66,7 +84,7 @@ public class EmitterTool : ToolMode
 	}
 
 	[Rpc.Host]
-	public void Spawn( SelectionPoint point, PrefabFile emitterPrefab, ScriptedEmitter effect, Transform tx )
+	public void Spawn( SelectionPoint point, PrefabFile emitterPrefab, ScriptedEmitter effect, Transform tx, bool noWeld )
 	{
 		if ( emitterPrefab == null )
 			return;
@@ -82,7 +100,11 @@ public class EmitterTool : ToolMode
 			emitter.Emitter = effect;
 		}
 
-		if ( !point.IsWorld )
+		ApplyPhysicsProperties( go );
+
+		go.NetworkSpawn( true, null );
+
+		if ( !noWeld )
 		{
 			var joint = go.AddComponent<FixedJoint>();
 			joint.Attachment = Joint.AttachmentMode.LocalFrames;
@@ -93,10 +115,6 @@ public class EmitterTool : ToolMode
 			joint.Body = point.GameObject;
 			joint.EnableCollision = false;
 		}
-
-		ApplyPhysicsProperties( go );
-
-		go.NetworkSpawn( true, null );
 
 		Track( go );
 

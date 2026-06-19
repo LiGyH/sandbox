@@ -14,6 +14,18 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 		}
 	}
 
+	internal void Notify( string text )
+	{
+		Assert.True( Networking.IsHost, "Only the host can send notifications" );
+		NotifyRpc( text );
+	}
+
+	[Rpc.Broadcast( NetFlags.HostOnly )]
+	private void NotifyRpc( string text )
+	{
+		Sandbox.Platform.Chat.AddText( text );
+	}
+
 	void Component.INetworkListener.OnActive( Connection channel )
 	{
 		channel.CanSpawnObjects = false;
@@ -22,8 +34,6 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 		SpawnPlayer( playerData );
 		CheckConnectionAchievement( channel );
 		CheckFriendsOnlineStat();
-
-		Scene.Get<Chat>()?.AddSystemText( $"{channel.DisplayName} has joined the game", "👋" );
 	}
 
 	/// <summary>
@@ -38,11 +48,6 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 		}
 
 		UndoSystem.Current?.RemovePlayer( channel.SteamId );
-
-		if ( _kickedPlayers.Remove( channel.Id ) ) return;
-		if ( BanSystem.Current?.IsBanned( channel.SteamId ) ?? false ) return;
-
-		Scene.Get<Chat>()?.AddSystemText( $"{channel.DisplayName} has left the game", "👋" );
 	}
 
 	private PlayerData CreatePlayerInfo( Connection channel )
@@ -53,25 +58,22 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 
 		var go = new GameObject( true, $"PlayerInfo - {channel.DisplayName}" );
 		var data = go.AddComponent<PlayerData>();
-		data.SteamId = (long)channel.SteamId;
-		data.PlayerId = channel.Id;
-		data.DisplayName = channel.DisplayName;
 
-		go.NetworkSpawn( null );
+		go.NetworkSpawn( channel );
 		go.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
 
 		return data;
 	}
 
-	public void SpawnPlayer( Connection connection ) => SpawnPlayer( PlayerData.For( connection ) );
+	internal void SpawnPlayer( Connection connection ) => SpawnPlayer( PlayerData.For( connection ) );
 
-	public void SpawnPlayer( PlayerData playerData )
+	internal void SpawnPlayer( PlayerData playerData )
 	{
 		Assert.NotNull( playerData, "PlayerData is null" );
-		Assert.True( Networking.IsHost, $"Client tried to SpawnPlayer: {playerData.DisplayName}" );
+		Assert.True( Networking.IsHost, $"Client tried to SpawnPlayer: {playerData.Network.Owner?.DisplayName}" );
 
 		// does this connection already have a player?
-		if ( Scene.GetAll<Player>().Any( x => x.Network.Owner?.Id == playerData.PlayerId ) )
+		if ( Scene.GetAll<Player>().Any( x => x.Network.Owner == playerData.Network.Owner ) )
 			return;
 
 		// Find a spawn location for this player
@@ -83,12 +85,12 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 		startLocation = respawnEvent.SpawnLocation;
 
 		// Spawn this object and make the client the owner
-		var playerGo = GameObject.Clone( "/prefabs/engine/player.prefab", new CloneConfig { Name = playerData.DisplayName, StartEnabled = false, Transform = startLocation } );
+		var playerGo = GameObject.Clone( "/prefabs/engine/player.prefab", new CloneConfig { Name = playerData.Network.Owner?.DisplayName, StartEnabled = false, Transform = startLocation } );
 
 		var player = playerGo.Components.Get<Player>( true );
 		player.PlayerData = playerData;
 
-		var owner = Connection.Find( playerData.PlayerId );
+		var owner = playerData.Network.Owner;
 		playerGo.NetworkSpawn( owner );
 
 		Local.IPlayerEvents.PostToGameObject( player.GameObject, x => x.OnSpawned() );
@@ -107,15 +109,21 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 		}
 	}
 
-	public void SpawnPlayerDelayed( PlayerData playerData )
+	/// <summary>
+	/// Called by the client (via PlayerObserver) when they want to respawn.
+	/// </summary>
+	[Rpc.Host]
+	internal void RequestRespawn()
 	{
-		GameTask.RunInThreadAsync( async () =>
+		var connection = Rpc.Caller;
+
+		// Clean up any lingering observers for this connection.
+		foreach ( var observer in Scene.GetAllComponents<PlayerObserver>().Where( x => x.Network.Owner == connection ).ToArray() )
 		{
-			await Task.Delay( 4000 );
-			await GameTask.MainThread();
-			if ( Current is not null )
-				Current.SpawnPlayer( playerData );
-		} );
+			observer.GameObject.Destroy();
+		}
+
+		SpawnPlayer( connection );
 	}
 
 	/// <summary>
@@ -137,7 +145,7 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	}
 
 	[Rpc.Broadcast( NetFlags.HostOnly )]
-	private static void SendMessage( string msg )
+	private static void NotifyConsole( string msg )
 	{
 		Log.Info( msg );
 	}
@@ -145,7 +153,7 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	/// <summary>
 	/// Called on the host when a played is killed
 	/// </summary>
-	public void OnDeath( Player player, DamageInfo dmg )
+	internal void OnDeath( Player player, DamageInfo dmg )
 	{
 		Assert.True( Networking.IsHost );
 
@@ -176,26 +184,27 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 		var attackerTags = isSuicide ? "" : source.Tags;
 		var attackerName = isSuicide ? null : source.DisplayName;
 		var attackerSteamId = isSuicide ? 0L : source.SteamId;
-		Scene.RunEvent<Feed>( x => x.NotifyKill( player.DisplayName, attackerName, attackerSteamId, damageTags, attackerTags, "", w?.DisplayIcon ) );
+		var playerName = player.Network.Owner?.DisplayName ?? "Unknown";
+		Scene.RunEvent<Feed>( x => x.NotifyKill( playerName, attackerName, attackerSteamId, damageTags, attackerTags, "", w?.DisplayIcon ) );
 
 		if ( string.IsNullOrEmpty( attackerName ) )
 		{
-			SendMessage( $"{player.DisplayName} died (tags: {dmg.Tags})" );
+			NotifyConsole( $"{playerName} died (tags: {dmg.Tags})" );
 		}
 		else if ( weapon.IsValid() )
 		{
-			SendMessage( $"{attackerName} killed {(isSuicide ? "self" : player.DisplayName)} with {weapon.Name} (tags: {dmg.Tags})" );
+			NotifyConsole( $"{attackerName} killed {(isSuicide ? "self" : playerName)} with {weapon.Name} (tags: {dmg.Tags})" );
 		}
 		else
 		{
-			SendMessage( $"{attackerName} killed {(isSuicide ? "self" : player.DisplayName)} (tags: {dmg.Tags})" );
+			NotifyConsole( $"{attackerName} killed {(isSuicide ? "self" : playerName)} (tags: {dmg.Tags})" );
 		}
 	}
 
 	/// <summary>
 	/// Called on the host when an NPC is killed. Credits the attacker and adds a kill feed entry.
 	/// </summary>
-	public void OnNpcDeath( string npcName, DamageInfo dmg )
+	internal void OnNpcDeath( string npcName, DamageInfo dmg )
 	{
 		Assert.True( Networking.IsHost );
 
@@ -214,9 +223,10 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	/// Change a property, remotely
 	/// </summary>
 	[Rpc.Host]
-	public static void ChangeProperty( Component c, string propertyName, object value )
+	internal static void ChangeProperty( Component c, string propertyName, object value )
 	{
 		if ( !c.IsValid() ) return;
+		if ( !c.GameObject.HasAccess( Rpc.Caller ) ) return;
 
 		var tl = TypeLibrary.GetType( c.GetType() );
 		if ( tl is null ) return;
@@ -239,9 +249,11 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	/// replicated to all clients. Only the morphs present in the batch are modified.
 	/// </summary>
 	[Rpc.Host]
-	public static void ApplyMorphBatch( SkinnedModelRenderer smr, string morphsJson )
+	internal static void ApplyMorphBatch( SkinnedModelRenderer smr, string morphsJson )
 	{
 		if ( !smr.IsValid() ) return;
+		if ( !smr.GameObject.HasAccess( Rpc.Caller ) ) return;
+
 		smr.GameObject.GetOrAddComponent<MorphState>().ApplyBatch( morphsJson );
 	}
 
@@ -249,16 +261,19 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	/// Apply a full morph preset (as json), and captures with <see cref="MorphState"/> which replicates changes to other clients
 	/// </summary>
 	[Rpc.Host]
-	public static void ApplyFacePosePreset( SkinnedModelRenderer smr, string morphsJson )
+	internal static void ApplyFacePosePreset( SkinnedModelRenderer smr, string morphsJson )
 	{
 		if ( !smr.IsValid() ) return;
+		if ( !smr.GameObject.HasAccess( Rpc.Caller ) ) return;
+
 		smr.GameObject.GetOrAddComponent<MorphState>().ApplyPreset( morphsJson );
 	}
 
 	[Rpc.Host]
-	public static async void ChangeMaterialOverride( ModelRenderer renderer, int materialIndex, string materialPath )
+	internal static async void ChangeMaterialOverride( ModelRenderer renderer, int materialIndex, string materialPath )
 	{
 		if ( !renderer.IsValid() ) return;
+		if ( !renderer.GameObject.HasAccess( Rpc.Caller ) ) return;
 
 		Material material = null;
 
@@ -279,7 +294,7 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	/// Delete an object from the Inspector context menu.
 	/// </summary>
 	[Rpc.Host]
-	public static void DeleteInspectedObject( GameObject go )
+	internal static void DeleteInspectedObject( GameObject go )
 	{
 		if ( !go.IsValid() || go.IsProxy ) return;
 		if ( go.Tags.Has( "player" ) ) return;
@@ -294,7 +309,7 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	/// Break (gib) a prop from the Inspector context menu.
 	/// </summary>
 	[Rpc.Host]
-	public static void BreakInspectedProp( Prop prop )
+	internal static void BreakInspectedProp( Prop prop )
 	{
 		if ( !prop.IsValid() || prop.IsProxy ) return;
 		// Check ownership if the object has an Ownable component
@@ -309,7 +324,7 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 	}
 
 	[Rpc.Host]
-	public static void GiveSpawnerWeaponAt( string type, string path, int slot, string data = null, string icon = null, string title = null )
+	internal static void GiveSpawnerWeaponAt( string type, string path, int slot, string data = null, string icon = null, string title = null )
 	{
 		var player = Player.FindForConnection( Rpc.Caller );
 		if ( player is null ) return;
@@ -357,7 +372,7 @@ public sealed partial class GameManager : GameObjectSystem<GameManager>, Compone
 		body.DestroyGameObject();
 	}
 
-	public void OnCleanup( int removedObjects, int restoredObjects )
+	void ICleanupEvents.OnCleanup( int removedObjects, int restoredObjects )
 	{
 		Notices.AddNotice( "cleaning_services", Color.Green, $"Cleanup! Removed {removedObjects} objects, restored {restoredObjects} objects." );
 	}

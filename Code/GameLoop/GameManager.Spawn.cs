@@ -67,12 +67,15 @@ public sealed partial class GameManager
 		{
 			Spawner = spawner,
 			Transform = transform,
-			Player = player?.PlayerData
+			Player = player?.Network.Owner
 		};
 
 		Game.ActiveScene.RunEvent<Global.ISpawnEvents>( x => x.OnSpawn( spawnData ) );
 
 		if ( spawnData.Cancelled )
+			return;
+
+		if ( !player.IsValid() )
 			return;
 
 		// If the prefab is a weapon, pick it up directly instead of spawning into the world
@@ -103,7 +106,7 @@ public sealed partial class GameManager
 			{
 				Spawner = spawner,
 				Transform = transform,
-				Player = player?.PlayerData,
+				Player = player?.Network.Owner,
 				Objects = objects
 			} ) );
 		}

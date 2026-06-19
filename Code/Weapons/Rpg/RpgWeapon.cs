@@ -1,7 +1,7 @@
 ﻿using Sandbox.Rendering;
 using Sandbox.Utility;
 
-public class RpgWeapon : BaseWeapon
+public sealed class RpgWeapon : BaseWeapon
 {
 	[Property] public float TimeBetweenShots { get; set; } = 2f;
 	[Property] public GameObject ProjectilePrefab { get; set; }
@@ -38,17 +38,15 @@ public class RpgWeapon : BaseWeapon
 		if ( Input.Pressed( "attack2" ) )
 			ToggleTrackedAim();
 
+		// Auto-reload after firing
 		if ( _hasFired && Input.Released( "attack1" ) )
 		{
 			_hasFired = false;
 
-			if ( HasAmmo() )
-			{
-				if ( IsGuiding )
-					_waitingForReload = true;
-				else
-					ViewModel?.RunEvent<ViewModel>( x => x.OnReloadStart() );
-			}
+			if ( IsGuiding )
+				_waitingForReload = true;
+			else if ( CanReload() )
+				OnReloadStart();
 		}
 
 		if ( IsGuiding )
@@ -56,10 +54,11 @@ public class RpgWeapon : BaseWeapon
 			var target = GetAimTarget();
 			Projectile.UpdateWithTarget( target, ProjectileSpeed );
 		}
-		else if ( _waitingForReload && HasAmmo() )
+		else if ( _waitingForReload )
 		{
 			_waitingForReload = false;
-			ViewModel?.RunEvent<ViewModel>( x => x.OnReloadStart() );
+			if ( CanReload() )
+				OnReloadStart();
 		}
 	}
 

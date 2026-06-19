@@ -1,26 +1,30 @@
 using Sandbox.CameraNoise;
-using Sandbox.Movement;
-using System.Threading;
 
 /// <summary>
 /// Holds player information like health
 /// </summary>
 public sealed partial class Player : Component, Component.IDamageable, PlayerController.IEvents, Global.ISaveEvents, IKillSource
 {
-	private static Player LocalPlayer { get; set; }
-	public static Player FindLocalPlayer() => LocalPlayer;
-	public static T FindLocalWeapon<T>() where T : BaseCarryable => FindLocalPlayer()?.GetComponentInChildren<T>( true );
-	public static T FindLocalToolMode<T>() where T : ToolMode => FindLocalPlayer()?.GetComponentInChildren<T>( true );
+	[RequireComponent] 
+	public PlayerController Controller { get; set; }
 
-	[RequireComponent] public PlayerController Controller { get; set; }
-	[Property] public GameObject Body { get; set; }
-	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float Health { get; set; } = 100;
-	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float MaxHealth { get; set; } = 100;
+	[Property] 
+	public GameObject Body { get; internal set; }
 
-	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float Armour { get; set; } = 0;
-	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float MaxArmour { get; set; } = 100;
+	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] 
+	public float Health { get; set; } = 100;
 
-	[Sync( SyncFlags.FromHost )] public PlayerData PlayerData { get; set; }
+	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] 
+	public float MaxHealth { get; set; } = 100;
+
+	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] 
+	public float Armour { get; set; } = 0;
+
+	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] 
+	public float MaxArmour { get; set; } = 100;
+
+	[Sync( SyncFlags.FromHost )] 
+	public PlayerData PlayerData { get; internal set; }
 
 	public Transform EyeTransform
 	{
@@ -36,13 +40,9 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	}
 
 	public bool IsLocalPlayer => !IsProxy;
-	public Guid PlayerId => PlayerData.IsValid() ? PlayerData.PlayerId : Guid.Empty;
-	public long SteamId => PlayerData.IsValid() ? PlayerData.SteamId : 0;
-	public string DisplayName => PlayerData.IsValid() ? PlayerData.DisplayName : "Unknown";
 
-	// IKillSource
-	string IKillSource.DisplayName => DisplayName;
-	long IKillSource.SteamId => SteamId;
+	string IKillSource.DisplayName => Network.Owner?.DisplayName ?? "Unknown";
+	long IKillSource.SteamId => (long)(Network.Owner?.SteamId ?? 0);
 	void IKillSource.OnKill( GameObject victim )
 	{
 		PlayerData.Kills++;
@@ -81,14 +81,6 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		{
 			t.GameObject.Destroy();
 		}
-
-		// Apply height from dresser to match camera with visual height
-		if ( Body.IsValid() )
-		{
-			var dresser = Body.GetComponentInChildren<Dresser>( true );
-			if ( dresser.IsValid() )
-				ApplyHeightFromDresser( dresser );
-		}
 	}
 
 	protected override void OnDestroy()
@@ -101,7 +93,7 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	/// Whether this player is currently noclipping. Synced so proxies can animate correctly.
 	/// </summary>
 	[Sync]
-	public bool IsNoclipping { get; set; }
+	public bool IsNoclipping { get; internal set; }
 
 	protected override void OnUpdate()
 	{
@@ -162,7 +154,6 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	{
 		if ( damage.Tags.Contains( DamageTags.Explosion ) && damage.Origin != Vector3.Zero )
 		{
-
 			var dist = (WorldPosition - damage.Origin).Length;
 			var strength = MathX.Remap( dist, 0, 512, 1024, 2048, true );
 
@@ -179,8 +170,10 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	[Rpc.Broadcast( NetFlags.HostOnly | NetFlags.Reliable )]
 	void CreateRagdoll( Vector3 velocity, Vector3 origin )
 	{
-		if ( !Controller.Renderer.IsValid() )
+		if ( !Controller.Renderer.IsValid() || Controller.Renderer.Model is null )
 			return;
+
+		var batch = Scene.BatchGroup();
 
 		var go = new GameObject( true, "Ragdoll" );
 		go.Tags.Add( "ragdoll" );
@@ -206,21 +199,21 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		var physics = go.Components.Create<ModelPhysics>();
 		physics.Model = mainBody.Model;
 		physics.Renderer = mainBody;
+		batch.Dispose();
+
 		physics.CopyBonesFrom( Controller.Renderer, true );
 
-		ApplyRagdollForce( physics, velocity, origin );
-		
 		var corpse = go.AddComponent<DeathCameraTarget>();
 		corpse.Connection = Network.Owner;
 		corpse.Created = DateTime.Now;
 
 		CopyBoneScalesToRagdoll( go );
+
+		ApplyRagdollForce( physics, velocity, origin );
 	}
 
-	async void ApplyRagdollForce( ModelPhysics physics, Vector3 force, Vector3 origin )
+	void ApplyRagdollForce( ModelPhysics physics, Vector3 force, Vector3 origin )
 	{
-		await GameTask.Delay( 10 );
-
 		if ( !physics.IsValid() ) return;
 		if ( force.Length < 1 ) return;
 
@@ -296,13 +289,12 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		//
 		// Ghost and say goodbye to the player
 		//
-		PlayerData?.MarkForRespawn();
 		Ghost();
 		GameObject.Destroy();
 	}
 
 	[Rpc.Host]
-	public void EquipBestWeapon()
+	internal void EquipBestWeapon()
 	{
 		var inventory = GetComponent<PlayerInventory>();
 
@@ -334,15 +326,16 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 			return;
 		}
 
+		if ( Input.Pressed( "noclip" ) )
+		{
+			ToggleNoclip();
+		}
+
 		if ( Input.Pressed( "jump" ) )
 		{
 			if ( _timeSinceJumpPressed < 0.3f )
 			{
-				if ( GetComponent<NoclipMoveMode>( true ) is { } noclip )
-					{
-						noclip.Enabled = !noclip.Enabled;
-						IsNoclipping = noclip.Enabled;
-					}
+				ToggleNoclip();
 			}
 
 			_timeSinceJumpPressed = 0;
@@ -358,10 +351,13 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		Scene.Get<Inventory>()?.HandleInput();
 	}
 
-	[ConCmd( "sbdm.dev.sethp", ConVarFlags.Cheat )]
-	private static void Dev_SetHp( int hp )
+	void ToggleNoclip()
 	{
-		FindLocalPlayer().Health = hp;
+		if ( GetComponent<NoclipMoveMode>( true ) is { } noclip )
+		{
+			noclip.Enabled = !noclip.Enabled;
+			IsNoclipping = noclip.Enabled;
+		}
 	}
 
 	private SoundHandle _dmgSound;
@@ -464,9 +460,7 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		Local.IPlayerEvents.PostToGameObject( GameObject, x => x.OnJump() );
 		Global.IPlayerEvents.Post( x => x.OnPlayerJumped( this ) );
 
-		var player = Components.Get<Player>();
-
-		if ( Controller.ThirdPerson || !player.IsLocalPlayer ) return;
+		if ( Controller.ThirdPerson || !IsLocalPlayer ) return;
 
 		new Punch( new Vector3( -20, 0, 0 ), 0.5f, 2.0f, 1.0f );
 	}
@@ -504,16 +498,6 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	private async Task ReapplyClothingAfterLoad( Dresser dresser )
 	{
 		await dresser.Apply();
-		ApplyHeightFromDresser( dresser );
 		GameObject.Network.Refresh();
-	}
-
-	private void ApplyHeightFromDresser( Dresser dresser )
-	{
-		if ( !Controller.IsValid() ) return;
-		if ( !dresser.ApplyHeightScale ) return;
-
-		var heightScale = dresser.ManualHeight.Remap( 0, 1, 0.8f, 1.2f, true );
-		Controller.BodyHeight = 72f * heightScale;
 	}
 }
