@@ -17,7 +17,7 @@
 
 ## Что мы делаем?
 
-Создаём систему дупликатора: инструмент `Duplicator` для копирования и вставки конструкций, класс `DuplicationData` для сериализации данных, `LinkedGameObjectBuilder` для поиска связанных объектов и `Duplicator.IconRendering` для рендеринга превью. ПКМ — скопировать конструкцию, ЛКМ — вставить копию.
+Создаём систему дупликатора: инструмент `DuplicatorTool` для копирования и вставки конструкций, класс `DuplicationData` для сериализации данных, `LinkedGameObjectBuilder` для поиска связанных объектов и `DuplicatorTool.IconRendering` для рендеринга превью. ПКМ — скопировать конструкцию, ЛКМ — вставить копию.
 
 ## Зачем это нужно?
 
@@ -35,9 +35,9 @@
 ### Архитектура (четыре файла)
 
 ```
-Duplicator (ToolMode, partial class)
-  ├── Duplicator.cs              — основная логика: копирование, вставка, ввод
-  └── Duplicator.IconRendering.cs — рендеринг превью в битмап (для сохранений)
+DuplicatorTool (ToolMode, partial class)
+  ├── DuplicatorTool.cs              — основная логика: копирование, вставка, ввод
+  └── DuplicatorTool.IconRendering.cs — рендеринг превью в битмап (для сохранений)
 
 DuplicationData                  — данные копии: JSON объектов, bounds, превью-модели
 LinkedGameObjectBuilder          — поиск всех связанных объектов (по Joint и ManualLink)
@@ -60,7 +60,7 @@ LinkedGameObjectBuilder          — поиск всех связанных об
 
 ## Создай файл
 
-📁 `Code/Weapons/ToolGun/Modes/Duplicator/Duplicator.cs`
+📁 `Code/Weapons/ToolGun/Modes/Duplicator/DuplicatorTool.cs`
 
 ```csharp
 ﻿﻿using Sandbox.UI;
@@ -70,7 +70,7 @@ using System.Text.Json.Nodes;
 [Icon( "✌️" )]
 [ClassName( "duplicator" )]
 [Group( "Building" )]
-public partial class Duplicator : ToolMode
+public sealed partial class DuplicatorTool : ToolMode
 {
 	/// <summary>
 	/// When we right click, to "copy" something, we create a Duplication object
@@ -306,9 +306,9 @@ public partial class Duplicator : ToolMode
 		var inventory = localPlayer.GetComponent<PlayerInventory>();
 		if ( !inventory.IsValid() ) return;
 
-		inventory.SetToolMode( "Duplicator" );
+		inventory.SetToolMode( "DuplicatorTool" );
 
-		var toolmode = localPlayer.GetComponentInChildren<Duplicator>( true );
+		var toolmode = localPlayer.GetComponentInChildren<DuplicatorTool>( true );
 
 		// we don't have a duplicator tool!
 		if ( toolmode is null ) return;
@@ -333,7 +333,7 @@ public partial class Duplicator : ToolMode
 }
 ```
 
-### Разбор ключевых частей Duplicator.cs
+### Разбор ключевых частей DuplicatorTool.cs
 
 - **`partial class`** — класс разделён на два файла: основная логика и рендеринг иконок.
 - **`[Sync(SyncFlags.FromHost), Change(nameof(JsonChanged))]`** — `CopiedJson` синхронизируется от хоста ко всем клиентам. При изменении вызывается `JsonChanged()`, создающий `DuplicatorSpawner` из JSON.
@@ -348,13 +348,13 @@ public partial class Duplicator : ToolMode
 
 ---
 
-📁 `Code/Weapons/ToolGun/Modes/Duplicator/Duplicator.IconRendering.cs`
+📁 `Code/Weapons/ToolGun/Modes/Duplicator/DuplicatorTool.IconRendering.cs`
 
 ```csharp
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 
-public partial class Duplicator
+public partial class DuplicatorTool
 {
 	/// <summary>
 	/// Render duplicator Json to a bitmap
@@ -397,7 +397,7 @@ public partial class Duplicator
 
 ### Разбор IconRendering
 
-- **`partial class Duplicator`** — продолжение основного класса.
+- **`partial class DuplicatorTool`** — продолжение основного класса.
 - **`RenderIconToBitmap()`** — статический метод для создания превью конструкции:
   1. Парсит JSON дупликации.
   2. Создаёт временную редакторскую сцену (`Scene.CreateEditorScene()`).

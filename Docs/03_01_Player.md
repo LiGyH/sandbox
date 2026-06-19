@@ -54,7 +54,7 @@ IKillSource               — информация об убийце в лент
 | `Health` | `float` | Текущее HP (0–100), синхронизируется по сети |
 | `MaxHealth` | `float` | Макс. HP |
 | `Armour` / `MaxArmour` | `float` | Броня поглощает урон до того, как он дойдёт до HP |
-| `PlayerData` | `PlayerData` | Постоянные данные (kills, deaths, SteamId) |
+| `PlayerData` | `PlayerData` | Постоянная статистика (kills, deaths, godmode) |
 | `Controller` | `PlayerController` | Движок персонажа (RequireComponent) |
 | `Body` | `GameObject` | Модель тела игрока |
 | `EyeTransform` | `Transform` | Позиция и направление глаз |
@@ -88,7 +88,7 @@ IKillSource               — информация об убийце в лент
 5. Добавляем `DeathCameraTarget` — камера следит за телом
 6. Копируем масштабы костей (для нестандартных моделей)
 
-> 🔄 **Изменение в актуальной версии sandbox:** `CreateRagdoll` теперь принимает параметры `(Vector3 velocity, Vector3 origin)` — скорость и точку приложения импульса. Скорость считается в `GetDeathLaunchVelocity(DamageInfo)` на основе урона/тегов (взрыв/падение/обычная смерть), а сам импульс к костям ragdoll'а применяется отдельным методом `ApplyRagdollForce(...)`. Также `Player` хранит `[Sync] public bool IsNoclipping` (чтобы клиенты видели чужой noclip) и при `OnStart` вызывает `ApplyHeightFromDresser()` — берёт рост модели из компонента-«дрессера». Подробности — в актуальном `Code/Player/Player.cs`.
+> 🔄 **Изменение в актуальной версии sandbox:** `CreateRagdoll` теперь принимает параметры `(Vector3 velocity, Vector3 origin)` — скорость и точку приложения импульса. Скорость считается в `GetDeathLaunchVelocity(DamageInfo)` на основе урона/тегов (взрыв/падение/обычная смерть), а сам импульс к костям ragdoll'а применяется отдельным методом `ApplyRagdollForce(...)` (создание ragdoll'а обёрнуто в `Scene.BatchGroup()` для производительности). Также `Player` хранит `[Sync] public bool IsNoclipping` (чтобы клиенты видели чужой noclip), а переключение noclip вынесено в общий метод `ToggleNoclip()` (вызывается по двойному прыжку и по кнопке `"noclip"`). Идентичность игрока (имя, SteamId) больше **не** хранится в `Player`/`PlayerData` — она читается из подключения-владельца `Network.Owner`. Статические хелперы (`FindLocalPlayer`, `FindForConnection`, `For`) вынесены в `Code/Player/Player.Static.cs`. Подробности — в актуальном `Code/Player/Player.cs`.
 
 ### Ввод (OnControl)
 
@@ -132,14 +132,14 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	public static T FindLocalToolMode<T>() where T : ToolMode => FindLocalPlayer()?.GetComponentInChildren<T>( true );
 
 	[RequireComponent] public PlayerController Controller { get; set; }
-	[Property] public GameObject Body { get; set; }
+	[Property] public GameObject Body { get; internal set; }
 	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float Health { get; set; } = 100;
 	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float MaxHealth { get; set; } = 100;
 
 	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float Armour { get; set; } = 0;
 	[Property, Range( 0, 100 ), Sync( SyncFlags.FromHost )] public float MaxArmour { get; set; } = 100;
 
-	[Sync( SyncFlags.FromHost )] public PlayerData PlayerData { get; set; }
+	[Sync( SyncFlags.FromHost )] public PlayerData PlayerData { get; internal set; }
 
 	public Transform EyeTransform
 	{
@@ -155,13 +155,10 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 	}
 
 	public bool IsLocalPlayer => !IsProxy;
-	public Guid PlayerId => PlayerData.IsValid() ? PlayerData.PlayerId : Guid.Empty;
-	public long SteamId => PlayerData.IsValid() ? PlayerData.SteamId : 0;
-	public string DisplayName => PlayerData.IsValid() ? PlayerData.DisplayName : "Unknown";
 
 	// IKillSource
-	string IKillSource.DisplayName => DisplayName;
-	long IKillSource.SteamId => SteamId;
+	string IKillSource.DisplayName => Network.Owner?.DisplayName ?? "Unknown";
+	long IKillSource.SteamId => (long)(Network.Owner?.SteamId ?? 0);
 	void IKillSource.OnKill( GameObject victim )
 	{
 		PlayerData.Kills++;
@@ -350,13 +347,12 @@ public sealed partial class Player : Component, Component.IDamageable, PlayerCon
 		//
 		// Ghost and say goodbye to the player
 		//
-		PlayerData?.MarkForRespawn();
 		Ghost();
 		GameObject.Destroy();
 	}
 
 	[Rpc.Host]
-	public void EquipBestWeapon()
+	internal void EquipBestWeapon()
 	{
 		var inventory = GetComponent<PlayerInventory>();
 

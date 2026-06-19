@@ -407,4 +407,4 @@ public class ScientistInspectPropSchedule : ScheduleBase
 
 ---
 
-Следующий шаг: [14.14 — NPC: Роллермайн (RollermineNpc)](22_11_RollermineNpc.md)
+Следующий шаг: [14.14 — NPC: Роллермайн (RollerNpc)](22_11_RollermineNpc.md)

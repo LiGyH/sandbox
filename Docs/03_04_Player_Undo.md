@@ -7,12 +7,12 @@
 ## Как это работает?
 
 ```csharp
-public UndoSystem.PlayerStack Undo => UndoSystem.Current.For( SteamId );
+public UndoSystem.PlayerStack Undo => UndoSystem.Current.For( Network.Owner.SteamId );
 ```
 
 Одна строка, которая делает следующее:
 1. `UndoSystem.Current` — получает синглтон системы отмены (GameObjectSystem)
-2. `.For( SteamId )` — возвращает стек отмены для конкретного SteamId
+2. `.For( Network.Owner.SteamId )` — возвращает стек отмены по SteamId подключения-владельца
 3. Каждый игрок имеет свой собственный стек — один игрок не может отменить действия другого
 
 ### Где используется?
@@ -45,7 +45,7 @@ public sealed partial class Player
 	/// <summary>
 	/// Access the undo system for this player
 	/// </summary>
-	public UndoSystem.PlayerStack Undo => UndoSystem.Current.For( SteamId );
+	public UndoSystem.PlayerStack Undo => UndoSystem.Current.For( Network.Owner.SteamId );
 }
 ```
 

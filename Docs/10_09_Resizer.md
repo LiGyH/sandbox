@@ -8,7 +8,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `Resizer.cs` — инструмент, который **увеличивает или уменьшает** размер объектов в реальном времени.
+Создаём файл `ResizerTool.cs` — инструмент, который **увеличивает или уменьшает** размер объектов в реальном времени.
 
 ## Зачем это нужно?
 
@@ -61,14 +61,14 @@ Resizer может масштабировать **любые** объекты, �
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/Resizer.cs`
+📄 `Code/Weapons/ToolGun/Modes/ResizerTool.cs`
 
 ```csharp
 ﻿﻿
 [Icon( "🍄" )]
 [ClassName( "resizer" )]
 [Group( "Tools" )]
-public class Resizer : ToolMode
+public sealed class ResizerTool : ToolMode
 {
 	public override IEnumerable<string> TraceIgnoreTags => [];
 

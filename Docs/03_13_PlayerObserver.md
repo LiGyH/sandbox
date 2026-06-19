@@ -61,7 +61,7 @@ if ( timeSinceStarted < 1 ) return;  // первую секунду нельзя
 /// <summary>
 /// Dead players become these. They try to observe their last corpse. 
 /// </summary>
-public sealed class PlayerObserver : Component
+internal sealed class PlayerObserver : Component
 {
 	Angles EyeAngles;
 	TimeSince timeSinceStarted;
@@ -101,7 +101,7 @@ public sealed class PlayerObserver : Component
 		// If pressed a button, or has been too long
 		if ( Input.Pressed( "attack1" ) || Input.Pressed( "jump" ) || timeSinceStarted > 4f )
 		{
-			PlayerData.For( Network.Owner )?.RequestRespawn();
+			GameManager.Current?.RequestRespawn();
 			GameObject.Destroy();
 		}
 	}
@@ -145,10 +145,10 @@ if ( IsProxy ) return;
 
 | Путь | Триггер | Механизм |
 |------|---------|----------|
-| Ручной | Нажатие кнопки | `PlayerData.RequestRespawn()` |
+| Ручной | Нажатие кнопки | `GameManager.Current?.RequestRespawn()` |
 | Автоматический | 4 секунды | `timeSinceStarted > 4f` |
 
-Оба пути вызывают `PlayerData.RequestRespawn()`, который создаёт нового игрока и уничтожает Observer.
+Оба пути вызывают `GameManager.Current?.RequestRespawn()` (host-RPC), который создаёт нового игрока и уничтожает Observer.
 
 ### Vector3.Lerp с временем
 

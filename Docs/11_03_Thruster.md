@@ -32,7 +32,7 @@ Thruster позволяет игрокам прикреплять реактив
 [Icon( "🚀" )]
 [ClassName( "thrustertool" )]
 [Group( "Building" )]
-public class ThrusterTool : ToolMode
+public sealed class ThrusterTool : ToolMode
 {
 	public override bool UseSnapGrid => true;
 	public override IEnumerable<string> TraceIgnoreTags => ["constraint", "collision"];
@@ -160,7 +160,7 @@ public class ThrusterTool : ToolMode
 
 ```csharp
 ﻿[Alias( "thruster" )]
-public class ThrusterEntity : Component, IPlayerControllable
+public sealed class ThrusterEntity : Component, IPlayerControllable
 {
 	[Property, Range( 0, 1 )]
 	public GameObject OnEffect { get; set; }

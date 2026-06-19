@@ -8,7 +8,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `Remover.cs` — инструмент, который **удаляет** объекты из мира. Наводишь — нажимаешь ЛКМ — объект исчезает.
+Создаём файл `RemoverTool.cs` — инструмент, который **удаляет** объекты из мира. Наводишь — нажимаешь ЛКМ — объект исчезает.
 
 ## Зачем это нужно?
 
@@ -18,7 +18,7 @@
 
 ### Отличие от других инструментов
 
-`Remover` наследуется напрямую от `ToolMode` (не от `BaseConstraintToolMode`), потому что ему нужна только **одна** точка — объект для удаления.
+`RemoverTool` наследуется напрямую от `ToolMode` (не от `BaseConstraintToolMode`), потому что ему нужна только **одна** точка — объект для удаления.
 
 ### Фильтрация
 
@@ -58,13 +58,13 @@ public void Remove( GameObject go )
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/Remover.cs`
+📄 `Code/Weapons/ToolGun/Modes/RemoverTool.cs`
 
 ```csharp
 ﻿﻿[Icon( "🧨" )]
 [ClassName( "remover" )]
 [Group( "Tools" )]
-public class Remover : ToolMode
+public sealed class RemoverTool : ToolMode
 {
 	public override bool TraceHitboxes => true;
 	public override string Description => "#tool.hint.remover.description";

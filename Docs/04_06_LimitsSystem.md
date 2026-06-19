@@ -97,7 +97,7 @@ private readonly HashSet<GameObject> _allTracked = new();
 
 ```csharp
 void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e )
-    => Track( e.Player.SteamId, e.Objects );
+    => Track( (long)e.Player.SteamId, e.Objects );
 ```
 
 ### Поток `OnToolAction` (через IToolActionEvents)
@@ -106,7 +106,7 @@ void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e )
 
 - `Reload` пропускается (это обычно «копировать настройки», а не создание).
 - Универсальный `CheckToolLimit<TTool, TEntity>` смотрит, не превысил ли игрок лимит для своего набора (`TEntity` — компонент, по которому считается; `TTool` — тип `ToolMode`).
-- Для констрейнтов (`BaseConstraintToolMode` или `KeepUpright`) — отдельная ветка с подсчётом по тегу `"constraint"`.
+- Для констрейнтов (`BaseConstraintToolMode` или `KeepUprightTool`) — отдельная ветка с подсчётом по тегу `"constraint"`.
 - Параметр `creationInput` нужен потому, что не все нажатия создают объект: например у `EmitterTool` создание идёт только на `ToolInput.Primary`, а `Secondary`/`Reload` — управление существующим эмиттером.
 
 ### Поток `OnPostToolAction`
@@ -129,7 +129,7 @@ Notices.SendNotice( target, "block", Color.Red,
 Полный исходник — в репозитории. Ниже — каркас, чтобы было понятно как всё собирается:
 
 ```csharp
-public sealed class LimitsSystem
+internal sealed class LimitsSystem
     : GameObjectSystem<LimitsSystem>, Global.ISpawnEvents, IToolActionEvents
 {
     [Range( -1, 1024 )]

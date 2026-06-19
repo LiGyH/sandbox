@@ -44,7 +44,7 @@ using Sandbox.UI;
 /// Can be triggered manually via player input or automatically on a timer.
 /// </summary>
 [Alias( "entity_spawner" )]
-public class EntitySpawnerEntity : Component, IPlayerControllable
+public sealed class EntitySpawnerEntity : Component, IPlayerControllable
 {
 	/// <summary>
 	/// The SENT to spawn.
@@ -143,7 +143,7 @@ public class EntitySpawnerEntity : Component, IPlayerControllable
 
 ```csharp
 [Alias( "entity_spawner" )]
-public class EntitySpawnerEntity : Component, IPlayerControllable
+public sealed class EntitySpawnerEntity : Component, IPlayerControllable
 ```
 
 - **`[Alias("entity_spawner")]`** — псевдоним для сериализации/десериализации.

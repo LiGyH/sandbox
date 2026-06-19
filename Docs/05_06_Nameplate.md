@@ -34,9 +34,9 @@
 
 		<div class="card">
 
-			<div class="avatar" style="background-image: url( avatar:@Player.SteamId )"></div>
+			<div class="avatar" style="background-image: url( avatar:@Player.Network.Owner?.SteamId )"></div>
 
-			<label class="name">@Player.DisplayName</label>
+			<label class="name">@Player.Network.Owner?.DisplayName</label>
 			@if ( IsVoicePlaying )
 			{
 				<div class="voice">volume_up</div>
@@ -89,8 +89,8 @@
 
 **Разметка:**
 
-- `avatar:@Player.SteamId` — загружает аватар из Steam
-- `@Player.DisplayName` — отображает имя игрока
+- `avatar:@Player.Network.Owner?.SteamId` — загружает аватар из Steam
+- `@Player.Network.Owner?.DisplayName` — отображает имя игрока
 - Если `IsVoicePlaying` — показывается иконка динамика (`volume_up` — это Material Icon)
 
 **Код:**

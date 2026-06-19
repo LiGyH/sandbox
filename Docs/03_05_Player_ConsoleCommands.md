@@ -56,24 +56,6 @@ if ( !player.IsValid() ) return;
 public sealed partial class Player
 {
 	/// <summary>
-	/// Find a player for this connection
-	/// </summary>
-	public static Player FindForConnection( Connection c )
-	{
-		return Game.ActiveScene.GetAll<Player>().FirstOrDefault( x => x.Network.Owner == c );
-	}
-
-	/// <summary>
-	/// Get player from a connecction id
-	/// </summary>
-	/// <param name="playerId"></param>
-	/// <returns></returns>
-	public static Player For( Guid playerId )
-	{
-		return Game.ActiveScene.GetAll<Player>().FirstOrDefault( x => x.PlayerId.Equals( playerId ) );
-	}
-
-	/// <summary>
 	/// Kill yourself
 	/// </summary>
 	[ConCmd( "kill" )]
@@ -115,7 +97,7 @@ public sealed partial class Player
 	}
 
 	/// <summary>
-	/// Switch to another map
+	/// Undo the last action for the calling player
 	/// </summary>
 	[ConCmd( "undo", ConVarFlags.Server )]
 	public static void RunUndo( Connection source )
@@ -131,12 +113,20 @@ public sealed partial class Player
 
 ## Построчное объяснение
 
-### FindForConnection (строки 6–9)
+### FindForConnection
+
+> 📦 В актуальной версии sandbox статические хелперы `FindForConnection( Connection )` и `For( Guid )` вынесены из `Player.ConsoleCommands.cs` в отдельный файл `Code/Player/Player.Static.cs` (там же, где `FindLocalPlayer`/`FindLocalToolMode`). Сами вызовы (`Player.FindForConnection( source )`) не меняются. Обновлённый `For` ищет по подключению-владельцу:
 
 ```csharp
+// Code/Player/Player.Static.cs
 public static Player FindForConnection( Connection c )
 {
     return Game.ActiveScene.GetAll<Player>().FirstOrDefault( x => x.Network.Owner == c );
+}
+
+public static Player For( Guid playerId )
+{
+    return Game.ActiveScene.GetAll<Player>().FirstOrDefault( x => x.Network.Owner?.Id == playerId );
 }
 ```
 

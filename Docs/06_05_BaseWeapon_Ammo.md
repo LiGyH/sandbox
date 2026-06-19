@@ -245,13 +245,15 @@ public partial class BaseWeapon
 - **Инкрементальная перезарядка**: для дробовиков — по одному патрону за раз, с возможностью прервать в любой момент.
 - **Отмена**: `CancellationTokenSource` позволяет отменить перезарядку при нажатии на атаку.
 - **Сетевая синхронизация**: `BroadcastReload()` — RPC для трансляции анимации перезарядки всем клиентам.
-- **Анимация**: управление параметрами анимации через `ViewModel` — `OnReloadStart()`, `OnIncrementalReload()`, `OnReloadFinish()`.
+- **Анимация**: управление параметрами анимации через `ViewModel` — `OnReloadStart()`, `OnIncrementalReload( bool firstShell = false )`, `OnReloadFinish()`. Для первого патрона при инкрементальной перезарядке передаётся `firstShell: true` (параметр анимации `b_reloading_first_shell`).
 
 ## Как это работает внутри движка?
 
 | Элемент | Описание |
 |---|---|
 | `IncrementalReloading` | Если `true` — перезарядка по 1 патрону за цикл (дробовик). Если `false` — заполняет магазин целиком за одну задержку. |
+| `FirstShellReloadTime` | Доп. задержка после вставки первого патрона перед началом последующих (длинная анимация досыла). Только при инкрементальной перезарядке; `0` — без задержки. |
+| `ReloadStartTime` | Задержка перед вставкой первого патрона при инкрементальной перезарядке. `0` — используется `ReloadTime`. |
 | `CanCancelReload` | Разрешает отмену перезарядки через атаку. |
 | `CancellationTokenSource` | Механизм отмены async-перезарядки. При `CancelReload()` вызывается `Cancel()`. |
 | `isReloading` | Приватный флаг состояния перезарядки. |
@@ -275,6 +277,20 @@ public partial class BaseWeapon
 	/// </summary>
 	[Property, Feature( "Ammo" )]
 	public bool IncrementalReloading { get; set; } = false;
+
+	/// <summary>
+	/// Extra delay after the first shell reload before subsequent shells begin (e.g. longer carrier insertion animation).
+	/// Only used with incremental reloading. If zero, no extra delay is added.
+	/// </summary>
+	[Property, Feature( "Ammo" ), ShowIf( nameof( IncrementalReloading ), true )]
+	public float FirstShellReloadTime { get; set; } = 0f;
+
+	/// <summary>
+	/// Delay before the first shell is inserted during incremental reload.
+	/// If zero, uses <see cref="ReloadTime"/>.
+	/// </summary>
+	[Property, Feature( "Ammo" ), ShowIf( nameof( IncrementalReloading ), true )]
+	public float ReloadStartTime { get; set; } = 0f;
 
 	/// <summary>
 	/// Can we cancel reloads?
@@ -348,6 +364,7 @@ public partial class BaseWeapon
 	{
 		// Capture so we can tell if a newer reload has replaced us by the time finally runs.
 		var mySource = reloadToken;
+		var isFirstShell = ClipContents == 0;
 
 		try
 		{
@@ -365,10 +382,12 @@ public partial class BaseWeapon
 				if ( available <= 0 )
 					break;
 
-				ViewModel?.RunEvent<ViewModel>( x => x.OnIncrementalReload() );
+				ViewModel?.RunEvent<ViewModel>( x => x.OnIncrementalReload( isFirstShell ) );
 
 				ReserveAmmo -= available;
 				ClipContents += available;
+
+				isFirstShell = false;
 			}
 		}
 		finally

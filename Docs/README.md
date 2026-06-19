@@ -105,7 +105,7 @@
 ### Фаза 5: Базовый UI (HUD)
 - [05_01 — Стили: Theme.scss и Hud.scss](05_01_Стили_Theme_Hud.md)
 - [05_02 — Vitals (здоровье)](05_02_Vitals.md)
-- [05_03 — Chat (чат)](05_03_Chat.md)
+- [05_03 — Chat (чат, удалён — историческая справка)](05_03_Chat.md)
 - [05_04 — Feed (килл-фид)](05_04_Feed.md)
 - [05_05 — Scoreboard (таблица)](05_05_Scoreboard.md)
 - [05_06 — Nameplate (имена)](05_06_Nameplate.md)
@@ -274,8 +274,8 @@
 - [22_08 — Tasks: Say, FireWeapon, PickUp/DropProp](22_08_Tasks_Advanced.md)
 - [22_09 — CombatNpc и его расписания](22_09_CombatNpc.md)
 - [22_10 — ScientistNpc и его расписания](22_10_ScientistNpc.md)
-- [22_11 — RollermineNpc и его задачи](22_11_RollermineNpc.md)
-- [22_12 — SubtitleExtension.cs](22_12_SubtitleExtension.md)
+- [22_11 — RollerNpc и его задачи](22_11_RollermineNpc.md)
+- [22_12 — SubtitleExtension.cs](22_12_SubtitleExtension.md) (удалён — историческая справка)
 
 ### Фаза 23: Сохранение и очистка
 - [23_01 — ISaveEvents.cs](23_01_ISaveEvents.md)

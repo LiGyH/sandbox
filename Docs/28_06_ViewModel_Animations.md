@@ -101,10 +101,14 @@ public void OnReloadStart()
     Renderer?.Set( IsIncremental ? "b_reloading" : "b_reload", true );
 }
 
-public void OnIncrementalReload()
+public void OnIncrementalReload( bool firstShell = false )
 {
     Renderer?.Set( "speed_reload", IncrementalAnimationSpeed );
-    Renderer?.Set( "b_reloading_shell", true );
+
+    if ( firstShell )
+        Renderer?.Set( "b_reloading_first_shell", true );
+    else
+        Renderer?.Set( "b_reloading_shell", true );
 }
 
 public void OnReloadFinish()

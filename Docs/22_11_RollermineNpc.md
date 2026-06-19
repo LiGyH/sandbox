@@ -1,4 +1,4 @@
-# 22.11 — NPC: Роллермайн (RollermineNpc) 🔵
+# 22.11 — NPC: Роллермайн (RollerNpc) 🔵
 
 <!-- phase05-links -->
 > **📚 Основы движка (см. Фаза 0.5):**
@@ -8,31 +8,31 @@
 
 ## Что мы делаем?
 
-Создаём **RollermineNpc** — физического NPC-мину в форме шара, который катится к игрокам, прыгает на них и наносит урон при контакте. Не использует NavMesh — всё на физических силах.
+Создаём **RollerNpc** — физического NPC-мину в форме шара, который катится к игрокам, прыгает на них и наносит урон при контакте. Не использует NavMesh — всё на физических силах.
 
-## Расписания Rollermine
+## Расписания Roller
 
 ```
 GetSchedule()
     ↓
-┌─ Видит цель? → RollermineChaseSchedule (Roll → Leap → повтор)
-└─ Не видит → RollermineIdleSchedule (Wait)
+┌─ Видит цель? → RollerChaseSchedule (Roll → Leap → повтор)
+└─ Не видит → RollerIdleSchedule (Wait)
 ```
 
-## Создай файл: RollermineNpc
+## Создай файл: RollerNpc
 
-Путь: `Code/Npcs/Rollermine/RollermineNpc.cs`
+Путь: `Code/Npcs/Roller/RollerNpc.cs`
 
 ```csharp
 using Sandbox.Npcs.Layers;
-using Sandbox.Npcs.Rollermine.Schedules;
+using Sandbox.Npcs.Roller.Schedules;
 
-namespace Sandbox.Npcs.Rollermine;
+namespace Sandbox.Npcs.Roller;
 
 /// <summary>
 /// A physics-driven NPC that chases players, leaps at them, and bounces off dealing damage on contact.
 /// </summary>
-public class RollermineNpc : Npc, Component.IDamageable, Component.ICollisionListener
+public sealed class RollerNpc : Npc, Component.IDamageable, Component.ICollisionListener
 {
 	[Property, ClientEditable, Range( 1f, 500f ), Sync]
 	public float Health { get; set; } = 35f;
@@ -167,9 +167,9 @@ public class RollermineNpc : Npc, Component.IDamageable, Component.ICollisionLis
 	{
 		var target = Senses.GetNearestVisible();
 		if ( target.IsValid() )
-			return GetSchedule<RollermineChaseSchedule>();
+			return GetSchedule<RollerChaseSchedule>();
 
-		return GetSchedule<RollermineIdleSchedule>();
+		return GetSchedule<RollerIdleSchedule>();
 	}
 
 	void IDamageable.OnDamage( in DamageInfo damage )
@@ -226,32 +226,32 @@ public class RollermineNpc : Npc, Component.IDamageable, Component.ICollisionLis
 
 ## Создай файлы расписаний и задач
 
-### RollermineChaseSchedule.cs
+### RollerChaseSchedule.cs
 
-Путь: `Code/Npcs/Rollermine/RollermineChaseSchedule.cs`
+Путь: `Code/Npcs/Roller/RollerChaseSchedule.cs`
 
 ```csharp
-using Sandbox.Npcs.Rollermine.Tasks;
+using Sandbox.Npcs.Roller.Tasks;
 
-namespace Sandbox.Npcs.Rollermine.Schedules;
+namespace Sandbox.Npcs.Roller.Schedules;
 
-public class RollermineChaseSchedule : ScheduleBase
+public sealed class RollerChaseSchedule : ScheduleBase
 {
 	protected override void OnStart()
 	{
-		(Npc as RollermineNpc)?.SetHunting( true );
-		AddTask( new RollermineRollTask() );
-		AddTask( new RollermineLeapTask() );
+		(Npc as RollerNpc)?.SetHunting( true );
+		AddTask( new RollerRollTask() );
+		AddTask( new RollerLeapTask() );
 	}
 
 	protected override void OnEnd()
 	{
-		(Npc as RollermineNpc)?.SetHunting( false );
+		(Npc as RollerNpc)?.SetHunting( false );
 	}
 
 	protected override void OnCancelled()
 	{
-		(Npc as RollermineNpc)?.SetHunting( false );
+		(Npc as RollerNpc)?.SetHunting( false );
 	}
 
 	protected override bool ShouldCancel()
@@ -261,16 +261,16 @@ public class RollermineChaseSchedule : ScheduleBase
 }
 ```
 
-### RollermineIdleSchedule.cs
+### RollerIdleSchedule.cs
 
-Путь: `Code/Npcs/Rollermine/RollermineIdleSchedule.cs`
+Путь: `Code/Npcs/Roller/RollerIdleSchedule.cs`
 
 ```csharp
 using Sandbox.Npcs.Tasks;
 
-namespace Sandbox.Npcs.Rollermine.Schedules;
+namespace Sandbox.Npcs.Roller.Schedules;
 
-public class RollermineIdleSchedule : ScheduleBase
+public sealed class RollerIdleSchedule : ScheduleBase
 {
 	protected override void OnStart()
 	{
@@ -284,17 +284,17 @@ public class RollermineIdleSchedule : ScheduleBase
 }
 ```
 
-### RollermineRollTask.cs
+### RollerRollTask.cs
 
-Путь: `Code/Npcs/Rollermine/Tasks/RollermineRollTask.cs`
+Путь: `Code/Npcs/Roller/Tasks/RollerRollTask.cs`
 
 ```csharp
-namespace Sandbox.Npcs.Rollermine.Tasks;
+namespace Sandbox.Npcs.Roller.Tasks;
 
 /// <summary>
 /// Rolls toward target using force and torque. Succeeds when within LeapRange.
 /// </summary>
-public class RollermineRollTask : TaskBase
+public sealed class RollerRollTask : TaskBase
 {
 	private const float StuckSpeedThreshold = 40f;
 	private const float StuckTime = 1.2f;
@@ -304,7 +304,7 @@ public class RollermineRollTask : TaskBase
 
 	protected override TaskStatus OnUpdate()
 	{
-		var rollermine = Npc as RollermineNpc;
+		var rollermine = Npc as RollerNpc;
 		if ( rollermine is null ) return TaskStatus.Failed;
 
 		var rb = rollermine.Rigidbody;
@@ -357,24 +357,24 @@ public class RollermineRollTask : TaskBase
 }
 ```
 
-### RollermineLeapTask.cs
+### RollerLeapTask.cs
 
-Путь: `Code/Npcs/Rollermine/Tasks/RollermineLeapTask.cs`
+Путь: `Code/Npcs/Roller/Tasks/RollerLeapTask.cs`
 
 ```csharp
-namespace Sandbox.Npcs.Rollermine.Tasks;
+namespace Sandbox.Npcs.Roller.Tasks;
 
 /// <summary>
 /// Leaps at the current target with a clean impulse, then waits for cooldown.
 /// </summary>
-public class RollermineLeapTask : TaskBase
+public sealed class RollerLeapTask : TaskBase
 {
 	private const float LeapCooldown = 1.2f;
 	private TimeUntil _cooldown;
 
 	protected override void OnStart()
 	{
-		var rollermine = Npc as RollermineNpc;
+		var rollermine = Npc as RollerNpc;
 		if ( rollermine is null ) return;
 
 		var rb = rollermine.Rigidbody;
@@ -403,49 +403,49 @@ public class RollermineLeapTask : TaskBase
 }
 ```
 
-## Сводка поведения Rollermine
+## Сводка поведения Roller
 
 | Фаза | Задача | Описание |
 |------|--------|----------|
 | Idle | Wait | Стоит на месте 1-2.5 сек, сканирует |
-| Chase: Roll | RollermineRollTask | Катится к цели, применяя силу и вращение |
-| Chase: Leap | RollermineLeapTask | Прыгает на цель импульсом |
+| Chase: Roll | RollerRollTask | Катится к цели, применяя силу и вращение |
+| Chase: Leap | RollerLeapTask | Прыгает на цель импульсом |
 | Contact | OnCollisionStart | Наносит урон и отскакивает |
 
-> **Примечание о сетевизации.** Поле `_hunting` заменено на публичное свойство `[Sync] IsHunting`, чтобы клиенты тоже могли реагировать на состояние охоты — это нужно для нового компонента `RollermineMorphs` (см. ниже). Кроме того, `SetHunting( true )` теперь временно увеличивает радиус `SphereCollider` в 1.4 раза и применяет короткий импульс вверх, благодаря чему ролик «вскакивает» при обнаружении цели.
+> **Примечание о сетевизации.** Поле `_hunting` заменено на публичное свойство `[Sync] IsHunting`, чтобы клиенты тоже могли реагировать на состояние охоты — это нужно для нового компонента `RollerMorphs` (см. ниже). Кроме того, `SetHunting( true )` теперь временно увеличивает радиус `SphereCollider` в 1.4 раза и применяет короткий импульс вверх, благодаря чему ролик «вскакивает» при обнаружении цели.
 
 ---
 
-# 🔵 Морфы и свечение Rollermine (RollermineMorphs)
+# 🔵 Морфы и свечение Roller (RollerMorphs)
 
 ## Что мы делаем?
-Создаём `RollermineMorphs` — компонент, который управляет морф-таргетами и пульсацией свечения материала роллермайна. Использует **ту же** меш-модель, что и морф-вариант ховербола (`Coils_Deployed`, `Pins_Deployed`), но реагирует на `IsHunting`.
+Создаём `RollerMorphs` — компонент, который управляет морф-таргетами и пульсацией свечения материала роллермайна. Использует **ту же** меш-модель, что и морф-вариант ховербола (`Coils_Deployed`, `Pins_Deployed`), но реагирует на `IsHunting`.
 
 ## Зачем это нужно?
 Визуально показывает «боевой режим»: при включении охоты у роллермайна выдвигаются катушки и шипы, материал начинает мерцать характерным бирюзовым self-illum.
 
 ## Как это работает внутри движка?
-- Берёт ссылку на `RollermineNpc` и `SkinnedModelRenderer` в дочернем объекте.
+- Берёт ссылку на `RollerNpc` и `SkinnedModelRenderer` в дочернем объекте.
 - Если задан `GlowMaterial`, копирует его и подменяет `MaterialOverride`, отключив батчинг.
 - В `OnUpdate()` целевые значения морфов = 1, если `IsHunting`, иначе 0.
 - Переходы — через `Easing.BounceOut`, длительность `TransitionDuration = 0.3 сек`.
 - Свечение работает аналогично `HoverballMorphs`: бирюзовый `IllumTint`, шумно мерцающая яркость, гасится множителем `_coils`.
 
 ## Создай файл
-`Code/Npcs/Rollermine/RollermineMorphs.cs`
+`Code/Npcs/Roller/RollerMorphs.cs`
 
 ```csharp
 using Sandbox.Utility;
 
-namespace Sandbox.Npcs.Rollermine;
+namespace Sandbox.Npcs.Roller;
 
 /// <summary>
 /// Drives morph targets and material glow on the rollermine mesh based on hunting state.
 /// Same mesh as hoverball — uses Coils_Deployed and Pins_Deployed morphs.
 /// </summary>
-public sealed class RollermineMorphs : Component
+public sealed class RollerMorphs : Component
 {
-	private RollermineNpc _rollermine;
+	private RollerNpc _rollermine;
 	private SkinnedModelRenderer _renderer;
 	private Material _glowMaterialCopy;
 
@@ -471,7 +471,7 @@ public sealed class RollermineMorphs : Component
 
 	protected override void OnStart()
 	{
-		_rollermine = GetComponent<RollermineNpc>();
+		_rollermine = GetComponent<RollerNpc>();
 		_renderer = GetComponentInChildren<SkinnedModelRenderer>();
 
 		if ( GlowMaterial is not null && _renderer.IsValid() )

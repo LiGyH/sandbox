@@ -47,6 +47,17 @@ camera.FieldOfView = Screen.CreateVerticalFieldOfView( Preferences.FieldOfView, 
 
 Конвертирует пользовательскую настройку FOV в вертикальный угол для соотношения 16:9. Это стандартный подход — горизонтальный FOV меняется в зависимости от монитора, а вертикальный остаётся стабильным.
 
+### Скрытие модели от первого лица в виде от третьего лица
+
+```csharp
+if ( Controller.ThirdPerson )
+    camera.RenderExcludeTags.Add( "firstperson" );
+else
+    camera.RenderExcludeTags.Remove( "firstperson" );
+```
+
+В актуальной версии sandbox `PostCameraSetup` управляет тегом `"firstperson"` в `RenderExcludeTags`: в виде от третьего лица объекты с этим тегом (вью-модель оружия в руках) скрываются, а при возврате к виду от первого лица — снова показываются.
+
 ## Создай файл
 
 Путь: `Code/Player/Player.Camera.cs`
@@ -80,6 +91,11 @@ public sealed partial class Player
 	{
 		camera.FovAxis = CameraComponent.Axis.Vertical;
 		camera.FieldOfView = Screen.CreateVerticalFieldOfView( Preferences.FieldOfView, 9.0f / 16.0f );
+
+		if ( Controller.ThirdPerson )
+			camera.RenderExcludeTags.Add( "firstperson" );
+		else
+			camera.RenderExcludeTags.Remove( "firstperson" );
 
 		Local.IPlayerEvents.Post( x => x.OnCameraSetup( camera ) );
 

@@ -197,7 +197,7 @@ void Local.IPlayerEvents.OnMoveSlot( PlayerMoveSlotEvent e )     => SaveLoadout(
 void Global.ISaveEvents.BeforeSave( string filename )
 {
     if ( !Networking.IsHost ) return;
-    var steamId = Player.SteamId;
+    var steamId = (long)(Player.Network.Owner?.SteamId ?? 0);
     if ( steamId == 0 ) return;
 
     var json = SerializeLoadout();
@@ -209,7 +209,7 @@ void Global.ISaveEvents.BeforeSave( string filename )
 void Global.ISaveEvents.AfterLoad( string filename )
 {
     if ( !Networking.IsHost ) return;
-    var steamId = Player.SteamId;
+    var steamId = (long)(Player.Network.Owner?.SteamId ?? 0);
     if ( steamId == 0 ) return;
 
     var json = SaveSystem.Current?.GetMetadata( $"Loadout_{steamId}" );

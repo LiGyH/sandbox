@@ -37,7 +37,7 @@ PointLightEntity / SpotLightEntity
 📁 `Code/Game/Entity/PointLightEntity.cs`
 
 ```csharp
-public class PointLightEntity : Component, IPlayerControllable
+public sealed class PointLightEntity : Component, IPlayerControllable
 {
 	[Property, ClientEditable, Group( "Light" )]
 	public bool On { get; set { field = value; UpdateLight(); } } = true;
@@ -132,7 +132,7 @@ public class PointLightEntity : Component, IPlayerControllable
 📁 `Code/Game/Entity/SpotLightEntity.cs`
 
 ```csharp
-public class SpotLightEntity : Component, IPlayerControllable
+public sealed class SpotLightEntity : Component, IPlayerControllable
 {
 	[Property, ClientEditable, Group( "Light" )]
 	public bool On { get; set { field = value; UpdateLight(); } } = true;

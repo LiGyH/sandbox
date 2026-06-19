@@ -2,7 +2,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `BallSocket.cs` — инструмент, который соединяет два объекта **шарнирным** соединением (`BallJoint`). Объекты могут свободно вращаться вокруг точки крепления.
+Создаём файл `BallSocketTool.cs` — инструмент, который соединяет два объекта **шарнирным** соединением (`BallJoint`). Объекты могут свободно вращаться вокруг точки крепления.
 
 ## Зачем это нужно?
 
@@ -44,14 +44,14 @@ go1.WorldTransform = go2.WorldTransform;  // <-- ключевая строка
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/BallSocket.cs`
+📄 `Code/Weapons/ToolGun/Modes/BallSocketTool.cs`
 
 ```csharp
 ﻿
 [Icon( "🎱" )]
 [ClassName( "ballsocket" )]
 [Group( "Constraints" )]
-public class BallSocket : BaseConstraintToolMode
+public sealed class BallSocketTool : BaseConstraintToolMode
 {
 	[Property, Sync]
 	public bool EnableCollision { get; set; } = false;

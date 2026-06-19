@@ -10,7 +10,7 @@
 
 ## Что мы делаем?
 
-Создаём инструмент `Balloon` — режим Tool Gun для размещения воздушных шаров. Шар можно привязать верёвкой к объекту или поставить свободно. Поддерживает настройку длины верёвки, силы подъёма, цвета и жёсткости верёвки.
+Создаём инструмент `BalloonTool` — режим Tool Gun для размещения воздушных шаров. Шар можно привязать верёвкой к объекту или поставить свободно. Поддерживает настройку длины верёвки, силы подъёма, цвета и жёсткости верёвки.
 
 ## Зачем это нужно?
 
@@ -34,7 +34,7 @@
 
 ## Создай файл
 
-📁 `Code/Weapons/ToolGun/Modes/Balloon/Balloon.cs`
+📁 `Code/Weapons/ToolGun/Modes/Balloon/BalloonTool.cs`
 
 ```csharp
 ﻿using Sandbox.UI;
@@ -42,7 +42,7 @@
 [Icon( "🎈" )]
 [ClassName( "balloon" )]
 [Group( "Building" )]
-public class Balloon : ToolMode
+public sealed class BalloonTool : ToolMode
 {
 	public override bool UseSnapGrid => true;
 	[Property, ResourceSelect( Extension = "bdef", AllowPackages = true ), Title( "Balloon" )]
@@ -218,7 +218,7 @@ public class Balloon : ToolMode
 
 ## Проверка
 
-- Класс `Balloon` наследуется от `ToolMode` (не от `BaseConstraintToolMode`).
+- Класс `BalloonTool` наследуется от `ToolMode` (не от `BaseConstraintToolMode`).
 - Действия регистрируются в `OnStart()` через `RegisterAction(...)`: `Primary` — с верёвкой, `Secondary` — без верёвки. Базовый класс сам читает ввод, стреляет [`IToolActionEvents`](09_11_IToolActionEvents.md), вызывает колбэк.
 - `BalloonDefinition` загружается из ресурса `.bdef` через `ResourceLibrary`.
 - Верёвка создаётся аналогично инструменту Rope: `SpringJoint` + `VerletRope` + `LineRenderer`.
@@ -334,7 +334,7 @@ public class BalloonDefinition : GameResource, IDefinitionResource
 📁 `Code/Weapons/ToolGun/Modes/Balloon/BalloonEntity.cs`
 
 ```csharp
-public class BalloonEntity : Component, Component.IDamageable
+public sealed class BalloonEntity : Component, Component.IDamageable
 {
 	[Property] public PrefabFile PopEffect { get; set; }
 	[Property] public SoundEvent PopSound { get; set; }

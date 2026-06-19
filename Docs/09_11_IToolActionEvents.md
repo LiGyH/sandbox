@@ -81,7 +81,7 @@ public interface IToolActionEvents : ISceneEvent<IToolActionEvents>
     {
         public ToolMode Tool   { get; init; }   // какой тул сработал
         public ToolInput Input { get; init; }   // какая кнопка
-        public PlayerData Player { get; init; } // кто
+        public Connection Player { get; init; } // подключение инициатора
         public bool Cancelled  { get; set; }    // отменить действие
     }
 
@@ -89,7 +89,7 @@ public interface IToolActionEvents : ISceneEvent<IToolActionEvents>
     {
         public ToolMode Tool   { get; init; }
         public ToolInput Input { get; init; }
-        public PlayerData Player { get; init; }
+        public Connection Player { get; init; }
         public List<GameObject> CreatedObjects { get; init; } // что создал тул (опционально)
     }
 
@@ -138,7 +138,9 @@ public sealed class NoBuildZone : Component, IToolActionEvents
     void IToolActionEvents.OnToolAction( IToolActionEvents.ActionData e )
     {
         if ( e.Player is null ) return;
-        var pos = e.Player.GameObject.WorldPosition;
+        var player = Player.FindForConnection( e.Player );
+        if ( !player.IsValid() ) return;
+        var pos = player.GameObject.WorldPosition;
         if ( Zone.Contains( pos ) )
             e.Cancelled = true;
     }
@@ -155,7 +157,7 @@ public sealed class ToolStats : GameObjectSystem<ToolStats>, IToolActionEvents
     void IToolActionEvents.OnPostToolAction( IToolActionEvents.PostActionData e )
     {
         var name = e.Tool?.GetType().Name ?? "Unknown";
-        e.Player?.AddStat( $"tool.{name}.{e.Input}" );
+        PlayerData.For( e.Player )?.AddStat( $"tool.{name}.{e.Input}" );
     }
 }
 ```

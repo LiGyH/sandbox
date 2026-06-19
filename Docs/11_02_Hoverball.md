@@ -31,7 +31,7 @@ Hoverball удерживает объект на заданной высоте, 
 [Icon( "🎱" )]
 [ClassName( "hoverballtool" )]
 [Group( "Building" )]
-public class HoverballTool : ToolMode
+public sealed class HoverballTool : ToolMode
 {
 	public override IEnumerable<string> TraceIgnoreTags => ["constraint", "collision"];
 
@@ -135,7 +135,7 @@ public class HoverballTool : ToolMode
 
 ```csharp
 ﻿[Alias( "hoverball" )]
-public class HoverballEntity : Component, IPlayerControllable
+public sealed class HoverballEntity : Component, IPlayerControllable
 {
 	/// <summary>
 	/// Is the hoverball on?

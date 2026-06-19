@@ -114,7 +114,7 @@
 |------|------|
 | [05.01](05_01_Стили_Theme_Hud.md) | Этап 05_01 — Стили Theme и Hud |
 | [05.02](05_02_Vitals.md) | Этап 05_02 — Vitals (Здоровье, броня и патроны) |
-| [05.03](05_03_Chat.md) | Этап 05_03 — Chat (Чат) |
+| [05.03](05_03_Chat.md) | Этап 05_03 — Chat (Чат, удалён — историческая справка) |
 | [05.04](05_04_Feed.md) | Этап 05_04 — Feed (Лента убийств) |
 | [05.05](05_05_Scoreboard.md) | Этап 05_05 — Scoreboard (Таблица счёта) |
 | [05.06](05_06_Nameplate.md) | Этап 05_06 — Nameplate (Табличка с именем) |
@@ -337,8 +337,8 @@
 | [22.08](22_08_Tasks_Advanced.md) | Продвинутые задачи NPC (Say, FireWeapon, PickUpProp, DropProp) |
 | [22.09](22_09_CombatNpc.md) | NPC: Боевой NPC (CombatNpc) ⚔️ |
 | [22.10](22_10_ScientistNpc.md) | NPC: Учёный (ScientistNpc) 🔬 |
-| [22.11](22_11_RollermineNpc.md) | NPC: Роллермайн (RollermineNpc) 🔵 |
-| [22.12](22_12_SubtitleExtension.md) | Расширение субтитров (SubtitleExtension) |
+| [22.11](22_11_RollermineNpc.md) | NPC: Роллермайн (RollerNpc) 🔵 |
+| [22.12](22_12_SubtitleExtension.md) | Расширение субтитров (SubtitleExtension) — удалён, историческая справка |
 
 ## Фаза 23: Сохранение и очистка 💾
 

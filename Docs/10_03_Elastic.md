@@ -2,7 +2,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `Elastic.cs` — инструмент, который соединяет два объекта **пружиной** (упругим соединением). В отличие от верёвки, пружина **тянет** объекты к длине покоя.
+Создаём файл `ElasticTool.cs` — инструмент, который соединяет два объекта **пружиной** (упругим соединением). В отличие от верёвки, пружина **тянет** объекты к длине покоя.
 
 ## Зачем это нужно?
 
@@ -48,13 +48,13 @@ joint.ForceMode = StretchOnly
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/Elastic.cs`
+📄 `Code/Weapons/ToolGun/Modes/ElasticTool.cs`
 
 ```csharp
 ﻿[Icon( "🌀" )]
 [ClassName( "elastic" )]
 [Group( "Constraints" )]
-public class Elastic : BaseConstraintToolMode
+public sealed class ElasticTool : BaseConstraintToolMode
 {
 	[Range( 0, 15 )]
 	[Property, Sync]

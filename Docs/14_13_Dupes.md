@@ -201,7 +201,7 @@ public enum DupeMovement
 
 		inventory.SetToolMode( "Duplicator" );
 
-		var toolmode = localPlayer.GetComponentInChildren<Duplicator>();
+		var toolmode = localPlayer.GetComponentInChildren<DuplicatorTool>();
 
 		if ( toolmode is null )
 		{
@@ -266,7 +266,7 @@ public enum DupeMovement
 
 				@if (context is Storage.QueryItem item)
                 {
-					<WorkshopIcon Item="@item" @onclick=@( () => _ = Duplicator.FromWorkshop( item ) )></WorkshopIcon>
+					<WorkshopIcon Item="@item" @onclick=@( () => _ = DuplicatorTool.FromWorkshop( item ) )></WorkshopIcon>
                 }
 
             </Item>
@@ -405,7 +405,7 @@ public partial class DupesFooter : Panel
 
 	bool CanSaveDupe()
 	{
-		var mode = Player.FindLocalToolMode<Duplicator>();
+		var mode = Player.FindLocalToolMode<DuplicatorTool>();
 		if ( mode is null ) return false;
 
 		// toolgun isn't out, not in duplicator mode
@@ -418,7 +418,7 @@ public partial class DupesFooter : Panel
 
 	void MakeSave()
 	{
-		var mode = Player.FindLocalToolMode<Duplicator>();
+		var mode = Player.FindLocalToolMode<DuplicatorTool>();
 		if ( mode is null ) return;
 
 		mode.Save();
@@ -877,7 +877,7 @@ public static class WorkshopSortModeExtensions
 bool CanSaveDupe()
 ```
 Проверяет три условия:
-1. Есть ли у игрока **инструмент Duplicator** (`Player.FindLocalToolMode<Duplicator>()`);
+1. Есть ли у игрока **инструмент Duplicator** (`Player.FindLocalToolMode<DuplicatorTool>()`);
 2. **Активен** ли он (`mode.Active`);
 3. Есть ли **скопированные данные** (`mode.CopiedJson` не пустой).
 

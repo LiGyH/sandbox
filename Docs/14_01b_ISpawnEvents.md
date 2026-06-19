@@ -60,7 +60,7 @@ public class SpawnData
 {
     public ISpawner Spawner { get; init; }   // что спавним (PropSpawner, EntitySpawner, MountSpawner, DuplicatorSpawner)
     public Transform Transform { get; init; } // куда (мир)
-    public PlayerData Player { get; init; }   // кто инициировал
+    public Connection Player { get; init; } // подключение инициатора
     public bool Cancelled { get; set; }       // <-- установить true, чтобы отменить
 }
 
@@ -87,7 +87,7 @@ var spawnData = new Global.ISpawnEvents.SpawnData
 {
     Spawner = spawner,
     Transform = transform,
-    Player = player?.PlayerData
+    Player = player?.Network.Owner
 };
 
 Scene.RunEvent<Global.ISpawnEvents>( x => x.OnSpawn( spawnData ) );
@@ -105,7 +105,7 @@ if ( objects is { Count: > 0 } )
     {
         Spawner = spawner,
         Transform = transform,
-        Player = player?.PlayerData,
+        Player = player?.Network.Owner,
         Objects = objects
     } ) );
 }
@@ -131,7 +131,7 @@ public static partial class Global
         {
             public ISpawner Spawner { get; init; }
             public Transform Transform { get; init; }
-            public PlayerData Player { get; init; }
+            public Connection Player { get; init; }
             public bool Cancelled { get; set; }
         }
 
@@ -176,11 +176,13 @@ public sealed class SpawnLog : GameObjectSystem<SpawnLog>, Global.ISpawnEvents
 
     void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e )
     {
-        Scene.Get<Chat>()?.AddSystemText(
+        GameManager.Current?.Notify(
             $"{e.Player?.DisplayName} spawned {e.Spawner.DisplayName} ({e.Objects.Count} obj.)" );
     }
 }
 ```
+
+> ℹ️ В актуальной версии sandbox кастомный компонент `Chat` удалён — для системных сообщений используйте `GameManager.Notify( string )` (host-only), который пишет в движковый чат через `Sandbox.Platform.Chat.AddText`. `e.Player` теперь имеет тип `Connection`, поэтому имя берётся напрямую: `e.Player?.DisplayName`.
 
 ## Проверка
 

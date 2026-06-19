@@ -10,7 +10,7 @@
 ## Что мы делаем?
 
 Создаём **два файла**:
-1. `Trail.cs` — инструмент для добавления и удаления следов (`TrailRenderer`) на объектах
+1. `TrailTool.cs` — инструмент для добавления и удаления следов (`TrailRenderer`) на объектах
 2. `LineDefinition.cs` — ресурс-описание типа линии (материал, прозрачность, масштаб текстуры)
 
 ## Зачем это нужно?
@@ -90,7 +90,7 @@ if ( existing.IsValid() )
 
 ## Создай файл №1
 
-📄 `Code/Weapons/ToolGun/Modes/Trail.cs`
+📄 `Code/Weapons/ToolGun/Modes/TrailTool.cs`
 
 ```csharp
 using Sandbox.UI;
@@ -99,7 +99,7 @@ using Sandbox.UI;
 [Title( "Trail" )]
 [ClassName( "trail" )]
 [Group( "Render" )]
-public class Trail : ToolMode
+public sealed class TrailTool : ToolMode
 {
 	[Property, ResourceSelect( Extension = "ldef", AllowPackages = true ), Title( "Line" )]
 	public string Definition { get; set; } = "entities/trails/basic.ldef";

@@ -135,7 +135,7 @@
 | `ApplyAnimationTransform()` | Ищет кость `camera` на модели — если есть, сдвигает камеру (для анимации отдачи и т.д.). |
 | `UpdateAnimation()` | Устанавливает параметры: `move_bob`, `aim_pitch`, `aim_yaw`, `move_speed`, `move_direction` и другие. |
 | `OnAttack()` | Устанавливает `b_attack`, создаёт дульную вспышку и гильзу. Для бросков — `b_throw`. |
-| `OnReloadStart/OnIncrementalReload/OnReloadFinish` | Управление анимацией перезарядки через параметры `b_reload`, `b_reloading`, `b_reloading_shell`, `speed_reload`. |
+| `OnReloadStart/OnIncrementalReload/OnReloadFinish` | Управление анимацией перезарядки через параметры `b_reload`, `b_reloading`, `b_reloading_shell`, `b_reloading_first_shell`, `speed_reload`. `OnIncrementalReload( bool firstShell )` для первого патрона устанавливает `b_reloading_first_shell`. |
 
 ## Создай файл
 
@@ -323,10 +323,14 @@ public sealed partial class ViewModel : WeaponModel, ICameraSetup
 	/// <summary>
 	/// Called when incrementally reloading a weapon.
 	/// </summary>
-	public void OnIncrementalReload()
+	public void OnIncrementalReload( bool firstShell = false )
 	{
 		Renderer?.Set( "speed_reload", IncrementalAnimationSpeed );
-		Renderer?.Set( "b_reloading_shell", true );
+
+		if ( firstShell )
+			Renderer?.Set( "b_reloading_first_shell", true );
+		else
+			Renderer?.Set( "b_reloading_shell", true );
 	}
 
 	public void OnReloadFinish()

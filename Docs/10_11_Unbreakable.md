@@ -8,7 +8,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `Unbreakable.cs` — инструмент, который делает объект **неразрушимым** (или возвращает обычную разрушимость).
+Создаём файл `UnbreakableTool.cs` — инструмент, который делает объект **неразрушимым** (или возвращает обычную разрушимость).
 
 ## Зачем это нужно?
 
@@ -45,14 +45,14 @@ if ( !prop.IsValid() ) return;
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/Unbreakable.cs`
+📄 `Code/Weapons/ToolGun/Modes/UnbreakableTool.cs`
 
 ```csharp
 
 [Icon( "🛡️" )]
 [ClassName( "unbreakable" )]
 [Group( "Tools" )]
-public class Unbreakable : ToolMode
+public sealed class UnbreakableTool : ToolMode
 {
 	public override string Description => "#tool.hint.unbreakable.description";
 	public override string PrimaryAction => "#tool.hint.unbreakable.set";
