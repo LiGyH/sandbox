@@ -28,19 +28,35 @@ Code/GameLoop/GameManager.Water.cs
 ## Полный код
 
 ```csharp
-using Sandbox.UI;
+using Sandbox.Audio;
 
+[Icon( "water" )]
 public partial class WaterVolume : Component, Component.ITriggerListener
 {
-    List<Rigidbody> Bodies = new();
+    [Property, Group( "Sound" )] private SoundEvent SoundEnter { get; set; }
+        = ResourceLibrary.Get<SoundEvent>( "sounds/water_enter.sound" );
+
+    [Property, Group( "Sound" )] private SoundEvent SoundExit { get; set; }
+        = ResourceLibrary.Get<SoundEvent>( "sounds/water_exit.sound" );
+
+    [RequireComponent] private BoxCollider Collider { get; set; }
+
+    /// <summary>
+    /// Roots of objects currently in the water.
+    /// Handy for playing sounds only once per object, even if it has multiple colliders (like ragdolls)
+    /// </summary>
+    private HashSet<GameObject> Objects = new();
+    private List<Rigidbody> Bodies = new();
+
+    private BBox Bounds => BBox.FromPositionAndSize( WorldTransform.PointToWorld( Collider.Center ), WorldScale * Collider.Scale );
 
     protected override void OnFixedUpdate()
     {
-        if ( Bodies is null )
+        if ( Bodies is null || !Collider.IsValid() )
             return;
 
-        var collider = GetComponent<BoxCollider>();
-        var waterSurface = WorldPosition + Vector3.Up * (collider.Scale.z * 0.5f);
+        var bbox = Bounds;
+        var waterSurface = bbox.Center + Vector3.Up * bbox.Extents.z;
         var waterPlane = new Plane( waterSurface, Vector3.Up );
 
         for ( int i = Bodies.Count - 1; i >= 0; i-- )
@@ -56,21 +72,74 @@ public partial class WaterVolume : Component, Component.ITriggerListener
         }
     }
 
+    bool _wasCamUnderwater;
+    protected override void OnUpdate()
+    {
+        if ( !Collider.IsValid() )
+            return;
+
+        var camera = Scene.Camera;
+        bool isCamUnderwater = camera.IsValid() && Bounds.Contains( camera.WorldPosition );
+        if ( isCamUnderwater != _wasCamUnderwater )
+        {
+            if ( isCamUnderwater ) OnCameraEnter();
+            else OnCameraExit();
+        }
+
+        _wasCamUnderwater = isCamUnderwater;
+    }
+
+    DspProcessor _dsp;
+    void OnCameraEnter()
+    {
+        var gameMixer = Mixer.FindMixerByName( "Game" );
+        if ( gameMixer is null ) return;
+
+        _dsp ??= new DspProcessor( "water.small" );
+        gameMixer.AddProcessor( _dsp );
+    }
+
+    void OnCameraExit()
+    {
+        var gameMixer = Mixer.FindMixerByName( "Game" );
+        if ( gameMixer is null ) return;
+
+        gameMixer.RemoveProcessor( _dsp );
+        _dsp = null;
+    }
+
     void ITriggerListener.OnTriggerEnter( Collider other )
     {
-        var body = other.GameObject.Components.Get<Rigidbody>( FindMode.EverythingInSelfAndParent );
-        if ( body.IsValid() && !Bodies.Contains( body ) )
+        var body = other.Rigidbody;
+        if ( !body.IsValid() || Bodies.Contains( body ) )
+            return;
+
+        Bodies.Add( body );
+
+        var root = other.GameObject.Root;
+        if ( Objects.Add( root ) )
         {
-            Bodies.Add( body );
+            if ( SoundEnter.IsValid() )
+            {
+                other.GameObject.PlaySound( SoundEnter );
+            }
         }
     }
 
     void ITriggerListener.OnTriggerExit( Collider other )
     {
-        var body = other.GameObject.Components.Get<Rigidbody>( FindMode.EverythingInSelfAndParent );
-        if ( body.IsValid() )
+        var body = other.Rigidbody;
+        if ( !body.IsValid() ) return;
+
+        Bodies.Remove( body );
+
+        var root = other.GameObject.Root;
+        if ( Objects.Remove( root ) )
         {
-            Bodies.Remove( body );
+            if ( SoundExit.IsValid() )
+            {
+                other.GameObject.PlaySound( SoundExit );
+            }
         }
     }
 }
@@ -84,6 +153,7 @@ public sealed partial class GameManager : ISceneLoadingEvents
 
         foreach ( var volume in waterVolumes )
         {
+            volume.Surface ??= Surface.FindByName( "water" );
             volume.GetOrAddComponent<WaterVolume>();
         }
     }
@@ -95,24 +165,26 @@ public sealed partial class GameManager : ISceneLoadingEvents
 ### `WaterVolume : Component, ITriggerListener`
 
 - **Triggers.** Чтобы движок присылал нам `OnTriggerEnter`/`OnTriggerExit`, на том же `GameObject` должен быть коллайдер с включённым `IsTrigger` и тегом `water`. См. [26.05 — Triggers](26_05_Triggers.md).
-- **`OnTriggerEnter`** — когда любая физическая штука пересекла объём, мы поднимаемся по иерархии (`FindMode.EverythingInSelfAndParent`) и ищем `Rigidbody`. Это нужно потому, что у пропа коллайдер обычно лежит на дочернем GO, а сам `Rigidbody` — на корневом.
-- **`OnTriggerExit`** — симметрично убираем `Rigidbody` из списка.
+- **`OnTriggerEnter`** — когда любая физическая штука пересекла объём, мы берём `other.Rigidbody` (новый удобный доступ к телу коллайдера). Корень объекта (`other.GameObject.Root`) добавляем в `HashSet<GameObject> Objects` — так звук входа в воду играется **один раз на объект**, даже если у него много коллайдеров (как у рэгдолла), и проигрываем `SoundEnter`.
+- **`OnTriggerExit`** — симметрично убираем `Rigidbody` из списка и, если объект полностью покинул воду, проигрываем `SoundExit`.
+- **Звук и DSP под водой.** Свойства `SoundEnter`/`SoundExit` (группа `Sound`) задают звуки входа/выхода. В `OnUpdate` компонент следит за камерой: когда она оказывается внутри `Bounds`, на микшер `"Game"` навешивается `DspProcessor("water.small")` (подводный эффект), а при выходе — снимается.
+- **`[RequireComponent] BoxCollider Collider`** — коллайдер теперь обязательная зависимость; `Bounds` считается из его `Center`/`Scale` в мировых координатах.
 
 ### `OnFixedUpdate` и `Rigidbody.ApplyBuoyancy`
 
 ```csharp
-var collider = GetComponent<BoxCollider>();
-var waterSurface = WorldPosition + Vector3.Up * (collider.Scale.z * 0.5f);
+var bbox = Bounds;
+var waterSurface = bbox.Center + Vector3.Up * bbox.Extents.z;
 var waterPlane = new Plane( waterSurface, Vector3.Up );
 
 body.ApplyBuoyancy( waterPlane, Time.Delta );
 ```
 
-- Берём `BoxCollider` объёма и считаем плоскость поверхности воды: центр объёма + половина высоты.
+- Поверхность воды считаем из `Bounds` (BBox по `BoxCollider`): центр объёма + половина высоты по Z.
 - На каждом шаге физики (`OnFixedUpdate`, не `OnUpdate`!) вызываем встроенный `Rigidbody.ApplyBuoyancy(plane, dt)`. Это движковый метод — Facepunch реализует силу Архимеда сам, нам остаётся только сказать «вот такая поверхность, толкай вверх с такой дельтой».
 - Перед вызовом проверяем `body.IsValid()` — пока пропы плавают, их могут удалить (Cleanup, Undo, и т.п.); невалидные сразу выкидываем из списка.
 
-> ⚠️ Текущая реализация считает поверхность по `BoxCollider`. Если на объёме другой коллайдер (`Sphere`, `Capsule`, mesh), `GetComponent<BoxCollider>()` вернёт `null` и в `OnFixedUpdate` упадёт. Для своих карт держи воду как `BoxCollider` либо расширь компонент.
+> ⚠️ `BoxCollider` теперь помечен `[RequireComponent]`, поэтому компонент гарантированно его получает; `OnFixedUpdate`/`OnUpdate` дополнительно проверяют `Collider.IsValid()` и тихо выходят, если коллайдера нет.
 
 ### `GameManager : ISceneLoadingEvents`
 
@@ -123,11 +195,15 @@ void ISceneLoadingEvents.AfterLoad( Scene scene )
 {
     var waterVolumes = scene.GetAll<Collider>().Where( x => x.Tags.Has( "water" ) );
     foreach ( var volume in waterVolumes )
+    {
+        volume.Surface ??= Surface.FindByName( "water" );
         volume.GetOrAddComponent<WaterVolume>();
+    }
 }
 ```
 
 - `scene.GetAll<Collider>()` — линейный обход всех коллайдеров сцены. Для огромных карт это «дорого один раз», но `AfterLoad` стреляет редко.
+- `volume.Surface ??= Surface.FindByName( "water" )` — если у коллайдера не задана поверхность, назначаем стандартную `water` (звуки, трение, всплески берутся из неё).
 - `GetOrAddComponent<WaterVolume>()` — идемпотентно: если вода уже была подготовлена (например, заскриптована префабом), второй компонент не появится.
 
 ## Как добавить воду на свою карту
