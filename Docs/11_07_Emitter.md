@@ -45,8 +45,9 @@ EmitterEntity (Component)       — компонент на объекте в м
 1. Игрок выбирает `EmitterTool` в Toolgun
 2. Выбирает базовую модель (`BaseDef`) и эффект (`EffectDef`)
 3. Наводит на поверхность — показывается превью
-4. Нажимает ЛКМ → на сервере создаётся объект-эмиттер
-5. Если поверхность — другой объект (не мир), создаётся `FixedJoint` для привязки
+4. Нажимает ЛКМ → на сервере создаётся объект-эмиттер (приваренный к поверхности)
+5. По умолчанию (ЛКМ) создаётся `FixedJoint` для привязки к объекту-основе
+6. ПКМ (вторичное действие) размещает эмиттер **без приварки** (`noWeld` — свободный объект)
 
 ## Создай файл
 
@@ -97,7 +98,14 @@ public sealed class EmitterTool : ToolMode
 		if ( Input.Pressed( "attack1" ) )
 		{
 			var effectDef = ResourceLibrary.Get<ScriptedEmitter>( EffectDef );
-			Spawn( select, baseDef.Prefab, effectDef, placementTrans );
+			Spawn( select, baseDef.Prefab, effectDef, placementTrans, false );
+			ShootEffects( select );
+		}
+		else if ( Input.Pressed( "attack2" ) )
+		{
+			// Вторичная ЛКМ: размещение без приварки (no weld)
+			var effectDef = ResourceLibrary.Get<ScriptedEmitter>( EffectDef );
+			Spawn( select, baseDef.Prefab, effectDef, placementTrans, true );
 			ShootEffects( select );
 		}
 
@@ -105,7 +113,7 @@ public sealed class EmitterTool : ToolMode
 	}
 
 	[Rpc.Host]
-	public void Spawn( SelectionPoint point, PrefabFile emitterPrefab, ScriptedEmitter effect, Transform tx )
+	public void Spawn( SelectionPoint point, PrefabFile emitterPrefab, ScriptedEmitter effect, Transform tx, bool noWeld )
 	{
 		if ( emitterPrefab == null )
 			return;
@@ -121,7 +129,11 @@ public sealed class EmitterTool : ToolMode
 			emitter.Emitter = effect;
 		}
 
-		if ( !point.IsWorld )
+		ApplyPhysicsProperties( go );
+
+		go.NetworkSpawn( true, null );
+
+		if ( !noWeld )
 		{
 			var joint = go.AddComponent<FixedJoint>();
 			joint.Attachment = Joint.AttachmentMode.LocalFrames;
@@ -132,10 +144,6 @@ public sealed class EmitterTool : ToolMode
 			joint.Body = point.GameObject;
 			joint.EnableCollision = false;
 		}
-
-		ApplyPhysicsProperties( go );
-
-		go.NetworkSpawn( true, null );
 
 		var undo = Player.Undo.Create();
 		undo.Name = "Emitter";
@@ -156,15 +164,16 @@ public sealed class EmitterTool : ToolMode
 - **`OnControl()`** — каждый кадр:
   1. Трассирует луч (`TraceSelect()`) для определения точки размещения.
   2. Загружает ресурс модели (`ScriptedEmitterModel`).
-  3. При нажатии ЛКМ — вызывает `Spawn()` на сервере.
+  3. При нажатии ЛКМ — вызывает `Spawn(..., noWeld: false)`; при ПКМ — `Spawn(..., noWeld: true)` (без приварки).
   4. Рисует полупрозрачное превью модели через `DebugOverlay.GameObject()`.
 - **`Spawn()` (`[Rpc.Host]`)** — выполняется на сервере:
   1. Клонирует префаб модели эмиттера.
   2. Назначает тег `removable` (можно удалить Remover-ом) и `constraint`.
   3. Устанавливает позицию и поворот.
   4. Назначает эффект (`EmitterEntity.Emitter`).
-  5. Если размещён на объекте (не на мире) — создаёт `FixedJoint` для привязки.
-  6. Регистрирует undo и спавнит в сети.
+  5. Применяет физ-свойства и спавнит в сети (`ApplyPhysicsProperties` → `NetworkSpawn`).
+  6. Если `noWeld == false` — создаёт `FixedJoint` для привязки к объекту-основе. При `noWeld == true` эмиттер остаётся свободным.
+  7. Регистрирует undo.
 
 ---
 
@@ -263,7 +272,7 @@ public enum EmitMode
 /// The emitter prefab is defined by a <see cref="ScriptedEmitter"/> resource.
 /// </summary>
 [Alias( "emitter" )]
-public class EmitterEntity : Component, IPlayerControllable
+public sealed class EmitterEntity : Component, IPlayerControllable
 {
 	/// <summary>
 	/// The emitter definition points to a prefab containing a particle system.

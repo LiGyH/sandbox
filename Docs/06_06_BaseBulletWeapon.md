@@ -25,7 +25,7 @@
 | `ShootBullet(fireRate, config)` | Главный метод стрельбы: проверка патронов → расход → задержка → расчёт луча → `Scene.Trace.Ray()` → эффекты → `TraceAttack()` → отдача камеры. |
 | `GetAimConeAmount()` | Возвращает 0–1 на основе `TimeSinceShoot` и `AimConeRecovery` — чем дольше не стрелял, тем точнее. |
 | `WithAimCone()` | Метод расширения для вектора — добавляет случайное отклонение в конус. |
-| `ShootEffects()` | `[Rpc.Broadcast]` — воспроизводит визуальные/звуковые эффекты на всех клиентах. Создаёт декаль из `Surface.PrefabCollection.BulletImpact`, привязывает к ближайшей кости. |
+| `ShootEffects()` | `[Rpc.Broadcast]` — воспроизводит визуальные/звуковые эффекты на всех клиентах. Проигрывает звук попадания по поверхности (`Surface.SoundCollection.Bullet`) и создаёт декаль из `Surface.PrefabCollection.BulletImpact`, привязывает к ближайшей кости. |
 | `CameraNoise.Recoil` | Создаёт эффект тряски камеры при выстреле в первом лице. |
 | Автономный режим | Без владельца: стреляет от `MuzzleTransform`, применяет физическую силу `ShootForce` к `Rigidbody` оружия. |
 | Поиск ближайшей кости | При попадании в `SkinnedModelRenderer` — декаль привязывается к ближайшей кости для корректного движения. |
@@ -118,6 +118,7 @@ public partial class BaseBulletWeapon : BaseWeapon
 
 		var tr = Scene.Trace.Ray( traceRay, config.Range )
 			.IgnoreGameObjectHierarchy( AimIgnoreRoot )
+			.WithCollisionRules( "bullet" )
 			.WithoutTags( "playercontroller" )
 			.Radius( config.BulletRadius )
 			.UseHitboxes()
@@ -164,8 +165,11 @@ public partial class BaseBulletWeapon : BaseWeapon
 			// WeaponModel resolves to viewmodel/worldmodel/standalone-model automatically (see 06.01).
 			// OnAttack and CreateRangedEffects are virtual on WeaponModel, so this works for both
 			// ViewModel (animated 1st-person) and WorldModel (3rd-person / standalone).
-			WeaponModel.GameObject.RunEvent<WeaponModel>( x => x.OnAttack() );
-			WeaponModel.GameObject.RunEvent<WeaponModel>( x => x.CreateRangedEffects( this, hitpoint, origin ) );
+			if ( WeaponModel.IsValid() )
+			{
+				WeaponModel.GameObject.RunEvent<WeaponModel>( x => x.OnAttack() );
+				WeaponModel.GameObject.RunEvent<WeaponModel>( x => x.CreateRangedEffects( this, hitpoint, origin ) );
+			}
 
 			if ( ShootSound.IsValid() )
 			{
@@ -182,7 +186,14 @@ public partial class BaseBulletWeapon : BaseWeapon
 		if ( !hit || !hitObject.IsValid() )
 			return;
 
-		var prefab = hitSurface.PrefabCollection.BulletImpact ?? hitSurface.GetBaseSurface()?.PrefabCollection.BulletImpact;
+		var baseSurface = hitSurface.GetBaseSurface();
+		var bulletSound = hitSurface.SoundCollection.Bullet ?? baseSurface?.SoundCollection.Bullet;
+		if ( bulletSound.IsValid() )
+		{
+			Sound.Play( bulletSound, hitpoint );
+		}
+
+		var prefab = hitSurface.PrefabCollection.BulletImpact ?? baseSurface?.PrefabCollection.BulletImpact;
 
 		// Still null?
 		if ( prefab is null )

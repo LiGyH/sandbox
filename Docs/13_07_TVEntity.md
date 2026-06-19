@@ -91,7 +91,7 @@ else if ( _linkedWeapon is null || !_linkedWeapon.Enabled || _linkedWeapon.Rende
 /// A TV screen entity that displays the feed from a linked <see cref="CameraEntity"/>.
 /// Use the Linker tool to connect a Camera to this TV.
 /// </summary>
-public class TVEntity : Component
+public sealed class TVEntity : Component
 {
 	[Property]
 	public string ScreenMaterialName { get; set; } = "screen";
