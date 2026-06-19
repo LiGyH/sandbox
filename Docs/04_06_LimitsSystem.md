@@ -97,7 +97,7 @@ private readonly HashSet<GameObject> _allTracked = new();
 
 ```csharp
 void Global.ISpawnEvents.OnPostSpawn( Global.ISpawnEvents.PostSpawnData e )
-    => Track( e.Player.SteamId, e.Objects );
+    => Track( (long)e.Player.SteamId, e.Objects );
 ```
 
 ### Поток `OnToolAction` (через IToolActionEvents)
@@ -129,7 +129,7 @@ Notices.SendNotice( target, "block", Color.Red,
 Полный исходник — в репозитории. Ниже — каркас, чтобы было понятно как всё собирается:
 
 ```csharp
-public sealed class LimitsSystem
+internal sealed class LimitsSystem
     : GameObjectSystem<LimitsSystem>, Global.ISpawnEvents, IToolActionEvents
 {
     [Range( -1, 1024 )]

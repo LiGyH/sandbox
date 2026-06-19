@@ -55,9 +55,9 @@
                     <div class="mute-spacer"></div>
                 </div>
 
-                @foreach ( var entry in Scene.GetAll<PlayerData>().OrderByDescending( x => x.Kills ).ThenBy( x => x.DisplayName ) )
+                @foreach ( var connection in Connection.All.OrderByDescending( x => PlayerData.For( x )?.Kills ?? 0 ).ThenBy( x => x.DisplayName ) )
                 {
-                    <ScoreboardRow Entry="@entry" />
+                    <ScoreboardRow Connection="@connection" />
                 }
             </div>
         </div>
@@ -110,9 +110,9 @@
 - `<label class="big">sandbox</label>` — заголовок «sandbox» вверху таблицы
 - `Playing on @(_mapTitle)` — название текущей карты
 - Заголовки столбцов: Kills (Убийства), Deaths (Смерти), Ping (Пинг)
-- `@foreach` — для каждого игрока создаётся компонент `ScoreboardRow`
-- `.OrderByDescending( x => x.Kills )` — игроки сортируются по убийствам (больше = выше)
-- `.ThenBy( x => x.DisplayName )` — при равных убийствах — по имени
+- `@foreach` — для каждого подключения (`Connection.All`) создаётся компонент `ScoreboardRow`
+- `.OrderByDescending( x => PlayerData.For( x )?.Kills ?? 0 )` — игроки сортируются по убийствам (больше = выше)
+- `.ThenBy( x => x.DisplayName )` — при равных убийствах — по имени подключения
 
 **Код:**
 
@@ -139,17 +139,18 @@
 
 <root class="row player">
 
-	@if ( Entry is not null && Entry.Connection is not null )
+	@if ( Connection is not null )
 	{
-		var steamId = Entry.Connection.SteamId;
+		var steamId = Connection.SteamId;
+		var data = PlayerData.For( Connection );
 		bool isMuted = SandboxVoice.IsMuted( steamId );
 
 		<img class="avatar" src="avatar:@steamId" />
-		<div class="name">@Entry.DisplayName</div>
-		<div class="stat">@Entry.Kills</div>
-		<div class="stat">@Entry.Deaths</div>
-		<div class="stat">@(Entry.Ping.CeilToInt())</div>
-		@if ( !Entry.IsMe )
+		<div class="name">@Connection.DisplayName</div>
+		<div class="stat">@(data?.Kills ?? 0)</div>
+		<div class="stat">@(data?.Deaths ?? 0)</div>
+		<div class="stat">@(Connection.Ping.CeilToInt())</div>
+		@if ( Connection != Connection.Local )
 		{
 			<div class="mute-btn @(isMuted ? "muted" : "")" onclick="@( () => SandboxVoice.Mute( steamId ) )">
 				<i>@(isMuted ? "volume_off" : "volume_up")</i>
@@ -165,35 +166,39 @@
 
 @code
 {
-    public PlayerData Entry { get; set; }
+    public Connection Connection { get; set; }
 
     /// <summary>
     /// Rebuild whenever ping or kill/death counters change (every second is enough).
     /// </summary>
-    protected override int BuildHash() => System.HashCode.Combine( Entry?.Kills, Entry?.Deaths, Entry?.Ping.CeilToInt() );
+    protected override int BuildHash()
+    {
+        if ( Connection is null ) return 0;
+        var data = PlayerData.For( Connection );
+        return System.HashCode.Combine( Connection.DisplayName, data?.Kills ?? 0, data?.Deaths ?? 0, Connection.Ping );
+    }
 
     public override void Tick()
     {
-        if ( Entry is null ) return;
-        SetClass( "me", Entry.IsMe );
-        if ( Entry.Connection is not null )
-            SetClass( "friend", new Friend( Entry.Connection.SteamId ).IsFriend );
+        if ( Connection is null ) return;
+        SetClass( "me", Connection == Connection.Local );
+        SetClass( "friend", new Friend( Connection.SteamId ).IsFriend );
     }
 
     protected override void OnRightClick( MousePanelEvent e )
     {
-        if ( Entry is null || Entry.Connection is null ) return;
+        if ( Connection is null ) return;
 
-        var steamId = Entry.Connection.SteamId;
+        var steamId = Connection.SteamId;
         var menu = MenuPanel.Open( this );
 
         menu.AddOption( "content_copy", "Copy Steam ID", () =>
         {
             Clipboard.SetText( steamId.ToString() );
-            Notices.AddNotice( "copy_all", Color.Cyan, $"Copied {Entry.Connection.DisplayName}'s SteamID to your clipboard", 5 );
+            Notices.AddNotice( "copy_all", Color.Cyan, $"Copied {Connection.DisplayName}'s SteamID to your clipboard", 5 );
         } );
 
-		if ( !Entry.IsMe )
+		if ( Connection != Connection.Local )
 		{
 			bool isMuted = SandboxVoice.IsMuted( steamId );
 			menu.AddOption( isMuted ? "volume_up" : "volume_off", isMuted ? "Unmute" : "Mute", () => SandboxVoice.Mute( steamId ) );
@@ -201,37 +206,37 @@
 			if ( Connection.Local?.HasPermission( "admin" ) == true )
 			{
 				menu.AddSpacer();
-				menu.AddOption( "person_remove", "Kick", () => OpenKickConfirm( Entry ) );
-				menu.AddOption( "gavel", "Ban", () => OpenBanConfirm( Entry ) );
+				menu.AddOption( "person_remove", "Kick", () => OpenKickConfirm( Connection ) );
+				menu.AddOption( "gavel", "Ban", () => OpenBanConfirm( Connection ) );
 			}
 		}
 
 		e.StopPropagation();
 	}
 
-	void OpenKickConfirm( PlayerData entry )
+	void OpenKickConfirm( Connection connection )
 	{
 		var popup = new StringQueryPopup
 		{
 			Title = "Kick Player",
-			Prompt = $"Why do you want to kick {entry.DisplayName}?",
+			Prompt = $"Why do you want to kick {connection.DisplayName}?",
 			ConfirmLabel = "Kick",
 			OnConfirm = x =>
 			{
-				GameManager.RpcKickPlayer( entry.Connection, x );
+				GameManager.RpcKickPlayer( connection, x );
 			}
 		};
 		popup.Parent = FindPopupPanel();
 	}
 
-	void OpenBanConfirm( PlayerData entry )
+	void OpenBanConfirm( Connection connection )
 	{
 		var popup = new StringQueryPopup
 		{
 			Title = "Ban Player",
-			Prompt = $"Why do you want to ban {entry.DisplayName}?",
+			Prompt = $"Why do you want to ban {connection.DisplayName}?",
 			ConfirmLabel = "Ban",
-			OnConfirm = x => BanSystem.RpcBanPlayer( entry.Connection, x )
+			OnConfirm = x => BanSystem.RpcBanPlayer( connection, x )
 		};
 		popup.Parent = FindPopupPanel();
 	}
@@ -243,8 +248,8 @@
 **Разметка каждой строки:**
 
 - `<img class="avatar" src="avatar:@steamId" />` — аватар игрока из Steam
-- `@Entry.DisplayName` — имя игрока
-- `@Entry.Kills`, `@Entry.Deaths`, `@Entry.Ping` — статистика
+- `@Connection.DisplayName` — имя игрока
+- `@(data?.Kills ?? 0)`, `@(data?.Deaths ?? 0)` — статистика из `PlayerData.For( Connection )`, `@(Connection.Ping.CeilToInt())` — пинг
 - Кнопка мьюта (🔇) — появляется только для **чужих** игроков
 
 **Метод `Tick()`:**

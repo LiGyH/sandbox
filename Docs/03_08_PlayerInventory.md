@@ -1001,7 +1001,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 	{
 		if ( !Networking.IsHost ) return;
 
-		var steamId = Player.SteamId;
+		var steamId = (long)(Player.Network.Owner?.SteamId ?? 0);
 		if ( steamId == 0 ) return;
 
 		var json = SerializeLoadout();
@@ -1015,7 +1015,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 	{
 		if ( !Networking.IsHost ) return;
 
-		var steamId = Player.SteamId;
+		var steamId = (long)(Player.Network.Owner?.SteamId ?? 0);
 		if ( steamId == 0 ) return;
 
 		// Restore the hotbar loadout

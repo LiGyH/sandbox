@@ -16,9 +16,10 @@
 /// <summary>
 /// Payload for spawning a prop model from a cloud ident.
 /// </summary>
-public class PropSpawner : ISpawner
+public sealed class PropSpawner : ISpawner
 {
 	public string DisplayName { get; private set; }
+	public string FullIdent => Path is not null && !Path.EndsWith( ".vmdl" ) && !Path.EndsWith( ".vmdl_c" ) ? Path : null;
 	public string Icon => Path;
 	public string Data => Path;
 	public BBox Bounds => Model?.Bounds ?? default;
@@ -77,7 +78,8 @@ public class PropSpawner : ISpawner
 		var prop = go.AddComponent<Prop>();
 		prop.Model = Model;
 
-		Ownable.Set( go, player.Network.Owner );
+		if ( player.IsValid() )
+			Ownable.Set( go, player.Network.Owner );
 
 		if ( (Model.Physics?.Parts?.Count ?? 0) == 0 )
 		{
