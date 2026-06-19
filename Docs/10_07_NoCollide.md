@@ -2,7 +2,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `NoCollide.cs` — инструмент, который **отключает столкновения** между двумя объектами. Они будут проходить друг сквозь друга.
+Создаём файл `NoCollideTool.cs` — инструмент, который **отключает столкновения** между двумя объектами. Они будут проходить друг сквозь друга.
 
 ## Зачем это нужно?
 
@@ -14,7 +14,7 @@
 
 ### PhysicsFilter
 
-Вместо физического соединения (Joint), `NoCollide` использует `PhysicsFilter`:
+Вместо физического соединения (Joint), `NoCollideTool` использует `PhysicsFilter`:
 
 ```csharp
 var joint = go.AddComponent<PhysicsFilter>();
@@ -32,7 +32,7 @@ joint.Body = point2.GameObject;
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/NoCollide.cs`
+📄 `Code/Weapons/ToolGun/Modes/NoCollideTool.cs`
 
 ```csharp
 ﻿﻿
@@ -40,7 +40,7 @@ joint.Body = point2.GameObject;
 [Title( "No Collide" )]
 [ClassName( "nocollide" )]
 [Group( "Tools" )]
-public class NoCollide : BaseConstraintToolMode
+public sealed class NoCollideTool : BaseConstraintToolMode
 {
 	public override string Description => Stage == 1 ? "#tool.hint.nocollide.stage1" : "#tool.hint.nocollide.stage0";
 	public override string PrimaryAction => Stage == 1 ? "#tool.hint.nocollide.finish" : "#tool.hint.nocollide.source";

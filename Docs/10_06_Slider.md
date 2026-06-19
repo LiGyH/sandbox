@@ -2,7 +2,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `Slider.cs` — инструмент, который соединяет два объекта **линейным** соединением (`SliderJoint`). Объект может двигаться вдоль прямой между двумя точками.
+Создаём файл `SliderTool.cs` — инструмент, который соединяет два объекта **линейным** соединением (`SliderJoint`). Объект может двигаться вдоль прямой между двумя точками.
 
 ## Зачем это нужно?
 
@@ -46,14 +46,14 @@ lineRenderer.Color = Color.Black;
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/Slider.cs`
+📄 `Code/Weapons/ToolGun/Modes/SliderTool.cs`
 
 ```csharp
 ﻿﻿
 [Icon( "➖" )]
 [ClassName( "slider" )]
 [Group( "Constraints" )]
-public class Slider : BaseConstraintToolMode
+public sealed class SliderTool : BaseConstraintToolMode
 {
 	public override string Description => Stage == 1 ? "#tool.hint.slider.stage1" : "#tool.hint.slider.stage0";
 	public override string PrimaryAction => Stage == 1 ? "#tool.hint.slider.finish" : "#tool.hint.slider.source";

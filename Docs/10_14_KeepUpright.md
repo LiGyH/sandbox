@@ -8,7 +8,7 @@
 
 ## Что мы делаем?
 
-Создаём файл `KeepUpright.cs` — инструмент ToolGun, который крепит к объекту **UprightJoint**. Это ограничитель ориентации: объект «держит» текущий поворот, стараясь вернуться в него после толчков. В отличие от шарниров, ограничивающих перемещение, здесь ограничивается **вращение**.
+Создаём файл `KeepUprightTool.cs` — инструмент ToolGun, который крепит к объекту **UprightJoint**. Это ограничитель ориентации: объект «держит» текущий поворот, стараясь вернуться в него после толчков. В отличие от шарниров, ограничивающих перемещение, здесь ограничивается **вращение**.
 
 Инструмент поддерживает два режима:
 
@@ -69,7 +69,7 @@ Reload (R) в стадии «ждём второй клик» — отмена; 
 
 ## Создай файл
 
-📄 `Code/Weapons/ToolGun/Modes/KeepUpright.cs`
+📄 `Code/Weapons/ToolGun/Modes/KeepUprightTool.cs`
 
 ```csharp
 [Hide]
@@ -77,7 +77,7 @@ Reload (R) в стадии «ждём второй клик» — отмена; 
 [Icon( "👆🏻" )]
 [ClassName( "upright" )]
 [Group( "Constraints" )]
-public class KeepUpright : ToolMode
+public sealed class KeepUprightTool : ToolMode
 {
 	[Range( 0, 20 )]
 	[Property, Sync]

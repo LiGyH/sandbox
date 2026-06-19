@@ -139,29 +139,29 @@
 
 ### Фаза 10: Базовые инструменты
 - [ ] `Code/Weapons/ToolGun/Modes/BaseConstraintToolMode.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Rope.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Elastic.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Weld.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/BallSocket.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Slider.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/NoCollide.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Remover.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Resizer.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Mass.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Unbreakable.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Trail.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/RopeTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/ElasticTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/WeldTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/BallSocketTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/SliderTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/NoCollideTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/RemoverTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/ResizerTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/MassTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/UnbreakableTool.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/TrailTool.cs`
 - [ ] `Code/Weapons/ToolGun/Modes/Trail/LineDefinition.cs`
 - [ ] `Code/Weapons/ToolGun/Modes/Decal/DecalTool.cs`
 
 ### Фаза 11: Инструменты-сущности
-- [ ] `Code/Weapons/ToolGun/Modes/Balloon/Balloon.cs` + `BalloonDefinition.cs` + `BalloonEntity.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/Balloon/BalloonTool.cs` + `BalloonDefinition.cs` + `BalloonEntity.cs`
 - [ ] `Code/Weapons/ToolGun/Modes/Hoverball/HoverballTool.cs` + `HoverballDefinition.cs` + `HoverballEntity.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Thruster/ThrusterTool.cs` + `ThrusterDefinition.cs` + `ThrusterEntity.cs` + `Propeller.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/Thruster/ThrusterTool.cs` + `ThrusterDefinition.cs` + `ThrusterEntity.cs` + `PropellerEntity.cs`
 - [ ] `Code/Weapons/ToolGun/Modes/Wheel/WheelTool.cs` + `WheelDefinition.cs` + `WheelEntity.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Hydraulic/HydraulicTool.cs` + `HydraulicEntity.cs` + `BallSocketPair.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/Hydraulic/HydraulicTool.cs` + `HydraulicEntity.cs` + `BallSocketPairEntity.cs`
 - [ ] `Code/Weapons/ToolGun/Modes/Linker/LinkerTool.cs`
 - [ ] `Code/Weapons/ToolGun/Modes/Emitter/EmitterTool.cs`
-- [ ] `Code/Weapons/ToolGun/Modes/Duplicator/Duplicator.cs` + `Duplicator.IconRendering.cs` + `DuplicationData.cs` + `LinkedGameObjectBuilder.cs`
+- [ ] `Code/Weapons/ToolGun/Modes/Duplicator/DuplicatorTool.cs` + `DuplicatorTool.IconRendering.cs` + `DuplicationData.cs` + `LinkedGameObjectBuilder.cs`
 
 ### Фаза 12: Компоненты
 - [ ] `Code/Components/Ownable.cs`

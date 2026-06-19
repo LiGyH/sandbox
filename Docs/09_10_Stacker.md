@@ -85,7 +85,7 @@ public enum StackAlignMode
 [ClassName( "stacker" )]
 [Group( "Building" )]
 [Title( "Stacker" )]
-public class StackerTool : ToolMode
+public sealed class StackerTool : ToolMode
 {
 	private const int MaxStackCount = 50;
 

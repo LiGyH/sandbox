@@ -54,7 +54,7 @@ GameObject A                    GameObject B
 [Title( "Linker" )]
 [ClassName( "linker" )]
 [Group( "Constraints" )]
-public class LinkerTool : BaseConstraintToolMode
+public sealed class LinkerTool : BaseConstraintToolMode
 {
 	public override string Description => Stage == 1 ? "#tool.hint.linker.stage1" : "#tool.hint.linker.stage0";
 	public override string PrimaryAction => Stage == 1 ? "#tool.hint.linker.finish" : "#tool.hint.linker.source";

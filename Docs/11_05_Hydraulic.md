@@ -32,7 +32,7 @@
 - `LineRenderer` рисует вал между точками крепления.
 - `HydraulicEntity` управляет длиной `SliderJoint`.
 - `CapsuleCollider` создаёт коллизию вдоль вала.
-- Режим шаровых шарниров добавляет `BallJoint` + `BallSocketPair` для свободного вращения.
+- Режим шаровых шарниров добавляет `BallJoint` + `BallSocketPairEntity` для свободного вращения.
 
 ## Создай файл
 `Code/Weapons/ToolGun/Modes/Hydraulic/HydraulicTool.cs`
@@ -43,7 +43,7 @@
 [Icon( "⚙️" )]
 [ClassName( "HydraulicTool" )]
 [Group( "Building" )]
-public class HydraulicTool : BaseConstraintToolMode
+public sealed class HydraulicTool : BaseConstraintToolMode
 {
 	public override string Description => Stage == 1 ? "#tool.hint.hydraulictool.stage1" : "#tool.hint.hydraulictool.stage0";
 	public override string PrimaryAction => Stage == 1 ? "#tool.hint.hydraulictool.finish" : "#tool.hint.hydraulictool.source";
@@ -216,7 +216,7 @@ public class HydraulicTool : BaseConstraintToolMode
 		lineRenderer.Width = 1.5f;
 		lineRenderer.Color = Color.White;
 
-		var aligner = goA.AddComponent<BallSocketPair>();
+		var aligner = goA.AddComponent<BallSocketPairEntity>();
 		aligner.BallModelA = skinA;
 		aligner.BallModelB = skinB;
 		aligner.ShaftRenderer = lineRenderer;
@@ -306,7 +306,7 @@ public class HydraulicTool : BaseConstraintToolMode
 ﻿
 using Sandbox.Utility;
 
-public class HydraulicEntity : Component, IPlayerControllable
+public sealed class HydraulicEntity : Component, IPlayerControllable
 {
 	[Property, Range( 0, 1 )]
 	public GameObject OnEffect { get; set; }
@@ -554,13 +554,13 @@ public class HydraulicEntity : Component, IPlayerControllable
 
 ---
 
-# 🔗 Пара шаровых шарниров (BallSocketPair)
+# 🔗 Пара шаровых шарниров (BallSocketPairEntity)
 
 ## Что мы делаем?
 Создаём компонент, который выравнивает два шаровых шарнира друг к другу и обновляет вал между ними.
 
 ## Зачем это нужно?
-`BallSocketPair` обеспечивает правильную визуальную ориентацию моделей шаровых шарниров гидравлики. Шары всегда смотрят друг на друга, а вал (LineRenderer) соединяет их концы.
+`BallSocketPairEntity` обеспечивает правильную визуальную ориентацию моделей шаровых шарниров гидравлики. Шары всегда смотрят друг на друга, а вал (LineRenderer) соединяет их концы.
 
 ## Как это работает внутри движка?
 - В `OnUpdate()` вычисляет направление между двумя шарами.
@@ -569,14 +569,14 @@ public class HydraulicEntity : Component, IPlayerControllable
 - Корректно обрабатывает вырожденный случай, когда направление почти вертикально.
 
 ## Создай файл
-`Code/Weapons/ToolGun/Modes/Hydraulic/BallSocketPair.cs`
+`Code/Weapons/ToolGun/Modes/Hydraulic/BallSocketPairEntity.cs`
 
 ```csharp
 
 /// <summary>
 /// A pair of ball sockets, we try to align the balls towards eachother.
 /// </summary>
-public class BallSocketPair : Component
+public sealed class BallSocketPairEntity : Component
 {
 	[Property]
 	public SkinnedModelRenderer BallModelA { get; set; }
