@@ -159,7 +159,7 @@ using Sandbox.Citizen;
 
 public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISaveEvents
 {
-	[Property] public int MaxSlots { get; set; } = 6;
+	[Property] public int MaxSlots { get; private set; } = 6;
 
 	[RequireComponent] public Player Player { get; set; }
 
@@ -172,7 +172,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 
 	[Sync( SyncFlags.FromHost ), Change] public BaseCarryable ActiveWeapon { get; private set; }
 
-	public void OnActiveWeaponChanged( BaseCarryable oldWeapon, BaseCarryable newWeapon )
+	internal void OnActiveWeaponChanged( BaseCarryable oldWeapon, BaseCarryable newWeapon )
 	{
 		if ( oldWeapon.IsValid() )
 			oldWeapon.GameObject.Enabled = false;
@@ -195,6 +195,28 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 	}
 
 	/// <summary>
+	/// Returns whether the given item could be inserted into the inventory.
+	/// Checks for existing weapons that can receive ammo, and empty slots.
+	/// </summary>
+	public bool CanTake( BaseCarryable item )
+	{
+		if ( !item.IsValid() )
+			return false;
+
+		var existing = Weapons.FirstOrDefault( x => x.GetType() == item.GetType() );
+		if ( existing.IsValid() )
+		{
+			// We already have this weapon — only allow if it can receive ammo
+			if ( existing is BaseWeapon existingWeapon && existingWeapon.UsesAmmo )
+				return existingWeapon.ReserveAmmo < existingWeapon.MaxReserveAmmo;
+
+			return false;
+		}
+
+		return FindEmptySlot() >= 0;
+	}
+
+	/// <summary>
 	/// Returns the first empty slot index, or -1 if the inventory is full.
 	/// </summary>
 	public int FindEmptySlot()
@@ -213,7 +235,7 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 		return -1;
 	}
 
-	public void GiveDefaultWeapons()
+	internal void GiveDefaultWeapons()
 	{
 		Pickup( "weapons/physgun/physgun.prefab", false );
 		Pickup( "weapons/toolgun/toolgun.prefab", false );
@@ -376,8 +398,11 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 		return true;
 	}
 
-	public void Take( BaseCarryable item, bool includeNotices )
+	public bool Take( BaseCarryable item, bool includeNotices )
 	{
+		if ( !CanTake( item ) )
+			return false;
+
 		var existing = Weapons.FirstOrDefault( x => x.GetType() == item.GetType() );
 		if ( existing.IsValid() )
 		{
@@ -386,19 +411,16 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 				if ( existingWeapon.ReserveAmmo < existingWeapon.MaxReserveAmmo )
 				{
 					existingWeapon.AddReserveAmmo( pickupWeapon.ClipContents );
-					OnClientPickup( existing, true );
+					if ( includeNotices )
+						OnClientPickup( existing, true );
 				}
 			}
 
 			item.DestroyGameObject();
-			return;
+			return true;
 		}
 
-		// Reject if the inventory is full
 		var slot = FindEmptySlot();
-		if ( slot < 0 )
-			return;
-
 		item.GameObject.SetParent( GameObject, false );
 		item.LocalTransform = global::Transform.Zero;
 		item.InventorySlot = slot;
@@ -418,6 +440,8 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 
 		Local.IPlayerEvents.PostToGameObject( GameObject, e => e.OnPickup( item ) );
 		OnClientPickup( item );
+
+		return true;
 	}
 
 	/// <summary>
@@ -1044,6 +1068,12 @@ public sealed class PlayerInventory : Component, Local.IPlayerEvents, Global.ISa
 ```
 
 ## Ключевые паттерны
+
+### Проверка вместимости — `CanTake` и `bool Take`
+
+`CanTake( BaseCarryable item )` — публичный метод, который заранее проверяет, можно ли положить предмет в инвентарь: либо есть совпадающее оружие, способное принять патроны, либо есть свободный слот. Его использует `DroppedWeapon`, чтобы показать тултип «Inventory Full» и заблокировать подбор, когда места нет.
+
+`Take( BaseCarryable item, bool includeNotices )` теперь возвращает `bool`: в самом начале он вызывает `CanTake(item)` и при `false` возвращает `false`, не трогая предмет. Вызывающий код (например `DroppedWeapon.OnPressed`) по этому возврату решает, показывать ли уведомление «Inventory Full».
 
 ### Host Authority (авторитет хоста)
 
